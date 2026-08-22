@@ -5,7 +5,10 @@ __pycache__/
 
 # Personal documents - never commit
 output/*.pdf
-pdf-merger-simple/output/*.pdf
+scripts/output/*.pdf
 
 # Planning docs - local only
 docs/
+
+# Node
+node_modules/
