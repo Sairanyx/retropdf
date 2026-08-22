@@ -8,19 +8,16 @@ from pypdf import PdfWriter
 # Folder where your PDF files are stored.
 # Example (Windows): r"C:\Users\Eduard\Documents\PDFs"
 # Example (Linux/Mac): "/home/eduard/Documents/PDFs"
-PDF_FOLDER = r"C:\Users\eddie\OneDrive\Documents\Dad\Elena\new"
+PDF_FOLDER = r"C:\Users\eddie\OneDrive\Documents\Dad\new"
 
 # Put the PDF filenames here in the exact order you want them merged.
 PDF_FILES = [
-    "0_5.pdf",
-    "6_15.pdf",
-    "16_25.pdf",
-    "26_end.pdf",
+    "0_7.pdf",
     
 ]
 
 # Name of the merged file.
-OUTPUT_FILENAME = "Passport_Elena_Cojoc.pdf"
+OUTPUT_FILENAME = "Merged.pdf"
 
 # ============================================================
 # YOU DO NOT NEED TO EDIT ANYTHING BELOW THIS LINE
