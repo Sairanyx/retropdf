@@ -1,0 +1,11 @@
+# Python generated files
+__pycache__/
+*.pyc
+.venv/
+
+# Personal documents - never commit
+output/*.pdf
+pdf-merger-simple/output/*.pdf
+
+# Planning docs - local only
+docs/
