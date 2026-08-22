@@ -1,0 +1,29 @@
+{
+  "name": "pdf_merger",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Sairanyx/redpdf.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Sairanyx/redpdf/issues"
+  },
+  "homepage": "https://github.com/Sairanyx/redpdf#readme",
+  "devDependencies": {
+    "@cantoo/pdf-lib": "^2.9.1",
+    "pdfjs-dist": "^6.2.108"
+  }
+}
