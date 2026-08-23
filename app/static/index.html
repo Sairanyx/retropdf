@@ -9,14 +9,15 @@
   <h1>RedPDF</h1>
 
   <p>
-    <label><input type="radio" name="mode" value="remove" checked> Remove pages</label>
+    <label><input type="radio" name="mode" value="merge" checked> Merge files</label>
+    <label><input type="radio" name="mode" value="remove"> Remove pages</label>
     <label><input type="radio" name="mode" value="extract"> Extract pages</label>
     <label><input type="radio" name="mode" value="reorder"> Reorder pages</label>
     <label><input type="radio" name="mode" value="rotate"> Rotate pages</label>
   </p>
 
-  <input type="file" id="picker" accept="application/pdf">
-  <p id="result">Choose a PDF.</p>
+  <input type="file" id="picker" accept="application/pdf" multiple>
+  <p id="result">Choose one or more PDFs.</p>
   <button id="download" disabled>Download</button>
   <div id="pages"></div>
 

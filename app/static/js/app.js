@@ -10,21 +10,20 @@ const result = document.querySelector("#result")
 const pagesEl = document.querySelector("#pages")
 const downloadBtn = document.querySelector("#download")
 
-// Page numbers the user clicked, counting from 1.
-const marked = new Set()
-
-// The current page order. Reordering rearranges this, the other tools leave
-// it alone. Always holds every page of the document exactly once.
+// Every page currently in the workspace, in output order. Each entry is
+// { doc, page, rotate, key }, where `doc` is a worker document id and `key`
+// identifies the entry for selection and thumbnail lookup.
 let order = []
 
-// Extra degrees to turn each page, keyed by page number. Only pages the user
-// actually rotated appear here.
-let rotations = {}
+// Keys of the pages the user clicked.
+const marked = new Set()
 
-// The document the worker is holding for us.
-let docId = null
-let pageCount = 0
-let sourceName = "document.pdf"
+// Loaded files, keyed by worker document id, so names can be shown.
+const files = new Map()
+
+// Rendered thumbnails, keyed by entry key. Rendering is the slow part, so
+// each page is drawn once and the canvas is then moved around.
+const thumbnails = new Map()
 
 function currentMode() {
   return document.querySelector('input[name="mode"]:checked').value
@@ -32,27 +31,33 @@ function currentMode() {
 
 // What each mode sends to the worker, and what to call the result.
 const modes = {
+  merge: {
+    hint: "Add more files, then download them as one PDF.",
+    items: () => order.slice(),
+    suffix: "-merged",
+    empty: "Add at least one file.",
+  },
   remove: {
     hint: "Click the pages you want to remove.",
-    pages: () => order.filter((n) => !marked.has(n)),
+    items: () => order.filter((entry) => !marked.has(entry.key)),
     suffix: "-edited",
     empty: "That would remove every page.",
   },
   extract: {
     hint: "Click the pages you want to keep.",
-    pages: () => order.filter((n) => marked.has(n)),
+    items: () => order.filter((entry) => marked.has(entry.key)),
     suffix: "-extract",
     empty: "Choose at least one page to keep.",
   },
   reorder: {
     hint: "Use the arrows to move pages, then download.",
-    pages: () => order.slice(),
+    items: () => order.slice(),
     suffix: "-reordered",
     empty: "There are no pages to save.",
   },
   rotate: {
     hint: "Turn pages with the buttons, then download.",
-    pages: () => order.slice(),
+    items: () => order.slice(),
     suffix: "-rotated",
     empty: "There are no pages to save.",
   },
@@ -61,53 +66,65 @@ const modes = {
 for (const radio of document.querySelectorAll('input[name="mode"]')) {
   radio.addEventListener("change", () => {
     marked.clear()
-    if (docId !== null) drawPages()
+    drawPages()
     result.textContent = modes[currentMode()].hint
   })
 }
 
 picker.addEventListener("change", async () => {
-  const file = picker.files[0]
-  if (!file) return
+  const chosen = Array.from(picker.files)
+  if (chosen.length === 0) return
 
-  result.textContent = "Reading..."
+  // Merge adds to what is already there. The single file tools replace it.
+  if (currentMode() !== "merge") reset()
+
   downloadBtn.disabled = true
-  marked.clear()
-  rotations = {}
-  pagesEl.replaceChildren()
-
-  const bytes = await file.arrayBuffer()
-  sourceName = file.name
 
   try {
-    // Tell the worker to forget the previous document before loading another.
-    if (docId !== null) await call("close", { id: docId })
+    for (const file of chosen) {
+      result.textContent = `Reading ${file.name}...`
+      const bytes = await file.arrayBuffer()
 
-    // pdf.js needs its own copy because the worker takes ownership of the
-    // buffer it is given.
-    const forRendering = bytes.slice(0)
+      // pdf.js needs its own copy because the worker takes ownership of the
+      // buffer it is given.
+      const forRendering = bytes.slice(0)
 
-    const loaded = await call("load", { bytes }, [bytes])
-    docId = loaded.id
-    pageCount = loaded.pageCount
-    order = Array.from({ length: pageCount }, (unused, i) => i + 1)
+      const loaded = await call("load", { bytes }, [bytes])
+      files.set(loaded.id, file.name)
+
+      for (let page = 1; page <= loaded.pageCount; page++) {
+        order.push({
+          doc: loaded.id,
+          page,
+          rotate: 0,
+          key: `${loaded.id}:${page}`,
+        })
+      }
+
+      drawPages()
+      await renderThumbnails(loaded.id, forRendering)
+    }
 
     downloadBtn.disabled = false
-    await renderThumbnails(forRendering)
-
-    result.textContent = `${file.name}, ${pageCount} pages. ${modes[currentMode()].hint}`
+    result.textContent = `${order.length} pages from ${files.size} file(s). ${modes[currentMode()].hint}`
   } catch (error) {
     result.textContent = error.message
   }
+
+  // Let the same file be chosen again later.
+  picker.value = ""
 })
 
-// Thumbnails are rendered once and kept, so reordering can move the existing
-// canvases around instead of drawing them again.
-const thumbnails = new Map()
-
-async function renderThumbnails(bytes) {
+function reset() {
+  for (const id of files.keys()) call("close", { id })
+  files.clear()
   thumbnails.clear()
+  marked.clear()
+  order = []
+  pagesEl.replaceChildren()
+}
 
+async function renderThumbnails(docId, bytes) {
   const task = pdfjs.getDocument({ data: bytes, isEvalSupported: false })
   const pdf = await task.promise
 
@@ -124,7 +141,7 @@ async function renderThumbnails(bytes) {
       viewport,
     }).promise
 
-    thumbnails.set(n, canvas)
+    thumbnails.set(`${docId}:${n}`, canvas)
     result.textContent = `Rendering ${n} of ${pdf.numPages}...`
     drawPages()
   }
@@ -135,35 +152,42 @@ function drawPages() {
   const mode = currentMode()
   pagesEl.replaceChildren()
 
-  order.forEach((n, position) => {
-    const canvas = thumbnails.get(n)
-    if (!canvas) return
+  order.forEach((entry, position) => {
+    const canvas = thumbnails.get(entry.key)
 
     const box = document.createElement("div")
     box.style.display = "inline-block"
     box.style.margin = "4px"
+    box.style.padding = "4px"
     box.style.textAlign = "center"
     box.style.border = "1px solid #ccc"
-    box.style.padding = "4px"
+    box.style.verticalAlign = "top"
 
-    if (marked.has(n)) {
-      box.style.borderColor = "#c8452a"
-      canvas.style.opacity = mode === "extract" ? "1" : "0.4"
+    if (canvas) {
+      if (marked.has(entry.key)) {
+        box.style.borderColor = "#c8452a"
+        canvas.style.opacity = mode === "extract" ? "1" : "0.4"
+      } else {
+        canvas.style.opacity = mode === "extract" ? "0.4" : "1"
+      }
+      canvas.style.transform = entry.rotate ? `rotate(${entry.rotate}deg)` : ""
+      box.appendChild(canvas)
     } else {
-      canvas.style.opacity = mode === "extract" ? "0.4" : "1"
+      const placeholder = document.createElement("div")
+      placeholder.textContent = "..."
+      placeholder.style.width = "120px"
+      placeholder.style.height = "160px"
+      box.appendChild(placeholder)
     }
 
-    box.appendChild(canvas)
-
     const label = document.createElement("div")
-    label.textContent = `page ${n}`
+    label.textContent = files.size > 1
+      ? `${shortName(files.get(entry.doc))} p${entry.page}`
+      : `page ${entry.page}`
     label.style.fontSize = "12px"
     box.appendChild(label)
 
-    // Show the rotation the user has chosen, without redrawing the page.
-    canvas.style.transform = rotations[n] ? `rotate(${rotations[n]}deg)` : ""
-
-    if (mode === "reorder") {
+    if (mode === "reorder" || mode === "merge") {
       const controls = document.createElement("div")
       controls.append(
         moveButton("left", position, position - 1, position === 0),
@@ -172,14 +196,13 @@ function drawPages() {
       box.appendChild(controls)
     } else if (mode === "rotate") {
       const controls = document.createElement("div")
-      controls.append(turnButton(n, -90), turnButton(n, 90))
+      controls.append(turnButton(entry, -90), turnButton(entry, 90))
       box.appendChild(controls)
     } else {
-      canvas.style.cursor = "pointer"
       box.style.cursor = "pointer"
       box.addEventListener("click", () => {
-        if (marked.has(n)) marked.delete(n)
-        else marked.add(n)
+        if (marked.has(entry.key)) marked.delete(entry.key)
+        else marked.add(entry.key)
         drawPages()
         reportSelection()
       })
@@ -189,31 +212,34 @@ function drawPages() {
   })
 }
 
+function shortName(name = "file") {
+  const stem = name.replace(/\.pdf$/i, "")
+  return stem.length > 12 ? stem.slice(0, 11) + "…" : stem
+}
+
 function moveButton(direction, from, to, disabled) {
   const button = document.createElement("button")
-  button.textContent = direction === "left" ? "←" : "→"
+  button.textContent = direction === "left" ? "<" : ">"
   button.title = direction === "left" ? "Move earlier" : "Move later"
   button.disabled = disabled
   button.addEventListener("click", () => {
     const moved = order.splice(from, 1)[0]
     order.splice(to, 0, moved)
     drawPages()
-    result.textContent = `New order: ${order.join(", ")}`
+    result.textContent = "Order updated."
   })
   return button
 }
 
-function turnButton(pageNumber, amount) {
+function turnButton(entry, amount) {
   const button = document.createElement("button")
   button.textContent = amount < 0 ? "left" : "right"
   button.addEventListener("click", () => {
-    const next = ((rotations[pageNumber] || 0) + amount + 360) % 360
-    if (next === 0) delete rotations[pageNumber]
-    else rotations[pageNumber] = next
+    entry.rotate = (entry.rotate + amount + 360) % 360
     drawPages()
-    const turned = Object.keys(rotations).length
+    const turned = order.filter((item) => item.rotate !== 0).length
     result.textContent = turned
-      ? `${turned} of ${pageCount} pages rotated`
+      ? `${turned} of ${order.length} pages rotated`
       : "No pages rotated"
   })
   return button
@@ -222,37 +248,40 @@ function turnButton(pageNumber, amount) {
 function reportSelection() {
   const mode = currentMode()
   if (mode === "extract") {
-    result.textContent = `${marked.size} of ${pageCount} pages selected to keep`
+    result.textContent = `${marked.size} of ${order.length} pages selected to keep`
   } else {
-    result.textContent = `${marked.size} of ${pageCount} pages marked for removal`
+    result.textContent = `${marked.size} of ${order.length} pages marked for removal`
   }
 }
 
 downloadBtn.addEventListener("click", async () => {
-  if (docId === null) return
+  if (order.length === 0) return
 
   const mode = modes[currentMode()]
-  const pages = mode.pages()
+  const items = mode.items()
 
-  if (pages.length === 0) {
+  if (items.length === 0) {
     result.textContent = mode.empty
     return
   }
 
   try {
     result.textContent = "Building..."
-    const { bytes } = await call("build", { id: docId, pages, rotations })
+    const { bytes } = await call("build", {
+      items: items.map(({ doc, page, rotate }) => ({ doc, page, rotate })),
+    })
 
     const blob = new Blob([bytes], { type: "application/pdf" })
     const url = URL.createObjectURL(blob)
 
+    const first = files.values().next().value || "document.pdf"
     const link = document.createElement("a")
     link.href = url
-    link.download = sourceName.replace(/\.pdf$/i, "") + mode.suffix + ".pdf"
+    link.download = first.replace(/\.pdf$/i, "") + mode.suffix + ".pdf"
     link.click()
 
     URL.revokeObjectURL(url)
-    result.textContent = `Saved ${pages.length} pages.`
+    result.textContent = `Saved ${items.length} pages.`
   } catch (error) {
     result.textContent = error.message
   }
