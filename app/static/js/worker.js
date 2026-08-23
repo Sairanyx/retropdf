@@ -21,7 +21,25 @@ self.addEventListener("message", async (event) => {
     const result = await run(payload)
 
     // Hand ownership of any returned bytes back rather than copying them.
-    const transfer = result.bytes ? [result.bytes.buffer] : []
+    //
+    // A Uint8Array can be a view onto part of a larger buffer, and
+    // transferring the whole buffer loses which part mattered, which produces
+    // a corrupt file. Only transfer when the view covers its buffer exactly.
+    let transfer = []
+    if (result.bytes) {
+      const view = result.bytes
+      const coversWholeBuffer =
+        view.byteOffset === 0 && view.byteLength === view.buffer.byteLength
+
+      if (coversWholeBuffer) {
+        transfer = [view.buffer]
+      } else {
+        // Copy out just the part that matters, then transfer that.
+        result.bytes = view.slice()
+        transfer = [result.bytes.buffer]
+      }
+    }
+
     self.postMessage({ requestId, result }, transfer)
   } catch (error) {
     self.postMessage({ requestId, error: error.message })
