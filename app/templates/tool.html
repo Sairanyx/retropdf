@@ -1,74 +1,98 @@
 {% extends "base.html" %}
 
 {% block content %}
-<main>
-  <h1>{{ tool.heading }}</h1>
-  <p>{{ tool.blurb }}</p>
+<div class="wrap">
+  <section class="tool-head">
+    <p class="label">{{ tool.name }}</p>
+    <h1>{{ tool.heading }}</h1>
+    <p class="lede">{{ tool.blurb }}</p>
+  </section>
 
-  <!-- The active tool. The browser code reads this instead of guessing from
+  <!-- The active tool. The browser code reads this rather than guessing from
        the URL, so the page and the script cannot disagree. -->
-  <div id="workspace" data-mode="{{ tool.mode }}">
-
-    <p>
+  <section class="plate workspace" id="workspace" data-mode="{{ tool.mode }}">
+    <div class="controls">
+      <label class="chip accent" for="picker">
+        {% if tool.mode == "frimages" %}Choose images{% else %}Choose a file{% endif %}
+        <span class="led"></span>
+      </label>
       <input type="file" id="picker" multiple>
-      <button id="download" disabled>Download</button>
-    </p>
+      <button class="chip" id="download" disabled>Download</button>
+    </div>
 
-    <p id="result">{{ start_hint }}</p>
+    <p class="readout" id="result">{{ start_hint }}</p>
+    <p class="note" id="limit-note"></p>
 
-    <!-- Filled in by the browser, which is the only thing that knows what
-         this device can handle. -->
-    <p id="limit-note"></p>
-
-    <!-- Only the options belonging to this tool are rendered. -->
     {% if tool.mode == "split" %}
     <fieldset id="split-options">
       <legend>Where to cut</legend>
-      <label><input type="radio" name="split" value="at" checked> After page
-        <input type="number" id="split-after" value="1" min="1"></label>
-      <label><input type="radio" name="split" value="every"> Every
-        <input type="number" id="split-size" value="1" min="1"> pages</label>
-      <label><input type="radio" name="split" value="single"> One file per page</label>
+      <label class="switchbox">
+        <input type="radio" name="split" value="at" checked>
+        <span class="led"></span> After page
+      </label>
+      <input type="number" id="split-after" value="1" min="1" aria-label="Cut after page">
+      <label class="switchbox">
+        <input type="radio" name="split" value="every">
+        <span class="led"></span> Every
+      </label>
+      <input type="number" id="split-size" value="1" min="1" aria-label="Pages per part">
+      <label class="switchbox">
+        <input type="radio" name="split" value="single">
+        <span class="led"></span> One file per page
+      </label>
     </fieldset>
     {% endif %}
 
     {% if tool.mode == "frimages" %}
     <fieldset id="image-options">
       <legend>Page size</legend>
-      <label><input type="radio" name="fit" value="a4" checked> Fit each image on an A4 page</label>
-      <label><input type="radio" name="fit" value="image"> Make each page the size of its image</label>
+      <label class="switchbox">
+        <input type="radio" name="fit" value="a4" checked>
+        <span class="led"></span> Fit on A4
+      </label>
+      <label class="switchbox">
+        <input type="radio" name="fit" value="image">
+        <span class="led"></span> Match the image
+      </label>
     </fieldset>
     {% endif %}
 
     {% if tool.mode == "toimages" %}
     <fieldset id="export-options">
       <legend>Image size</legend>
-      <label>Size
-        <select id="export-scale">
-          <option value="1">Normal</option>
-          <option value="2" selected>Large</option>
-          <option value="3">Very large</option>
-        </select>
-      </label>
+      <label for="export-scale" class="visually-hidden">Image size</label>
+      <select id="export-scale">
+        <option value="1">Normal</option>
+        <option value="2" selected>Large</option>
+        <option value="3">Very large</option>
+      </select>
     </fieldset>
     {% endif %}
 
-    <div id="pages"></div>
-  </div>
+    <div class="screen">
+      <div id="pages"></div>
+    </div>
+  </section>
 
   <section>
-    <h2>Other things you can do</h2>
-    <ul>
+    <p class="label">Other tools</p>
+    <ul class="tools">
       {% for other in tools if other.slug != tool.slug %}
-        <li><a href="/{{ other.slug }}">{{ other.name }}</a>: {{ other.blurb }}</li>
+        <li>
+          <a class="plate tool" href="/{{ other.slug }}">
+            <span class="tool-art">{{ art[other.mode] | safe }}</span>
+            <h3>{{ other.name }}</h3>
+            <p>{{ other.blurb }}</p>
+          </a>
+        </li>
       {% endfor %}
     </ul>
-    <p>
-      Need to do several of these to the same file?
-      <a href="/workspace">Open the workspace</a> and do them in one go.
+    <p style="margin-top:1.5rem">
+      Doing several of these to one file?
+      <a href="/workspace">Open the workspace</a>.
     </p>
   </section>
-</main>
+</div>
 
 <script type="module" src="/static/js/app.js"></script>
 {% endblock %}

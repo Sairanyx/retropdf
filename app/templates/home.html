@@ -1,45 +1,62 @@
 {% extends "base.html" %}
 
 {% block content %}
-<main>
-  <h1>Work with PDFs, without the noise</h1>
-  <p>
-    Free tools to combine, split and tidy up PDF files. Your documents stay
-    on your own computer. There is nothing to sign up for and no limit on how
-    often you use them.
-  </p>
+<div class="wrap">
+  <section class="hero">
+    <!-- Types itself in on load. The text is in the markup so it is there for
+         search engines and for anyone with scripting off. -->
+    <h1 id="headline" data-type="Work with PDFs, without the noise">Work with PDFs, without the noise</h1>
 
-  <ul>
-    {% for tool in tools %}
-      <li>
-        <a href="/{{ tool.slug }}">{{ tool.name }}</a>
-        <span>{{ tool.blurb }}</span>
-      </li>
-    {% endfor %}
-  </ul>
+    <p class="lede">
+      Free tools to combine, split and tidy up PDF files. Your documents stay
+      on your own computer. Nothing to sign up for, no limit on how often you
+      use them.
+    </p>
 
-  <p>
-    Doing several things to the same file?
-    <a href="/workspace">Open the workspace</a> to use every tool at once.
-  </p>
-
-  <section>
-    <h2>Your files stay with you</h2>
     <p>
+      <a class="chip accent" href="/merge-pdf">Start with merge <span class="led"></span></a>
+      <a class="chip" href="/workspace">Open the workspace</a>
+    </p>
+  </section>
+
+  <section id="tools">
+    <p class="label">Eight tools</p>
+    <h2>Pick the one that matches your job</h2>
+
+    <ul class="tools">
+      {% for tool in tools %}
+        <li>
+          <a class="plate tool" href="/{{ tool.slug }}">
+            <span class="tool-art">{{ art[tool.mode] | safe }}</span>
+            <span class="k">{{ "%02d"|format(loop.index) }}</span>
+            <h3>{{ tool.name }}</h3>
+            <p>{{ tool.blurb }}</p>
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
+
+  <section id="privacy">
+    <p class="label">Privacy</p>
+    <h2>Your files stay with you</h2>
+
+    <p class="lede">
       Most free PDF websites send your document to a company's computer,
       change it there, and send it back. Your file ends up somewhere you
       cannot see, and you have to trust that it is deleted.
     </p>
-    <p>
+    <p class="lede">
       RedPDF works differently. The whole tool loads into this page, and your
       file is opened by the page itself. It is never sent anywhere. That is
-      also why there is no waiting and no daily limit: your own computer is
-      doing the work, not ours.
+      also why there is no waiting and no daily limit: your own computer does
+      the work, not ours.
     </p>
-    <p>
-      This matters most for the documents people usually need these tools
-      for. Passports, contracts, bank statements, medical letters.
+    <p class="lede">
+      This matters most for the documents people usually need these tools for.
+      Passports, contracts, bank statements, medical letters.
     </p>
   </section>
-</main>
+</div>
+
 {% endblock %}

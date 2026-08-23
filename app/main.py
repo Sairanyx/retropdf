@@ -18,6 +18,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from app.security import SecurityHeaders
+from app.tool_art import ART
 from app.tools import TOOLS, BY_SLUG
 
 APP_DIR = Path(__file__).resolve().parent
@@ -45,7 +46,7 @@ def render(request: Request, template: str, **context) -> HTMLResponse:
     return templates.TemplateResponse(
         request=request,
         name=template,
-        context={"tools": TOOLS, **context},
+        context={"tools": TOOLS, "art": ART, **context},
     )
 
 
@@ -61,6 +62,7 @@ def home(request: Request) -> HTMLResponse:
             "stay on your device. No account, no limits, no uploads."
         ),
         canonical=f"{BASE_URL}/",
+        intro=True,
     )
 
 

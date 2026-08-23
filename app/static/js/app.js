@@ -284,12 +284,6 @@ function drawPages() {
 
     const box = document.createElement("div")
     box.dataset.position = String(position)
-    box.style.display = "inline-block"
-    box.style.margin = "4px"
-    box.style.padding = "4px"
-    box.style.textAlign = "center"
-    box.style.border = "1px solid #ccc"
-    box.style.verticalAlign = "top"
 
     // Dragging moves pages, so a drag must not be read as a text selection.
     if (kind === "move") box.style.touchAction = "none"
@@ -298,7 +292,7 @@ function drawPages() {
       if (kind !== "select") {
         canvas.style.opacity = "1"
       } else if (marked.has(entry.key)) {
-        box.style.borderColor = "#c8452a"
+        box.classList.add("marked")
         canvas.style.opacity = mode === "extract" ? "1" : "0.4"
       } else {
         canvas.style.opacity = mode === "extract" ? "0.4" : "1"
@@ -307,21 +301,20 @@ function drawPages() {
       box.appendChild(canvas)
     } else {
       const placeholder = document.createElement("div")
-      placeholder.textContent = "..."
-      placeholder.style.width = "120px"
-      placeholder.style.height = "160px"
+      placeholder.className = "placeholder"
       box.appendChild(placeholder)
     }
 
     const label = document.createElement("div")
+    label.className = "num"
     label.textContent = files.size > 1
       ? `${shortName(files.get(entry.doc))} p${entry.page}`
-      : `page ${entry.page}`
-    label.style.fontSize = "12px"
+      : String(entry.page).padStart(2, "0")
     box.appendChild(label)
 
     if (kind === "move") {
       const controls = document.createElement("div")
+      controls.className = "page-controls"
       controls.append(
         moveButton("left", position, position - 1, position === 0),
         moveButton("right", position, position + 1, position === order.length - 1),
@@ -329,6 +322,7 @@ function drawPages() {
       box.appendChild(controls)
     } else if (kind === "turn") {
       const controls = document.createElement("div")
+      controls.className = "page-controls"
       controls.append(turnButton(entry, -90), turnButton(entry, 90))
       box.appendChild(controls)
     } else if (kind === "select") {
@@ -352,6 +346,7 @@ function shortName(name = "file") {
 
 function moveButton(direction, from, to, disabled) {
   const button = document.createElement("button")
+  button.className = "mini"
   button.textContent = direction === "left" ? "<" : ">"
   button.title = direction === "left" ? "Move earlier" : "Move later"
   button.disabled = disabled
@@ -366,7 +361,9 @@ function moveButton(direction, from, to, disabled) {
 
 function turnButton(entry, amount) {
   const button = document.createElement("button")
-  button.textContent = amount < 0 ? "left" : "right"
+  button.className = "mini"
+  button.title = amount < 0 ? "Turn left" : "Turn right"
+  button.textContent = amount < 0 ? "↶" : "↷"
   button.addEventListener("click", () => {
     entry.rotate = (entry.rotate + amount + 360) % 360
     drawPages()
@@ -494,29 +491,22 @@ function drawImages() {
 
   chosenImages.forEach((image, position) => {
     const box = document.createElement("div")
-    box.style.display = "inline-block"
-    box.style.margin = "4px"
-    box.style.padding = "4px"
-    box.style.border = "1px solid #ccc"
-    box.style.textAlign = "center"
-    box.style.verticalAlign = "top"
+    box.dataset.position = String(position)
 
     // A blob URL points at memory in this tab. Nothing is uploaded.
     const preview = document.createElement("img")
     const url = URL.createObjectURL(new Blob([image.bytes]))
     preview.src = url
-    preview.style.maxWidth = "120px"
-    preview.style.maxHeight = "160px"
-    preview.style.display = "block"
     preview.addEventListener("load", () => URL.revokeObjectURL(url))
     box.appendChild(preview)
 
     const label = document.createElement("div")
+    label.className = "num"
     label.textContent = shortName(image.name)
-    label.style.fontSize = "12px"
     box.appendChild(label)
 
     const controls = document.createElement("div")
+    controls.className = "page-controls"
     controls.append(
       imageMoveButton(position, position - 1, "<", position === 0),
       imageMoveButton(position, position + 1, ">", position === chosenImages.length - 1),
@@ -529,6 +519,7 @@ function drawImages() {
 
 function imageMoveButton(from, to, label, disabled) {
   const button = document.createElement("button")
+  button.className = "mini"
   button.textContent = label
   button.disabled = disabled
   button.addEventListener("click", () => {

@@ -14,22 +14,50 @@
   <meta property="og:url" content="{{ canonical }}">
   <link rel="stylesheet" href="/static/css/app.css">
 </head>
-<body>
-  <header>
-    <a href="/">RedPDF</a>
-    <p>Free PDF tools. Your files stay on your computer.</p>
-  </header>
+<body{% if intro %} data-intro="1"{% endif %}>
+  <!-- Falls from above on first load, then settles into the corner. -->
+  <div class="intro-mark" aria-hidden="true">
+    <svg viewBox="0 0 22 26" fill="none">
+      <path d="M2 1h11l7 7v16a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1Z"
+            stroke="currentColor" stroke-width="1.4"/>
+      <path d="M13 1v7h7" stroke="currentColor" stroke-width="1.4"/>
+      <rect x="5" y="14" width="12" height="5" rx="1" fill="var(--accent)"/>
+    </svg>
+  </div>
+
+  <div class="wrap">
+    <div class="topbar">
+      <a class="plate brand" href="/">
+        <svg width="22" height="26" viewBox="0 0 22 26" fill="none" aria-hidden="true">
+          <path d="M2 1h11l7 7v16a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1Z"
+                stroke="currentColor" stroke-width="1.6"/>
+          <path d="M13 1v7h7" stroke="currentColor" stroke-width="1.6"/>
+          <rect x="5" y="14" width="12" height="5" rx="1" fill="var(--accent)"/>
+        </svg>
+        <span class="brand-word">RedPDF</span>
+      </a>
+
+      <nav class="plate navgroup" aria-label="Main">
+        <a class="chip" href="/#tools">Tools <span class="led"></span></a>
+        <a class="chip" href="/#privacy">Privacy <span class="led"></span></a>
+        <a class="chip solid" href="/workspace">Open workspace</a>
+      </nav>
+    </div>
+  </div>
 
   {% block content %}{% endblock %}
 
-  <footer>
-    <nav aria-label="All tools">
-      {% for tool in tools %}
-        <a href="/{{ tool.slug }}">{{ tool.name }}</a>
-      {% endfor %}
-      <a href="/workspace">Workspace</a>
-    </nav>
-    <p>Your files stay on your computer. They are never sent to us.</p>
-  </footer>
+  <div class="wrap">
+    <footer>
+      <nav aria-label="All tools">
+        {% for tool in tools %}
+          <a href="/{{ tool.slug }}">{{ tool.name }}</a>
+        {% endfor %}
+        <a href="/workspace">Workspace</a>
+      </nav>
+      <p>Your files stay on your computer. They are never sent to us.</p>
+    </footer>
+  </div>
+  <script type="module" src="/static/js/intro.js"></script>
 </body>
 </html>

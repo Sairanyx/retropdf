@@ -1,38 +1,605 @@
-/* Temporary styles, mostly for drag feedback.
-   The real design system replaces this file. */
+/* RedPDF design system.
+ *
+ * The look: a mid grey ground with everything sitting on it as a raised
+ * physical chip, lit from the top left. Monospace throughout, because the
+ * product is about documents and precision, and because a technical typeface
+ * is the trust signal for a privacy tool.
+ *
+ * Fonts are served from this domain. No font host, no CDN, nothing that
+ * would need a hole in the content security policy.
+ */
 
-body.drag-over {
-  outline: 3px dashed #c8452a;
-  outline-offset: -8px;
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("/static/fonts/ibm-plex-mono-latin-400-normal.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
 }
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("/static/fonts/ibm-plex-mono-latin-500-normal.woff2") format("woff2");
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("/static/fonts/ibm-plex-mono-latin-600-normal.woff2") format("woff2");
+  font-weight: 600;
+  font-display: swap;
+}
+
+:root {
+  /* The ground everything sits on. Warm grey, not blue, so it reads as
+     painted metal rather than screen. */
+  --ground: #c9c7c4;
+  --ground-low: #b4b2af;
+  --chip: #cdcbc8;
+  --chip-hover: #d3d1ce;
+  --chip-press: #c0bebb;
+  --inset: #b9b7b4;
+
+  --ink: #201f1d;
+  --ink-2: #4e4c48;
+  --ink-3: #7b7873;
+  --ink-4: #99958f;
+
+  --accent: #c8452a;
+  --accent-hi: #dc5637;
+  --accent-low: #a53620;
+  --on-accent: #fffaf8;
+
+  /* The light comes from the top left, so highlights go up and left and
+     shadows go down and right. Every raised surface uses the same pair. */
+  --lit: rgba(255, 255, 255, 0.85);
+  --shade: rgba(88, 84, 78, 0.32);
+  --shade-soft: rgba(88, 84, 78, 0.18);
+
+  --raise: -1px -1px 3px var(--lit), 2px 2px 5px var(--shade-soft);
+  --raise-lg: -2px -2px 7px var(--lit), 4px 4px 11px var(--shade);
+  --press: inset 2px 2px 4px var(--shade), inset -2px -2px 4px var(--lit);
+
+  --r: 12px;
+  --r-sm: 8px;
+  --r-xs: 4px;
+
+  /* Rechroma is snappy at .15s, tonik is calm at .4s. This sits between. */
+  --t: 0.18s ease;
+  --t-slow: 0.3s ease;
+
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas,
+    monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #262523;
+    --ground-low: #1b1a19;
+    --chip: #2c2a28;
+    --chip-hover: #333130;
+    --chip-press: #232120;
+    --inset: #1e1d1b;
+    --ink: #ebe8e3;
+    --ink-2: #b0aca6;
+    --ink-3: #837f79;
+    --ink-4: #66625d;
+    --accent: #e8583a;
+    --accent-hi: #f26c50;
+    --accent-low: #c8452a;
+    --on-accent: #1a0f0c;
+    --lit: rgba(255, 255, 255, 0.05);
+    --shade: rgba(0, 0, 0, 0.5);
+    --shade-soft: rgba(0, 0, 0, 0.32);
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink-2);
+  font-family: var(--mono);
+  font-size: 14px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* The ground brightens from near black up to its resting grey.
+ *
+ * Timed from a frame by frame reading of the reference: the brightness rises
+ * from 30 to 193 over 2.7 seconds, slow at first, fastest through the middle,
+ * then easing to a stop. The mark stays full black throughout, so contrast
+ * builds rather than the whole page fading in together.
+ */
+@keyframes ground-up {
+  0% {
+    background-color: #1c1b1a;
+  }
+  100% {
+    background-color: var(--ground);
+  }
+}
+
+body.intro-running,
+body.intro-drop,
+body.intro-dock,
+body.intro-reveal {
+  animation: ground-up 2.7s cubic-bezier(0.62, 0.02, 0.34, 1) forwards;
+}
+
+.wrap {
+  max-width: 1240px;
+  margin-inline: auto;
+  padding-inline: clamp(1rem, 3vw, 2rem);
+}
+
+/* ---------- plates and chips ---------- */
+
+.plate {
+  background: var(--chip);
+  border-radius: var(--r);
+  box-shadow: var(--raise-lg);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.6875rem 1rem;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: var(--chip);
+  box-shadow: var(--raise);
+  color: var(--ink-2);
+  font: inherit;
+  font-weight: 500;
+  font-size: 0.75rem;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background var(--t), box-shadow var(--t), color var(--t),
+    transform var(--t);
+}
+
+.chip:hover {
+  background: var(--chip-hover);
+  color: var(--ink);
+}
+
+.chip:active {
+  box-shadow: var(--press);
+  background: var(--chip-press);
+  transform: translateY(1px);
+}
+
+.chip:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.chip[disabled] {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: var(--raise);
+}
+
+.chip.solid {
+  background: var(--ink);
+  color: var(--ground);
+}
+.chip.solid:hover {
+  background: #000;
+  color: #fff;
+}
+
+.chip.accent {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+.chip.accent:hover {
+  background: var(--accent-hi);
+  color: var(--on-accent);
+}
+
+/* The little indicator light. Dead by default, lit when active. */
+.led {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex: none;
+  background: var(--ground-low);
+  box-shadow: inset 1px 1px 2px var(--shade), inset -1px -1px 2px var(--lit);
+  transition: background var(--t), box-shadow var(--t);
+}
+
+.chip.on .led,
+.chip[aria-current="true"] .led {
+  background: var(--accent);
+  box-shadow: 0 0 6px var(--accent);
+}
+
+/* ---------- header ---------- */
+
+.topbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-block: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  text-decoration: none;
+  color: var(--ink);
+}
+
+.brand-word {
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+}
+
+.brand-tag {
+  font-size: 0.6875rem;
+  color: var(--ink-3);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.navgroup {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.4375rem;
+  flex-wrap: wrap;
+}
+
+/* ---------- headings ---------- */
+
+h1 {
+  font-size: clamp(1.75rem, 4vw, 3rem);
+  line-height: 1.1;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin: 0 0 1rem;
+  text-wrap: balance;
+}
+
+h2 {
+  font-size: clamp(1.25rem, 2.2vw, 1.625rem);
+  line-height: 1.2;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  margin: 0 0 0.75rem;
+}
+
+h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0;
+}
+
+p {
+  margin: 0 0 1rem;
+  max-width: 68ch;
+}
+
+a {
+  color: var(--accent);
+}
+
+.label {
+  font-size: 0.6875rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin: 0 0 0.875rem;
+}
+
+.lede {
+  font-size: clamp(0.9375rem, 1vw, 1.0625rem);
+  color: var(--ink-2);
+  max-width: 58ch;
+}
+
+section {
+  padding-block: clamp(2.5rem, 6vw, 4.5rem);
+}
+
+.hero {
+  padding-block: clamp(3rem, 8vw, 6rem) clamp(2rem, 5vw, 3.5rem);
+}
+
+/* A block cursor while the headline types itself in. */
+h1.typing::after {
+  content: "";
+  display: inline-block;
+  width: 0.55em;
+  height: 0.85em;
+  margin-left: 0.08em;
+  background: var(--accent);
+  vertical-align: -0.08em;
+  animation: blink 0.7s steps(1) infinite;
+}
+
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+/* ---------- tool cards ---------- */
+
+.tools {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  margin-top: 2rem;
+  padding: 0;
+  list-style: none;
+}
+
+.tool {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  padding: 1.375rem;
+  text-decoration: none;
+  color: inherit;
+  transition: transform var(--t), box-shadow var(--t);
+}
+
+.tool:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--raise-lg), 0 10px 24px -12px var(--shade);
+}
+
+.tool:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.tool .k {
+  font-size: 0.625rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+}
+
+.tool h3 {
+  color: var(--ink);
+}
+
+.tool p {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--ink-3);
+}
+
+.tool-art {
+  color: var(--accent);
+  opacity: 0.9;
+}
+
+/* ---------- workspace ---------- */
+
+.workspace {
+  padding: clamp(1rem, 2vw, 1.5rem);
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+/* The file input is replaced by a chip, since the browser default cannot be
+   styled and looks out of place. */
+input[type="file"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.readout {
+  font-size: 0.8125rem;
+  color: var(--ink-2);
+  margin: 0 0 0.375rem;
+  min-height: 1.65em;
+}
+
+.note {
+  font-size: 0.6875rem;
+  color: var(--ink-4);
+  margin: 0 0 1rem;
+}
+
+fieldset {
+  border: 0;
+  border-radius: var(--r-sm);
+  background: var(--inset);
+  box-shadow: var(--press);
+  padding: 0.875rem 1rem;
+  margin: 0 0 1rem;
+  display: flex;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+legend {
+  font-size: 0.625rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  padding: 0;
+}
+
+fieldset label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4375rem;
+  font-size: 0.8125rem;
+}
+
+input[type="number"],
+select {
+  font: inherit;
+  font-size: 0.8125rem;
+  padding: 0.3125rem 0.5rem;
+  border: 0;
+  border-radius: var(--r-xs);
+  background: var(--chip);
+  box-shadow: var(--raise);
+  color: var(--ink);
+  width: 5em;
+}
+
+select {
+  width: auto;
+}
+
+/* The page grid sits recessed, like a screen set into the panel. */
+.screen {
+  background: var(--inset);
+  border-radius: var(--r-sm);
+  box-shadow: var(--press);
+  padding: clamp(0.75rem, 1.5vw, 1.125rem);
+  min-height: 120px;
+}
+
+#pages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+#pages:empty::after {
+  content: "Nothing loaded yet.";
+  color: var(--ink-4);
+  font-size: 0.8125rem;
+}
+
+/* ---------- page thumbnails ---------- */
 
 [data-position] {
+  background: var(--chip);
+  border-radius: var(--r-xs);
+  box-shadow: var(--raise);
+  padding: 5px;
+  text-align: center;
   user-select: none;
-  transition: transform 0.18s ease, opacity 0.18s ease;
+  transition: transform var(--t), opacity var(--t), box-shadow var(--t);
 }
 
-/* The page being dragged stays in place as a gap, so the grid does not
-   reflow the moment a drag starts. */
+[data-position] canvas,
+[data-position] img {
+  display: block;
+  border-radius: 2px;
+  background: #fff;
+  max-width: 120px;
+  height: auto;
+}
+
+[data-position] .num {
+  font-size: 0.625rem;
+  color: var(--ink-3);
+  padding-top: 3px;
+  font-variant-numeric: tabular-nums;
+}
+
+[data-position].marked {
+  box-shadow: var(--raise), inset 0 0 0 2px var(--accent);
+}
+
+[data-position].marked .num {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.page-controls {
+  display: flex;
+  gap: 3px;
+  justify-content: center;
+  padding-top: 3px;
+}
+
+.mini {
+  font: inherit;
+  font-size: 0.6875rem;
+  line-height: 1;
+  padding: 4px 7px;
+  border: 0;
+  border-radius: var(--r-xs);
+  background: var(--chip);
+  box-shadow: var(--raise);
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: background var(--t), color var(--t), box-shadow var(--t);
+}
+
+.mini:hover:not([disabled]) {
+  background: var(--chip-hover);
+  color: var(--accent);
+}
+
+.mini:active:not([disabled]) {
+  box-shadow: var(--press);
+}
+
+.mini[disabled] {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.mini:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* ---------- dragging ---------- */
+
+body.drag-over::after {
+  content: "";
+  position: fixed;
+  inset: 10px;
+  border: 2px dashed var(--accent);
+  border-radius: var(--r);
+  pointer-events: none;
+  z-index: 900;
+}
+
 [data-position].drag-source {
   opacity: 0.25;
 }
 
-/* The copy that follows the pointer. Smaller, lifted off the page, and
-   ignoring pointer events so it cannot hide what is underneath it. */
 .drag-ghost {
   position: fixed;
   z-index: 1000;
   margin: 0;
   pointer-events: none;
-  transform: scale(0.75) rotate(-2deg);
+  transform: scale(0.78) rotate(-2deg);
   transform-origin: center;
-  opacity: 0.95;
-  box-shadow: 0 12px 28px rgb(0 0 0 / 0.28);
-  background: #fff;
-  transition: transform 0.16s ease, box-shadow 0.16s ease;
+  box-shadow: var(--raise-lg), 0 14px 30px -8px var(--shade);
+  transition: transform 0.16s ease;
 }
 
-/* Settling into its new home when released. */
 .drag-ghost.drag-landing {
   transition: left 0.18s ease, top 0.18s ease, transform 0.18s ease,
     opacity 0.18s ease;
@@ -40,28 +607,268 @@ body.drag-over {
   opacity: 0;
 }
 
-/* Pages slide aside to open a gap where the dragged page would land. */
 [data-position].shift-forward {
-  transform: translateX(14%);
+  transform: translateX(12%);
 }
-
 [data-position].shift-back {
-  transform: translateX(-14%);
+  transform: translateX(-12%);
 }
 
 body.dragging-page {
   cursor: grabbing;
 }
 
-/* Dragging is decoration. Anyone who has asked for less movement gets the
-   arrow buttons doing exactly the same job without it. */
+/* ---------- footer ---------- */
+
+footer {
+  padding-block: 2rem 3rem;
+  color: var(--ink-3);
+  font-size: 0.75rem;
+}
+
+footer nav {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+footer a {
+  color: var(--ink-2);
+  text-decoration: none;
+}
+
+footer a:hover {
+  color: var(--accent);
+}
+
 @media (prefers-reduced-motion: reduce) {
-  [data-position],
-  .drag-ghost,
-  .drag-ghost.drag-landing {
-    transition: none;
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
   }
+  .tool:hover,
   .drag-ghost {
     transform: none;
   }
+}
+
+/* ============================================================
+   Opening sequence
+   ============================================================ */
+
+/* Everything except the falling mark is held back until the intro finishes.
+   Nothing is hidden from search engines: this only runs when scripting is on,
+   and the markup is complete either way. */
+body.intro-running .topbar,
+body.intro-running main,
+body.intro-running footer,
+body.intro-running .wrap > section {
+  opacity: 0;
+}
+
+body.intro-running .intro-mark {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  z-index: 500;
+  pointer-events: none;
+}
+
+.intro-mark {
+  display: none;
+}
+
+body.intro-running .intro-mark {
+  display: grid;
+}
+
+.intro-mark svg {
+  width: 88px;
+  height: auto;
+  color: var(--ink);
+  /* Starts above the fold, already falling. */
+  transform: translateY(-60vh) scale(1.6);
+  opacity: 0;
+}
+
+/* The drop. Slow at first, then it lands and settles, which is what makes it
+   read as weight rather than a slide. */
+body.intro-drop .intro-mark svg {
+  transform: translateY(0) scale(1.6);
+  opacity: 1;
+  transition: transform 0.95s cubic-bezier(0.16, 0.9, 0.3, 1),
+    opacity 0.4s ease-out;
+}
+
+/* Then it shrinks away towards the corner where the real brand mark sits. */
+body.intro-dock .intro-mark svg {
+  transform: translate(-38vw, -34vh) scale(0.34);
+  opacity: 0;
+  transition: transform 0.5s cubic-bezier(0.5, 0, 0.2, 1), opacity 0.4s ease-in;
+}
+
+/* The page assembles behind it. */
+body.intro-reveal .topbar,
+body.intro-reveal main,
+body.intro-reveal footer,
+body.intro-reveal .wrap > section {
+  opacity: 1;
+  transition: opacity 0.45s ease-out;
+}
+
+body.intro-reveal .topbar {
+  animation: settle 0.5s cubic-bezier(0.16, 0.9, 0.3, 1);
+}
+
+@keyframes settle {
+  from {
+    transform: translateY(-14px);
+  }
+}
+
+/* Tool cards arrive one after another rather than all at once. */
+body.intro-done .tools > li {
+  animation: arrive 0.4s cubic-bezier(0.16, 0.9, 0.3, 1) backwards;
+}
+
+.tools > li:nth-child(1) { animation-delay: 0.02s; }
+.tools > li:nth-child(2) { animation-delay: 0.06s; }
+.tools > li:nth-child(3) { animation-delay: 0.10s; }
+.tools > li:nth-child(4) { animation-delay: 0.14s; }
+.tools > li:nth-child(5) { animation-delay: 0.18s; }
+.tools > li:nth-child(6) { animation-delay: 0.22s; }
+.tools > li:nth-child(7) { animation-delay: 0.26s; }
+.tools > li:nth-child(8) { animation-delay: 0.30s; }
+
+@keyframes arrive {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+/* ============================================================
+   Form controls
+   ============================================================ */
+
+/* The browser default radio and checkbox cannot be styled and look wrong
+   next to everything else, so they are replaced by physical looking
+   switches. The real input stays for keyboard and screen reader users. */
+
+.switchbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  padding: 0.4375rem 0.6875rem;
+  border-radius: var(--r-sm);
+  background: var(--chip);
+  box-shadow: var(--raise);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  transition: background var(--t), color var(--t), box-shadow var(--t);
+}
+
+.switchbox:hover {
+  color: var(--ink);
+  background: var(--chip-hover);
+}
+
+.switchbox input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+
+.switchbox .led {
+  width: 10px;
+  height: 10px;
+}
+
+.switchbox:has(input:checked) {
+  background: var(--ink);
+  color: var(--ground);
+  box-shadow: var(--press);
+}
+
+.switchbox:has(input:checked) .led {
+  background: var(--accent);
+  box-shadow: 0 0 6px var(--accent);
+}
+
+.switchbox:has(input:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Numbers and selects, styled to match. */
+input[type="number"],
+select {
+  appearance: none;
+  font: inherit;
+  font-size: 0.8125rem;
+  padding: 0.4375rem 0.625rem;
+  border: 0;
+  border-radius: var(--r-xs);
+  background: var(--inset);
+  box-shadow: var(--press);
+  color: var(--ink);
+  width: 4.5em;
+}
+
+select {
+  width: auto;
+  padding-right: 1.75rem;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(100% - 14px) 55%, calc(100% - 9px) 55%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+}
+
+input[type="number"]:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .intro-mark {
+    display: none !important;
+  }
+  body.intro-running .topbar,
+  body.intro-running main,
+  body.intro-running footer,
+  body.intro-running .wrap > section {
+    opacity: 1;
+  }
+}
+
+/* Visible to screen readers, not on screen. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.placeholder {
+  width: 110px;
+  height: 146px;
+  border-radius: 2px;
+  background: var(--inset);
+  box-shadow: var(--press);
+}
+
+.tool-head {
+  padding-block: clamp(2rem, 5vw, 3.5rem) clamp(1.25rem, 3vw, 2rem);
 }
