@@ -1,5 +1,8 @@
 import * as pdfjs from "/static/js/vendor/pdf.min.mjs"
 import { call } from "/static/js/pdf-worker.js"
+// splitRanges is plain arithmetic with no PDF work, so it runs here rather
+// than costing a round trip to the worker.
+import { splitRanges } from "/static/js/pdf-operations.js"
 
 // pdf.js parses on its own background thread and needs to know where that
 // code lives. Without this it fails with an unhelpful error.
@@ -9,6 +12,7 @@ const picker = document.querySelector("#picker")
 const result = document.querySelector("#result")
 const pagesEl = document.querySelector("#pages")
 const downloadBtn = document.querySelector("#download")
+const splitOptions = document.querySelector("#split-options")
 
 // Every page currently in the workspace, in output order. Each entry is
 // { doc, page, rotate, key }, where `doc` is a worker document id and `key`
@@ -32,40 +36,53 @@ function currentMode() {
 // What each mode sends to the worker, and what to call the result.
 const modes = {
   merge: {
+    controls: "move",
     hint: "Add more files, then download them as one PDF.",
     items: () => order.slice(),
     suffix: "-merged",
     empty: "Add at least one file.",
   },
   remove: {
+    controls: "select",
     hint: "Click the pages you want to remove.",
     items: () => order.filter((entry) => !marked.has(entry.key)),
     suffix: "-edited",
     empty: "That would remove every page.",
   },
   extract: {
+    controls: "select",
     hint: "Click the pages you want to keep.",
     items: () => order.filter((entry) => marked.has(entry.key)),
     suffix: "-extract",
     empty: "Choose at least one page to keep.",
   },
   reorder: {
+    controls: "move",
     hint: "Use the arrows to move pages, then download.",
     items: () => order.slice(),
     suffix: "-reordered",
     empty: "There are no pages to save.",
   },
   rotate: {
+    controls: "turn",
     hint: "Turn pages with the buttons, then download.",
     items: () => order.slice(),
     suffix: "-rotated",
     empty: "There are no pages to save.",
+  },
+  split: {
+    controls: "none",
+    hint: "Choose where to cut, then download a zip of the parts.",
+    items: () => order.slice(),
+    suffix: "-split",
+    empty: "There are no pages to split.",
   },
 }
 
 for (const radio of document.querySelectorAll('input[name="mode"]')) {
   radio.addEventListener("change", () => {
     marked.clear()
+    splitOptions.hidden = currentMode() !== "split"
     drawPages()
     result.textContent = modes[currentMode()].hint
   })
@@ -150,6 +167,7 @@ async function renderThumbnails(docId, bytes) {
 // Rebuild the grid from `order`, wrapping each thumbnail in its controls.
 function drawPages() {
   const mode = currentMode()
+  const kind = modes[mode].controls
   pagesEl.replaceChildren()
 
   order.forEach((entry, position) => {
@@ -164,7 +182,9 @@ function drawPages() {
     box.style.verticalAlign = "top"
 
     if (canvas) {
-      if (marked.has(entry.key)) {
+      if (kind !== "select") {
+        canvas.style.opacity = "1"
+      } else if (marked.has(entry.key)) {
         box.style.borderColor = "#c8452a"
         canvas.style.opacity = mode === "extract" ? "1" : "0.4"
       } else {
@@ -187,18 +207,18 @@ function drawPages() {
     label.style.fontSize = "12px"
     box.appendChild(label)
 
-    if (mode === "reorder" || mode === "merge") {
+    if (kind === "move") {
       const controls = document.createElement("div")
       controls.append(
         moveButton("left", position, position - 1, position === 0),
         moveButton("right", position, position + 1, position === order.length - 1),
       )
       box.appendChild(controls)
-    } else if (mode === "rotate") {
+    } else if (kind === "turn") {
       const controls = document.createElement("div")
       controls.append(turnButton(entry, -90), turnButton(entry, 90))
       box.appendChild(controls)
-    } else {
+    } else if (kind === "select") {
       box.style.cursor = "pointer"
       box.addEventListener("click", () => {
         if (marked.has(entry.key)) marked.delete(entry.key)
@@ -249,13 +269,63 @@ function reportSelection() {
   const mode = currentMode()
   if (mode === "extract") {
     result.textContent = `${marked.size} of ${order.length} pages selected to keep`
-  } else {
+  } else if (mode === "remove") {
     result.textContent = `${marked.size} of ${order.length} pages marked for removal`
+  } else {
+    result.textContent = modes[mode].hint
   }
+}
+
+// Hand bytes to the browser as a download. Nothing is uploaded: the URL
+// points at memory in this tab and is released straight afterwards.
+function save(bytes, filename, type) {
+  const blob = new Blob([bytes], { type })
+  const url = URL.createObjectURL(blob)
+
+  const link = document.createElement("a")
+  link.href = url
+  link.download = filename
+  link.click()
+
+  URL.revokeObjectURL(url)
+}
+
+async function downloadSplit() {
+  const splitMode = document.querySelector('input[name="split"]:checked').value
+  const after = Number(document.querySelector("#split-after").value)
+  const size = Number(document.querySelector("#split-size").value)
+
+  const ranges = splitRanges({ pageCount: order.length, mode: splitMode, after, size })
+  const stem = (files.values().next().value || "document.pdf").replace(/\.pdf$/i, "")
+
+  // Range positions refer to the workspace order, so any reordering or
+  // rotation the user did is carried into the parts.
+  const parts = ranges.map((positions, index) => ({
+    name: `${stem}-${index + 1}.pdf`,
+    items: positions.map((position) => {
+      const { doc, page, rotate } = order[position - 1]
+      return { doc, page, rotate }
+    }),
+  }))
+
+  result.textContent = `Building ${parts.length} files...`
+  const zip = await call("splitToZip", { parts, zipName: `${stem}-split.zip` })
+
+  save(zip.bytes, zip.name, "application/zip")
+  result.textContent = `Saved ${zip.fileCount} files as ${zip.name}`
 }
 
 downloadBtn.addEventListener("click", async () => {
   if (order.length === 0) return
+
+  if (currentMode() === "split") {
+    try {
+      await downloadSplit()
+    } catch (error) {
+      result.textContent = error.message
+    }
+    return
+  }
 
   const mode = modes[currentMode()]
   const items = mode.items()
@@ -271,16 +341,9 @@ downloadBtn.addEventListener("click", async () => {
       items: items.map(({ doc, page, rotate }) => ({ doc, page, rotate })),
     })
 
-    const blob = new Blob([bytes], { type: "application/pdf" })
-    const url = URL.createObjectURL(blob)
-
     const first = files.values().next().value || "document.pdf"
-    const link = document.createElement("a")
-    link.href = url
-    link.download = first.replace(/\.pdf$/i, "") + mode.suffix + ".pdf"
-    link.click()
-
-    URL.revokeObjectURL(url)
+    const name = first.replace(/\.pdf$/i, "") + mode.suffix + ".pdf"
+    save(bytes, name, "application/pdf")
     result.textContent = `Saved ${items.length} pages.`
   } catch (error) {
     result.textContent = error.message

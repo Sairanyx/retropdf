@@ -14,6 +14,15 @@
     <label><input type="radio" name="mode" value="extract"> Extract pages</label>
     <label><input type="radio" name="mode" value="reorder"> Reorder pages</label>
     <label><input type="radio" name="mode" value="rotate"> Rotate pages</label>
+    <label><input type="radio" name="mode" value="split"> Split file</label>
+  </p>
+
+  <p id="split-options" hidden>
+    <label><input type="radio" name="split" value="at" checked> Cut after page
+      <input type="number" id="split-after" value="1" min="1" style="width:5em"></label>
+    <label><input type="radio" name="split" value="every"> Every
+      <input type="number" id="split-size" value="1" min="1" style="width:5em"> pages</label>
+    <label><input type="radio" name="split" value="single"> One file per page</label>
   </p>
 
   <input type="file" id="picker" accept="application/pdf" multiple>

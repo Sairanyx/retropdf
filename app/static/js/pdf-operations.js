@@ -3,6 +3,7 @@
 // and the worker becomes a thin message handling wrapper.
 
 import { PDFDocument, degrees } from "/static/js/vendor/pdf-lib.esm.min.js"
+import { zipSync } from "/static/js/vendor/fflate.esm.js"
 
 // Documents that have been loaded, kept by id so callers can refer to them
 // later without sending the bytes again.
@@ -78,6 +79,91 @@ export async function build({ items }) {
 
   const bytes = await output.save()
   return { bytes }
+}
+
+/**
+ * Cut one document into several.
+ *
+ * `parts` is a list of { name, items }, each describing one output file in
+ * the same shape build() takes. Returns a single ZIP, because browsers block
+ * a page that tries to start several downloads at once.
+ */
+export async function splitToZip({ parts, zipName = "split.zip" }) {
+  if (!Array.isArray(parts) || parts.length === 0) {
+    throw new Error("Nothing to split.")
+  }
+
+  const entries = {}
+  const used = new Set()
+
+  for (const part of parts) {
+    const { bytes } = await build({ items: part.items })
+
+    // Two parts must never share a name or one would silently overwrite the
+    // other inside the archive.
+    let name = part.name
+    let attempt = 2
+    while (used.has(name)) {
+      name = part.name.replace(/\.pdf$/i, "") + `-${attempt}.pdf`
+      attempt++
+    }
+    used.add(name)
+
+    entries[name] = bytes
+  }
+
+  // level 0 stores without compressing. PDF content is already compressed, so
+  // squeezing it again costs time and saves almost nothing.
+  const zipped = zipSync(entries, { level: 0 })
+  return { bytes: zipped, name: zipName, fileCount: parts.length }
+}
+
+/**
+ * Work out the page ranges for a split, without doing the split.
+ *
+ * `mode` is "at" to cut once after `after`, "every" to cut into chunks of
+ * `size` pages, or "single" for one page per file. Returns a list of 1 based
+ * page number arrays.
+ */
+export function splitRanges({ pageCount, mode, after = 1, size = 1 }) {
+  if (!Number.isInteger(pageCount) || pageCount < 1) {
+    throw new Error("That document has no pages.")
+  }
+
+  if (mode === "at") {
+    if (!Number.isInteger(after) || after < 1 || after >= pageCount) {
+      throw new Error(
+        `Choose a page between 1 and ${pageCount - 1} to cut after.`,
+      )
+    }
+    return [
+      range(1, after),
+      range(after + 1, pageCount),
+    ]
+  }
+
+  if (mode === "every") {
+    if (!Number.isInteger(size) || size < 1) {
+      throw new Error("Each part must have at least one page.")
+    }
+    const parts = []
+    for (let start = 1; start <= pageCount; start += size) {
+      parts.push(range(start, Math.min(start + size - 1, pageCount)))
+    }
+    return parts
+  }
+
+  if (mode === "single") {
+    return range(1, pageCount).map((n) => [n])
+  }
+
+  throw new Error(`Unknown split mode: ${mode}`)
+}
+
+function range(first, last) {
+  const out = []
+  for (let n = first; n <= last; n++) out.push(n)
+  return out
 }
 
 // Free a document once the caller has moved on.

@@ -7,7 +7,15 @@ import test from "node:test"
 import assert from "node:assert/strict"
 
 import { PDFDocument, rgb } from "/static/js/vendor/pdf-lib.esm.min.js"
-import { load, build, close, reset } from "/static/js/pdf-operations.js"
+import { unzipSync } from "/static/js/vendor/fflate.esm.js"
+import {
+  load,
+  build,
+  close,
+  reset,
+  splitRanges,
+  splitToZip,
+} from "/static/js/pdf-operations.js"
 
 /**
  * Make a PDF with the given number of pages. Each page is drawn a different
@@ -192,4 +200,73 @@ test("a merge then split round trip preserves the page count", async () => {
 
   const back = await Promise.all([widths(firstHalf.bytes), widths(secondHalf.bytes)])
   assert.equal(back[0].length + back[1].length, 7)
+})
+
+// --- splitting ---------------------------------------------------------
+
+test("split at a point gives two ranges", () => {
+  const parts = splitRanges({ pageCount: 10, mode: "at", after: 4 })
+  assert.deepEqual(parts, [[1, 2, 3, 4], [5, 6, 7, 8, 9, 10]])
+})
+
+test("split at a point refuses a cut past the last page", () => {
+  assert.throws(
+    () => splitRanges({ pageCount: 5, mode: "at", after: 5 }),
+    /between 1 and 4/,
+  )
+})
+
+test("split every N pages divides evenly", () => {
+  const parts = splitRanges({ pageCount: 6, mode: "every", size: 2 })
+  assert.deepEqual(parts, [[1, 2], [3, 4], [5, 6]])
+})
+
+test("split every N pages puts the remainder in a shorter last part", () => {
+  const parts = splitRanges({ pageCount: 7, mode: "every", size: 3 })
+  assert.deepEqual(parts, [[1, 2, 3], [4, 5, 6], [7]])
+})
+
+test("split into single pages gives one range per page", () => {
+  const parts = splitRanges({ pageCount: 3, mode: "single" })
+  assert.deepEqual(parts, [[1], [2], [3]])
+})
+
+test("splitToZip returns an archive holding every part", async () => {
+  const { id, pageCount } = await load({ bytes: await makePdf(6) })
+  const ranges = splitRanges({ pageCount, mode: "every", size: 2 })
+
+  const parts = ranges.map((pages, i) => ({
+    name: `part-${i + 1}.pdf`,
+    items: pages.map((page) => ({ doc: id, page })),
+  }))
+
+  const zip = await splitToZip({ parts })
+  assert.equal(zip.fileCount, 3)
+
+  const unzipped = unzipSync(zip.bytes)
+  assert.deepEqual(Object.keys(unzipped).sort(), [
+    "part-1.pdf",
+    "part-2.pdf",
+    "part-3.pdf",
+  ])
+
+  // Each entry must be a real PDF with the pages we asked for.
+  assert.deepEqual(await widths(unzipped["part-1.pdf"]), [201, 202])
+  assert.deepEqual(await widths(unzipped["part-3.pdf"]), [205, 206])
+})
+
+test("splitToZip does not let two parts share a name", async () => {
+  const { id } = await load({ bytes: await makePdf(2) })
+  const parts = [
+    { name: "same.pdf", items: [{ doc: id, page: 1 }] },
+    { name: "same.pdf", items: [{ doc: id, page: 2 }] },
+  ]
+
+  const zip = await splitToZip({ parts })
+  const names = Object.keys(unzipSync(zip.bytes)).sort()
+  assert.deepEqual(names, ["same-2.pdf", "same.pdf"])
+})
+
+test("splitToZip refuses an empty list of parts", async () => {
+  await assert.rejects(() => splitToZip({ parts: [] }), /Nothing to split/)
 })
