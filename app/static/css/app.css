@@ -28,6 +28,34 @@
   font-display: swap;
 }
 
+/* Pixelify Sans carries the retro character. It is used only at display
+   sizes, where the stepped letterforms read as deliberate. Small text stays
+   in the mono, which is far easier on the eye. */
+@font-face {
+  font-family: "Pixelify Sans";
+  src: url("/static/fonts/pixelify-sans-latin-400-normal.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Pixelify Sans";
+  src: url("/static/fonts/pixelify-sans-latin-500-normal.woff2") format("woff2");
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Pixelify Sans";
+  src: url("/static/fonts/pixelify-sans-latin-600-normal.woff2") format("woff2");
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Pixelify Sans";
+  src: url("/static/fonts/pixelify-sans-latin-700-normal.woff2") format("woff2");
+  font-weight: 700;
+  font-display: swap;
+}
+
 :root {
   /* The ground everything sits on. Warm grey, not blue, so it reads as
      painted metal rather than screen. */
@@ -68,6 +96,7 @@
 
   --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas,
     monospace;
+  --display: "Pixelify Sans", "IBM Plex Mono", ui-monospace, monospace;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -244,9 +273,10 @@ body.intro-reveal {
 }
 
 .brand-word {
-  font-size: 1.5rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  font-family: var(--display);
+  font-size: 1.625rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
   color: var(--ink);
 }
 
@@ -268,26 +298,29 @@ body.intro-reveal {
 /* ---------- headings ---------- */
 
 h1 {
-  font-size: clamp(1.75rem, 4vw, 3rem);
-  line-height: 1.1;
+  font-family: var(--display);
+  font-size: clamp(2rem, 4.6vw, 3.5rem);
+  line-height: 1.05;
   font-weight: 600;
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
   color: var(--ink);
   margin: 0 0 1rem;
   text-wrap: balance;
 }
 
 h2 {
-  font-size: clamp(1.25rem, 2.2vw, 1.625rem);
-  line-height: 1.2;
+  font-family: var(--display);
+  font-size: clamp(1.375rem, 2.4vw, 1.875rem);
+  line-height: 1.15;
   font-weight: 600;
-  letter-spacing: -0.01em;
+  letter-spacing: 0;
   color: var(--ink);
   margin: 0 0 0.75rem;
 }
 
 h3 {
-  font-size: 1rem;
+  font-family: var(--display);
+  font-size: 1.125rem;
   font-weight: 600;
   color: var(--ink);
   margin: 0;
