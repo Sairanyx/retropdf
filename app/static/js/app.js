@@ -17,6 +17,10 @@ const marked = new Set()
 // it alone. Always holds every page of the document exactly once.
 let order = []
 
+// Extra degrees to turn each page, keyed by page number. Only pages the user
+// actually rotated appear here.
+let rotations = {}
+
 // The document the worker is holding for us.
 let docId = null
 let pageCount = 0
@@ -46,6 +50,12 @@ const modes = {
     suffix: "-reordered",
     empty: "There are no pages to save.",
   },
+  rotate: {
+    hint: "Turn pages with the buttons, then download.",
+    pages: () => order.slice(),
+    suffix: "-rotated",
+    empty: "There are no pages to save.",
+  },
 }
 
 for (const radio of document.querySelectorAll('input[name="mode"]')) {
@@ -63,6 +73,7 @@ picker.addEventListener("change", async () => {
   result.textContent = "Reading..."
   downloadBtn.disabled = true
   marked.clear()
+  rotations = {}
   pagesEl.replaceChildren()
 
   const bytes = await file.arrayBuffer()
@@ -149,12 +160,19 @@ function drawPages() {
     label.style.fontSize = "12px"
     box.appendChild(label)
 
+    // Show the rotation the user has chosen, without redrawing the page.
+    canvas.style.transform = rotations[n] ? `rotate(${rotations[n]}deg)` : ""
+
     if (mode === "reorder") {
       const controls = document.createElement("div")
       controls.append(
         moveButton("left", position, position - 1, position === 0),
         moveButton("right", position, position + 1, position === order.length - 1),
       )
+      box.appendChild(controls)
+    } else if (mode === "rotate") {
+      const controls = document.createElement("div")
+      controls.append(turnButton(n, -90), turnButton(n, 90))
       box.appendChild(controls)
     } else {
       canvas.style.cursor = "pointer"
@@ -185,6 +203,22 @@ function moveButton(direction, from, to, disabled) {
   return button
 }
 
+function turnButton(pageNumber, amount) {
+  const button = document.createElement("button")
+  button.textContent = amount < 0 ? "left" : "right"
+  button.addEventListener("click", () => {
+    const next = ((rotations[pageNumber] || 0) + amount + 360) % 360
+    if (next === 0) delete rotations[pageNumber]
+    else rotations[pageNumber] = next
+    drawPages()
+    const turned = Object.keys(rotations).length
+    result.textContent = turned
+      ? `${turned} of ${pageCount} pages rotated`
+      : "No pages rotated"
+  })
+  return button
+}
+
 function reportSelection() {
   const mode = currentMode()
   if (mode === "extract") {
@@ -207,7 +241,7 @@ downloadBtn.addEventListener("click", async () => {
 
   try {
     result.textContent = "Building..."
-    const { bytes } = await call("build", { id: docId, pages })
+    const { bytes } = await call("build", { id: docId, pages, rotations })
 
     const blob = new Blob([bytes], { type: "application/pdf" })
     const url = URL.createObjectURL(blob)

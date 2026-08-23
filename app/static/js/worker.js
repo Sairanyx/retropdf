@@ -5,7 +5,7 @@
 // Keeping this off the main thread is what stops a large PDF from freezing
 // the tab while it is being processed.
 
-import { PDFDocument } from "/static/js/vendor/pdf-lib.esm.min.js"
+import { PDFDocument, degrees } from "/static/js/vendor/pdf-lib.esm.min.js"
 
 // Documents the main thread has loaded, kept by id so it can refer to them
 // later without sending the bytes again.
@@ -23,7 +23,11 @@ const operations = {
   },
 
   // Build a new document from the given 1 based page numbers, in that order.
-  async build({ id, pages }) {
+  //
+  // `rotations` optionally maps a page number to extra degrees to turn it,
+  // added on top of whatever rotation the page already carries. Doing this
+  // inside build means one call can remove, reorder and rotate at once.
+  async build({ id, pages, rotations = {} }) {
     const source = documents.get(id)
     if (!source) throw new Error("That document is no longer loaded.")
 
@@ -39,7 +43,16 @@ const operations = {
     const output = await PDFDocument.create()
     // pdf-lib counts from 0, the interface counts from 1.
     const copied = await output.copyPages(source, pages.map((n) => n - 1))
-    for (const page of copied) output.addPage(page)
+
+    copied.forEach((page, index) => {
+      const extra = rotations[pages[index]] || 0
+      if (extra) {
+        // PDF only allows 0, 90, 180 and 270, so wrap into that range.
+        const turned = (page.getRotation().angle + extra) % 360
+        page.setRotation(degrees((turned + 360) % 360))
+      }
+      output.addPage(page)
+    })
 
     const bytes = await output.save()
     return { bytes }
