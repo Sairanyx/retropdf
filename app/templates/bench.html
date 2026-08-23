@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block content %}
+<main>
+  <h1>Memory and speed test</h1>
+  <p>
+    A development page, not part of the product. It generates PDFs of a known
+    size, merges them, and reports how long each step took and how much
+    memory the tab was using. Run it on a desktop and on a phone: the numbers
+    are what the size limits should be based on.
+  </p>
+
+  <p>
+    <button id="run">Run the test</button>
+    <button id="stop" disabled>Stop</button>
+  </p>
+
+  <p id="status">Ready.</p>
+
+  <table id="results" border="1" cellpadding="6">
+    <thead>
+      <tr>
+        <th>Input</th>
+        <th>Files</th>
+        <th>Build</th>
+        <th>Merge</th>
+        <th>Save</th>
+        <th>Output</th>
+        <th>Peak memory</th>
+        <th>Result</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <p id="note"></p>
+</main>
+
+<script type="module" src="/static/js/bench.js"></script>
+{% endblock %}
