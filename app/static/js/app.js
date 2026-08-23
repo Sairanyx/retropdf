@@ -12,6 +12,7 @@ const picker = document.querySelector("#picker")
 const result = document.querySelector("#result")
 const pagesEl = document.querySelector("#pages")
 const downloadBtn = document.querySelector("#download")
+// Present only on the pages that use them.
 const splitOptions = document.querySelector("#split-options")
 const imageOptions = document.querySelector("#image-options")
 const exportOptions = document.querySelector("#export-options")
@@ -39,8 +40,14 @@ let chosenImages = []
 // document id, so the bytes are only fetched back once per file.
 const renderCache = new Map()
 
+// The workspace has a tool switcher. A focused tool page does not, and
+// states its tool in data-mode instead.
+const workspace = document.querySelector("#workspace")
+const switcher = document.querySelector('input[name="mode"]')
+
 function currentMode() {
-  return document.querySelector('input[name="mode"]:checked').value
+  const chosen = document.querySelector('input[name="mode"]:checked')
+  return chosen ? chosen.value : workspace.dataset.mode
 }
 
 // What each mode sends to the worker, and what to call the result.
@@ -103,17 +110,24 @@ const modes = {
   },
 }
 
+// Images to PDF takes pictures, every other tool takes PDFs.
+function applyAccept() {
+  picker.accept = currentMode() === "frimages"
+    ? "image/jpeg,image/png"
+    : "application/pdf"
+}
+
+applyAccept()
+
 for (const radio of document.querySelectorAll('input[name="mode"]')) {
   radio.addEventListener("change", () => {
     const mode = currentMode()
     marked.clear()
-    splitOptions.hidden = mode !== "split"
-    imageOptions.hidden = mode !== "frimages"
-    exportOptions.hidden = mode !== "toimages"
+    if (splitOptions) splitOptions.hidden = mode !== "split"
+    if (imageOptions) imageOptions.hidden = mode !== "frimages"
+    if (exportOptions) exportOptions.hidden = mode !== "toimages"
 
-    // Images to PDF takes pictures, everything else takes PDFs.
-    picker.accept = mode === "frimages" ? "image/jpeg,image/png" : "application/pdf"
-
+    applyAccept()
     reset()
     result.textContent = modes[mode].hint
   })

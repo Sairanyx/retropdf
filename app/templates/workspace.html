@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block content %}
+<main>
+  <h1>Workspace</h1>
+  <p>
+    Every tool on one page. Load a file once, switch between tools, and
+    download when you are done. If you only need to do one thing, the
+    <a href="/">single tools</a> are simpler.
+  </p>
+
+  <!-- data-mode is the starting tool. The switcher below overrides it. -->
+  <div id="workspace" data-mode="merge">
+
+    <fieldset>
+      <legend>Tool</legend>
+      {% for tool in tools %}
+        <label>
+          <input type="radio" name="mode" value="{{ tool.mode }}"
+                 {% if loop.first %}checked{% endif %}>
+          {{ tool.name }}
+        </label>
+      {% endfor %}
+    </fieldset>
+
+    <p>
+      <input type="file" id="picker" multiple>
+      <button id="download" disabled>Download</button>
+    </p>
+
+    <p id="result">Choose a file to begin.</p>
+
+    <fieldset id="split-options" hidden>
+      <legend>Where to cut</legend>
+      <label><input type="radio" name="split" value="at" checked> After page
+        <input type="number" id="split-after" value="1" min="1"></label>
+      <label><input type="radio" name="split" value="every"> Every
+        <input type="number" id="split-size" value="1" min="1"> pages</label>
+      <label><input type="radio" name="split" value="single"> One file per page</label>
+    </fieldset>
+
+    <fieldset id="image-options" hidden>
+      <legend>Page size</legend>
+      <label><input type="radio" name="fit" value="a4" checked> Fit each image on an A4 page</label>
+      <label><input type="radio" name="fit" value="image"> Make each page the size of its image</label>
+    </fieldset>
+
+    <fieldset id="export-options" hidden>
+      <legend>Image size</legend>
+      <label>Size
+        <select id="export-scale">
+          <option value="1">Normal</option>
+          <option value="2" selected>Large</option>
+          <option value="3">Very large</option>
+        </select>
+      </label>
+    </fieldset>
+
+    <div id="pages"></div>
+  </div>
+</main>
+
+<script type="module" src="/static/js/app.js"></script>
+{% endblock %}

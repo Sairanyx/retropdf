@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block content %}
+<main>
+  <h1>Work with PDFs, without the noise</h1>
+  <p>
+    Free tools to combine, split and tidy up PDF files. Your documents stay
+    on your own computer. There is nothing to sign up for and no limit on how
+    often you use them.
+  </p>
+
+  <ul>
+    {% for tool in tools %}
+      <li>
+        <a href="/{{ tool.slug }}">{{ tool.name }}</a>
+        <span>{{ tool.blurb }}</span>
+      </li>
+    {% endfor %}
+  </ul>
+
+  <p>
+    Doing several things to the same file?
+    <a href="/workspace">Open the workspace</a> to use every tool at once.
+  </p>
+
+  <section>
+    <h2>Your files stay with you</h2>
+    <p>
+      Most free PDF websites send your document to a company's computer,
+      change it there, and send it back. Your file ends up somewhere you
+      cannot see, and you have to trust that it is deleted.
+    </p>
+    <p>
+      RedPDF works differently. The whole tool loads into this page, and your
+      file is opened by the page itself. It is never sent anywhere. That is
+      also why there is no waiting and no daily limit: your own computer is
+      doing the work, not ours.
+    </p>
+    <p>
+      This matters most for the documents people usually need these tools
+      for. Passports, contracts, bank statements, medical letters.
+    </p>
+  </section>
+</main>
+{% endblock %}

@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>{{ page_title }}</title>
+  <meta name="description" content="{{ page_description }}">
+  <link rel="canonical" href="{{ canonical }}">
+
+  <meta property="og:title" content="{{ page_title }}">
+  <meta property="og:description" content="{{ page_description }}">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="{{ canonical }}">
+</head>
+<body>
+  <header>
+    <a href="/">RedPDF</a>
+    <p>Free PDF tools. Your files stay on your computer.</p>
+  </header>
+
+  {% block content %}{% endblock %}
+
+  <footer>
+    <nav aria-label="All tools">
+      {% for tool in tools %}
+        <a href="/{{ tool.slug }}">{{ tool.name }}</a>
+      {% endfor %}
+      <a href="/workspace">Workspace</a>
+    </nav>
+    <p>Your files stay on your computer. They are never sent to us.</p>
+  </footer>
+</body>
+</html>

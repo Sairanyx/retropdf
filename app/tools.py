@@ -1,0 +1,141 @@
+"""The tools RedPDF offers, and the URLs they live at.
+
+One definition drives the routes, the home page listing, and the page titles,
+so adding a tool means adding one entry here.
+
+Wording matters. People arriving from a search have often not used a tool like
+this before, so headings say what the tool does in plain words rather than
+naming the operation.
+"""
+
+from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class Tool:
+    """One tool, as both a page and an entry on the home page."""
+
+    slug: str
+    """The URL path, without the leading slash. Chosen to match what people
+    actually search for, not internal naming."""
+
+    mode: str
+    """The identifier the browser code uses for this tool."""
+
+    name: str
+    """Short label, for the home page and the tool switcher."""
+
+    heading: str
+    """The h1 on the tool's own page."""
+
+    blurb: str
+    """One sentence explaining the tool, used on the home page."""
+
+    title: str
+    """The browser tab and search result title."""
+
+    description: str
+    """The meta description shown under the title in search results."""
+
+
+TOOLS: tuple[Tool, ...] = (
+    Tool(
+        slug="merge-pdf",
+        mode="merge",
+        name="Merge PDFs",
+        heading="Combine PDFs into one file",
+        blurb="Put several PDFs together in the order you choose.",
+        title="Merge PDF files in your browser",
+        description=(
+            "Combine PDF files into one document. Nothing is uploaded: the "
+            "merge happens on your own device, so your files stay private."
+        ),
+    ),
+    Tool(
+        slug="remove-pdf-pages",
+        mode="remove",
+        name="Remove pages",
+        heading="Delete pages from a PDF",
+        blurb="Click the pages you do not want and download the rest.",
+        title="Remove pages from a PDF in your browser",
+        description=(
+            "Delete pages from a PDF without uploading it. The file never "
+            "leaves your device, so private documents stay private."
+        ),
+    ),
+    Tool(
+        slug="extract-pdf-pages",
+        mode="extract",
+        name="Extract pages",
+        heading="Save some pages as a new PDF",
+        blurb="Pick the pages you want and save just those.",
+        title="Extract pages from a PDF in your browser",
+        description=(
+            "Save selected pages of a PDF as a new file. Everything happens "
+            "in your browser, with no upload and no account."
+        ),
+    ),
+    Tool(
+        slug="reorder-pdf",
+        mode="reorder",
+        name="Reorder pages",
+        heading="Change the order of PDF pages",
+        blurb="Move pages around until they are in the right order.",
+        title="Reorder PDF pages in your browser",
+        description=(
+            "Rearrange the pages of a PDF. Nothing is uploaded, so the "
+            "document stays on your own device."
+        ),
+    ),
+    Tool(
+        slug="rotate-pdf",
+        mode="rotate",
+        name="Rotate pages",
+        heading="Turn sideways pages upright",
+        blurb="Fix scans that came out rotated the wrong way.",
+        title="Rotate PDF pages in your browser",
+        description=(
+            "Turn PDF pages the right way up, one page or all of them. "
+            "Runs entirely in your browser with no upload."
+        ),
+    ),
+    Tool(
+        slug="split-pdf",
+        mode="split",
+        name="Split a PDF",
+        heading="Cut one PDF into several files",
+        blurb="Split at a page, every few pages, or into single pages.",
+        title="Split a PDF in your browser",
+        description=(
+            "Cut a PDF into separate files and download them as a zip. "
+            "The file is never uploaded anywhere."
+        ),
+    ),
+    Tool(
+        slug="jpg-to-pdf",
+        mode="frimages",
+        name="Images to PDF",
+        heading="Turn photos into a PDF",
+        blurb="Combine JPG or PNG images into a single document.",
+        title="Convert JPG images to PDF in your browser",
+        description=(
+            "Turn JPG and PNG images into one PDF. The pictures stay on your "
+            "device, which matters for photos of documents and ID."
+        ),
+    ),
+    Tool(
+        slug="pdf-to-jpg",
+        mode="toimages",
+        name="PDF to images",
+        heading="Save PDF pages as pictures",
+        blurb="Turn each page into an image and download them as a zip.",
+        title="Convert PDF pages to images in your browser",
+        description=(
+            "Save each page of a PDF as a PNG image. Runs on your own "
+            "device, so nothing is uploaded."
+        ),
+    ),
+)
+
+BY_SLUG = {tool.slug: tool for tool in TOOLS}
+BY_MODE = {tool.mode: tool for tool in TOOLS}
