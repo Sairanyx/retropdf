@@ -15,6 +15,8 @@ import {
   reset,
   splitRanges,
   splitToZip,
+  imagesToPdf,
+  imageKind,
 } from "/static/js/pdf-operations.js"
 
 /**
@@ -269,4 +271,72 @@ test("splitToZip does not let two parts share a name", async () => {
 
 test("splitToZip refuses an empty list of parts", async () => {
   await assert.rejects(() => splitToZip({ parts: [] }), /Nothing to split/)
+})
+
+// --- images to PDF -----------------------------------------------------
+
+// The smallest valid PNG: a single transparent pixel.
+const ONE_PIXEL_PNG = Uint8Array.from(atob(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk" +
+  "YPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+), (c) => c.charCodeAt(0))
+
+test("imageKind recognises a PNG by its magic bytes", () => {
+  assert.equal(imageKind(ONE_PIXEL_PNG), "png")
+})
+
+test("imageKind recognises a JPEG by its magic bytes", () => {
+  const jpeg = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 0, 0, 0])
+  assert.equal(imageKind(jpeg), "jpg")
+})
+
+test("imageKind rejects a file that is neither, whatever it is named", () => {
+  const heicish = new Uint8Array([0, 0, 0, 0x20, 0x66, 0x74, 0x79, 0x70])
+  assert.equal(imageKind(heicish), null)
+})
+
+test("imagesToPdf makes one page per image", async () => {
+  const { bytes, pageCount } = await imagesToPdf({
+    images: [
+      { name: "a.png", bytes: ONE_PIXEL_PNG },
+      { name: "b.png", bytes: ONE_PIXEL_PNG },
+    ],
+  })
+
+  assert.equal(pageCount, 2)
+  const doc = await PDFDocument.load(bytes)
+  assert.equal(doc.getPageCount(), 2)
+})
+
+test("imagesToPdf fits images onto A4 by default", async () => {
+  const { bytes } = await imagesToPdf({ images: [{ name: "a.png", bytes: ONE_PIXEL_PNG }] })
+  const doc = await PDFDocument.load(bytes)
+  const page = doc.getPages()[0]
+
+  assert.equal(Math.round(page.getWidth()), 595)
+  assert.equal(Math.round(page.getHeight()), 842)
+})
+
+test("imagesToPdf can size each page to its image instead", async () => {
+  const { bytes } = await imagesToPdf({
+    images: [{ name: "a.png", bytes: ONE_PIXEL_PNG }],
+    fit: "image",
+  })
+  const doc = await PDFDocument.load(bytes)
+  const page = doc.getPages()[0]
+
+  assert.equal(page.getWidth(), 1)
+  assert.equal(page.getHeight(), 1)
+})
+
+test("imagesToPdf explains that an unsupported format must be converted", async () => {
+  const heicish = new Uint8Array([0, 0, 0, 0x20, 0x66, 0x74, 0x79, 0x70])
+  await assert.rejects(
+    () => imagesToPdf({ images: [{ name: "IMG_4821.HEIC", bytes: heicish }] }),
+    /IMG_4821\.HEIC is not a JPG or PNG/,
+  )
+})
+
+test("imagesToPdf refuses an empty list", async () => {
+  await assert.rejects(() => imagesToPdf({ images: [] }), /at least one image/)
 })

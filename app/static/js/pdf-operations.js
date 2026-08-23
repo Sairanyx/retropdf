@@ -81,6 +81,85 @@ export async function build({ items }) {
   return { bytes }
 }
 
+// A4 at 72 points per inch, the unit PDF pages are measured in.
+const A4 = { width: 595.28, height: 841.89 }
+
+/**
+ * Build a PDF from JPEG and PNG images, one image per page.
+ *
+ * `images` is a list of { name, bytes }. `fit` is "image" to make each page
+ * exactly the size of its image, or "a4" to place every image on an A4 page,
+ * scaled to fit and centred.
+ *
+ * Only JPEG and PNG can be embedded. Anything else, including the HEIC that
+ * iPhones produce by default, has to be converted first.
+ */
+export async function imagesToPdf({ images, fit = "a4" }) {
+  if (!Array.isArray(images) || images.length === 0) {
+    throw new Error("Choose at least one image.")
+  }
+
+  const doc = await PDFDocument.create()
+
+  for (const image of images) {
+    const kind = imageKind(image.bytes)
+    if (!kind) {
+      throw new Error(
+        `${image.name || "That file"} is not a JPG or PNG. Convert it first.`,
+      )
+    }
+
+    let embedded
+    try {
+      embedded = kind === "jpg"
+        ? await doc.embedJpg(image.bytes)
+        : await doc.embedPng(image.bytes)
+    } catch (error) {
+      throw new Error(`${image.name || "That image"} could not be read.`)
+    }
+
+    if (fit === "image") {
+      const page = doc.addPage([embedded.width, embedded.height])
+      page.drawImage(embedded, { x: 0, y: 0, width: embedded.width, height: embedded.height })
+      continue
+    }
+
+    // Scale to fit inside A4 without distorting, then centre it.
+    const page = doc.addPage([A4.width, A4.height])
+    const scale = Math.min(A4.width / embedded.width, A4.height / embedded.height)
+    const width = embedded.width * scale
+    const height = embedded.height * scale
+
+    page.drawImage(embedded, {
+      x: (A4.width - width) / 2,
+      y: (A4.height - height) / 2,
+      width,
+      height,
+    })
+  }
+
+  const bytes = await doc.save()
+  return { bytes, pageCount: doc.getPageCount() }
+}
+
+/**
+ * Identify an image by its magic bytes rather than its file extension, since
+ * a name can lie about what a file actually contains.
+ */
+export function imageKind(bytes) {
+  const view = new Uint8Array(bytes)
+  if (view.length < 8) return null
+
+  // JPEG starts FF D8 FF.
+  if (view[0] === 0xff && view[1] === 0xd8 && view[2] === 0xff) return "jpg"
+
+  // PNG starts with an 8 byte signature.
+  const png = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]
+  if (png.every((byte, i) => view[i] === byte)) return "png"
+
+  return null
+}
+
 /**
  * Cut one document into several.
  *
@@ -164,6 +243,36 @@ function range(first, last) {
   const out = []
   for (let n = first; n <= last; n++) out.push(n)
   return out
+}
+
+/**
+ * Pack already rendered images into a zip.
+ *
+ * Rendering happens on the main thread because a plain worker has no canvas,
+ * so this takes the finished bytes rather than doing the drawing itself.
+ */
+export function zipImages({ images, zipName = "pages.zip" }) {
+  if (!Array.isArray(images) || images.length === 0) {
+    throw new Error("There are no images to save.")
+  }
+
+  const entries = {}
+  for (const image of images) entries[image.name] = image.bytes
+
+  // PNG and JPEG are already compressed, so storing is faster and no larger.
+  return { bytes: zipSync(entries, { level: 0 }), name: zipName, fileCount: images.length }
+}
+
+/**
+ * Return a loaded document as bytes again.
+ *
+ * Rendering needs a canvas, which a plain worker does not have, so the main
+ * thread asks for the bytes back rather than the pages being drawn here.
+ */
+export async function bytesOf({ id }) {
+  const doc = documents.get(id)
+  if (!doc) throw new Error("That file is no longer loaded.")
+  return { bytes: await doc.save() }
 }
 
 // Free a document once the caller has moved on.

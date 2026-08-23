@@ -15,6 +15,23 @@
     <label><input type="radio" name="mode" value="reorder"> Reorder pages</label>
     <label><input type="radio" name="mode" value="rotate"> Rotate pages</label>
     <label><input type="radio" name="mode" value="split"> Split file</label>
+    <label><input type="radio" name="mode" value="toimages"> PDF to images</label>
+    <label><input type="radio" name="mode" value="frimages"> Images to PDF</label>
+  </p>
+
+  <p id="image-options" hidden>
+    <label><input type="radio" name="fit" value="a4" checked> Fit each image on an A4 page</label>
+    <label><input type="radio" name="fit" value="image"> Make each page the size of its image</label>
+  </p>
+
+  <p id="export-options" hidden>
+    <label>Size
+      <select id="export-scale">
+        <option value="1">Normal</option>
+        <option value="2" selected>Large</option>
+        <option value="3">Very large</option>
+      </select>
+    </label>
   </p>
 
   <p id="split-options" hidden>

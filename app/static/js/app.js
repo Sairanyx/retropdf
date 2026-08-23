@@ -2,7 +2,7 @@ import * as pdfjs from "/static/js/vendor/pdf.min.mjs"
 import { call } from "/static/js/pdf-worker.js"
 // splitRanges is plain arithmetic with no PDF work, so it runs here rather
 // than costing a round trip to the worker.
-import { splitRanges } from "/static/js/pdf-operations.js"
+import { splitRanges, imageKind } from "/static/js/pdf-operations.js"
 
 // pdf.js parses on its own background thread and needs to know where that
 // code lives. Without this it fails with an unhelpful error.
@@ -13,6 +13,8 @@ const result = document.querySelector("#result")
 const pagesEl = document.querySelector("#pages")
 const downloadBtn = document.querySelector("#download")
 const splitOptions = document.querySelector("#split-options")
+const imageOptions = document.querySelector("#image-options")
+const exportOptions = document.querySelector("#export-options")
 
 // Every page currently in the workspace, in output order. Each entry is
 // { doc, page, rotate, key }, where `doc` is a worker document id and `key`
@@ -28,6 +30,14 @@ const files = new Map()
 // Rendered thumbnails, keyed by entry key. Rendering is the slow part, so
 // each page is drawn once and the canvas is then moved around.
 const thumbnails = new Map()
+
+// Chosen images, for the images to PDF tool. Kept as bytes because they are
+// not PDFs and never reach the worker as documents.
+let chosenImages = []
+
+// pdf.js documents kept for exporting pages as images, keyed by worker
+// document id, so the bytes are only fetched back once per file.
+const renderCache = new Map()
 
 function currentMode() {
   return document.querySelector('input[name="mode"]:checked').value
@@ -70,6 +80,20 @@ const modes = {
     suffix: "-rotated",
     empty: "There are no pages to save.",
   },
+  toimages: {
+    controls: "none",
+    hint: "Choose a size, then download a zip of PNG images.",
+    items: () => order.slice(),
+    suffix: "-images",
+    empty: "There are no pages to export.",
+  },
+  frimages: {
+    controls: "none",
+    hint: "Choose JPG or PNG images to turn into one PDF.",
+    items: () => [],
+    suffix: "",
+    empty: "Choose at least one image.",
+  },
   split: {
     controls: "none",
     hint: "Choose where to cut, then download a zip of the parts.",
@@ -81,16 +105,29 @@ const modes = {
 
 for (const radio of document.querySelectorAll('input[name="mode"]')) {
   radio.addEventListener("change", () => {
+    const mode = currentMode()
     marked.clear()
-    splitOptions.hidden = currentMode() !== "split"
-    drawPages()
-    result.textContent = modes[currentMode()].hint
+    splitOptions.hidden = mode !== "split"
+    imageOptions.hidden = mode !== "frimages"
+    exportOptions.hidden = mode !== "toimages"
+
+    // Images to PDF takes pictures, everything else takes PDFs.
+    picker.accept = mode === "frimages" ? "image/jpeg,image/png" : "application/pdf"
+
+    reset()
+    result.textContent = modes[mode].hint
   })
 }
 
 picker.addEventListener("change", async () => {
   const chosen = Array.from(picker.files)
   if (chosen.length === 0) return
+
+  if (currentMode() === "frimages") {
+    await addImages(chosen)
+    picker.value = ""
+    return
+  }
 
   // Merge adds to what is already there. The single file tools replace it.
   if (currentMode() !== "merge") reset()
@@ -133,6 +170,8 @@ picker.addEventListener("change", async () => {
 })
 
 function reset() {
+  chosenImages = []
+  renderCache.clear()
   for (const id of files.keys()) call("close", { id })
   files.clear()
   thumbnails.clear()
@@ -316,11 +355,17 @@ async function downloadSplit() {
 }
 
 downloadBtn.addEventListener("click", async () => {
-  if (order.length === 0) return
+  if (order.length === 0 && chosenImages.length === 0) return
 
-  if (currentMode() === "split") {
+  const special = {
+    split: downloadSplit,
+    toimages: downloadPdfToImages,
+    frimages: downloadImagesToPdf,
+  }[currentMode()]
+
+  if (special) {
     try {
-      await downloadSplit()
+      await special()
     } catch (error) {
       result.textContent = error.message
     }
@@ -349,3 +394,130 @@ downloadBtn.addEventListener("click", async () => {
     result.textContent = error.message
   }
 })
+
+// --- images to PDF -----------------------------------------------------
+
+async function addImages(chosen) {
+  for (const file of chosen) {
+    const bytes = new Uint8Array(await file.arrayBuffer())
+
+    // Check what the file really is, since a name can lie about its contents.
+    if (!imageKind(bytes)) {
+      result.textContent = `${file.name} is not a JPG or PNG. Convert it first.`
+      return
+    }
+
+    chosenImages.push({ name: file.name, bytes })
+  }
+
+  downloadBtn.disabled = false
+  drawImages()
+  result.textContent = `${chosenImages.length} image(s) ready.`
+}
+
+function drawImages() {
+  pagesEl.replaceChildren()
+
+  chosenImages.forEach((image, position) => {
+    const box = document.createElement("div")
+    box.style.display = "inline-block"
+    box.style.margin = "4px"
+    box.style.padding = "4px"
+    box.style.border = "1px solid #ccc"
+    box.style.textAlign = "center"
+    box.style.verticalAlign = "top"
+
+    // A blob URL points at memory in this tab. Nothing is uploaded.
+    const preview = document.createElement("img")
+    const url = URL.createObjectURL(new Blob([image.bytes]))
+    preview.src = url
+    preview.style.maxWidth = "120px"
+    preview.style.maxHeight = "160px"
+    preview.style.display = "block"
+    preview.addEventListener("load", () => URL.revokeObjectURL(url))
+    box.appendChild(preview)
+
+    const label = document.createElement("div")
+    label.textContent = shortName(image.name)
+    label.style.fontSize = "12px"
+    box.appendChild(label)
+
+    const controls = document.createElement("div")
+    controls.append(
+      imageMoveButton(position, position - 1, "<", position === 0),
+      imageMoveButton(position, position + 1, ">", position === chosenImages.length - 1),
+    )
+    box.appendChild(controls)
+
+    pagesEl.appendChild(box)
+  })
+}
+
+function imageMoveButton(from, to, label, disabled) {
+  const button = document.createElement("button")
+  button.textContent = label
+  button.disabled = disabled
+  button.addEventListener("click", () => {
+    const moved = chosenImages.splice(from, 1)[0]
+    chosenImages.splice(to, 0, moved)
+    drawImages()
+  })
+  return button
+}
+
+async function downloadImagesToPdf() {
+  const fit = document.querySelector('input[name="fit"]:checked').value
+
+  result.textContent = "Building..."
+  const { bytes, pageCount } = await call("imagesToPdf", { images: chosenImages, fit })
+
+  save(bytes, "images.pdf", "application/pdf")
+  result.textContent = `Saved a ${pageCount} page PDF.`
+}
+
+// --- PDF to images -----------------------------------------------------
+
+async function downloadPdfToImages() {
+  const scale = Number(document.querySelector("#export-scale").value)
+  const stem = (files.values().next().value || "document.pdf").replace(/\.pdf$/i, "")
+
+  // Rendering needs a canvas, which a plain worker does not have, so this
+  // runs on the main thread. Each page is drawn then released before the
+  // next, to keep only one full size canvas in memory at a time.
+  const images = []
+  for (const [position, entry] of order.entries()) {
+    result.textContent = `Rendering ${position + 1} of ${order.length}...`
+    const bytes = await renderPageToPng(entry, scale)
+    images.push({
+      name: `${stem}-${String(position + 1).padStart(3, "0")}.png`,
+      bytes,
+    })
+  }
+
+  const zip = await call("zipImages", { images, zipName: `${stem}-images.zip` })
+  save(zip.bytes, zip.name, "application/zip")
+  result.textContent = `Saved ${zip.fileCount} images as ${zip.name}`
+}
+
+async function renderPageToPng(entry, scale) {
+  let pdf = renderCache.get(entry.doc)
+  if (!pdf) {
+    // Ask the worker for the original bytes so pdf.js can render from them.
+    const { bytes } = await call("bytesOf", { id: entry.doc })
+    const task = pdfjs.getDocument({ data: bytes, isEvalSupported: false })
+    pdf = await task.promise
+    renderCache.set(entry.doc, pdf)
+  }
+
+  const page = await pdf.getPage(entry.page)
+  const viewport = page.getViewport({ scale, rotation: (page.rotate + entry.rotate) % 360 })
+
+  const canvas = document.createElement("canvas")
+  canvas.width = viewport.width
+  canvas.height = viewport.height
+
+  await page.render({ canvasContext: canvas.getContext("2d"), viewport }).promise
+
+  const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"))
+  return new Uint8Array(await blob.arrayBuffer())
+}
