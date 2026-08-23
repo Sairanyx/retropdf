@@ -16,6 +16,10 @@
 
     <p id="result">{{ start_hint }}</p>
 
+    <!-- Filled in by the browser, which is the only thing that knows what
+         this device can handle. -->
+    <p id="limit-note"></p>
+
     <!-- Only the options belonging to this tool are rendered. -->
     {% if tool.mode == "split" %}
     <fieldset id="split-options">

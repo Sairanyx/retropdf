@@ -3,7 +3,7 @@ import { call } from "/static/js/pdf-worker.js"
 // splitRanges is plain arithmetic with no PDF work, so it runs here rather
 // than costing a round trip to the worker.
 import { splitRanges, imageKind } from "/static/js/pdf-operations.js"
-import { checkSelection, looksLikePdf } from "/static/js/limits.js"
+import { checkSelection, looksLikePdf, LIMITS, formatSize } from "/static/js/limits.js"
 
 // pdf.js parses on its own background thread and needs to know where that
 // code lives. Without this it fails with an unhelpful error.
@@ -123,6 +123,19 @@ function applyAccept() {
 }
 
 applyAccept()
+showLimit()
+
+// Say up front what this device can handle, rather than only mentioning it
+// when someone has already chosen a file that is too big.
+function showLimit() {
+  const note = document.querySelector("#limit-note")
+  if (!note) return
+
+  note.textContent =
+    `On this device you can work with up to ${formatSize(LIMITS.maxTotal)} ` +
+    `at a time, or ${formatSize(LIMITS.maxFile)} in a single file.` +
+    (LIMITS.mobile ? " A computer will handle more than a phone." : "")
+}
 
 for (const radio of document.querySelectorAll('input[name="mode"]')) {
   radio.addEventListener("change", () => {

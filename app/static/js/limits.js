@@ -23,9 +23,12 @@ function deviceBudget() {
     return navigator.deviceMemory * 1024 * 1024 * 1024 * 0.25
   }
 
-  // Nothing to go on. Safari and Firefox report neither, and Safari is where
-  // the tight limits live, so assume the worst.
-  return 400 * 1024 * 1024
+  // Nothing to go on: Safari and Firefox report neither, on any platform.
+  //
+  // Assume by form factor rather than treating every silent browser as the
+  // worst case. The severe limits are an iOS thing, and a desktop running
+  // Safari or Firefox still has gigabytes even though it will not say so.
+  return isMobile() ? 400 * 1024 * 1024 : 2 * 1024 * 1024 * 1024
 }
 
 /**
