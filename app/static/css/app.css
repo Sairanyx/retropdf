@@ -1,0 +1,67 @@
+/* Temporary styles, mostly for drag feedback.
+   The real design system replaces this file. */
+
+body.drag-over {
+  outline: 3px dashed #c8452a;
+  outline-offset: -8px;
+}
+
+[data-position] {
+  user-select: none;
+  transition: transform 0.18s ease, opacity 0.18s ease;
+}
+
+/* The page being dragged stays in place as a gap, so the grid does not
+   reflow the moment a drag starts. */
+[data-position].drag-source {
+  opacity: 0.25;
+}
+
+/* The copy that follows the pointer. Smaller, lifted off the page, and
+   ignoring pointer events so it cannot hide what is underneath it. */
+.drag-ghost {
+  position: fixed;
+  z-index: 1000;
+  margin: 0;
+  pointer-events: none;
+  transform: scale(0.75) rotate(-2deg);
+  transform-origin: center;
+  opacity: 0.95;
+  box-shadow: 0 12px 28px rgb(0 0 0 / 0.28);
+  background: #fff;
+  transition: transform 0.16s ease, box-shadow 0.16s ease;
+}
+
+/* Settling into its new home when released. */
+.drag-ghost.drag-landing {
+  transition: left 0.18s ease, top 0.18s ease, transform 0.18s ease,
+    opacity 0.18s ease;
+  transform: scale(1) rotate(0deg);
+  opacity: 0;
+}
+
+/* Pages slide aside to open a gap where the dragged page would land. */
+[data-position].shift-forward {
+  transform: translateX(14%);
+}
+
+[data-position].shift-back {
+  transform: translateX(-14%);
+}
+
+body.dragging-page {
+  cursor: grabbing;
+}
+
+/* Dragging is decoration. Anyone who has asked for less movement gets the
+   arrow buttons doing exactly the same job without it. */
+@media (prefers-reduced-motion: reduce) {
+  [data-position],
+  .drag-ghost,
+  .drag-ghost.drag-landing {
+    transition: none;
+  }
+  .drag-ghost {
+    transform: none;
+  }
+}

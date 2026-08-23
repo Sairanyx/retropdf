@@ -4,6 +4,7 @@ import { call } from "/static/js/pdf-worker.js"
 // than costing a round trip to the worker.
 import { splitRanges, imageKind } from "/static/js/pdf-operations.js"
 import { checkSelection, looksLikePdf, LIMITS, formatSize } from "/static/js/limits.js"
+import { acceptDroppedFiles, makeReorderable } from "/static/js/dragdrop.js"
 
 // pdf.js parses on its own background thread and needs to know where that
 // code lives. Without this it fails with an unhelpful error.
@@ -152,20 +153,24 @@ for (const radio of document.querySelectorAll('input[name="mode"]')) {
 }
 
 picker.addEventListener("change", async () => {
-  const chosen = Array.from(picker.files)
+  await openFiles(Array.from(picker.files))
+  // Let the same file be chosen again later.
+  picker.value = ""
+})
+
+/** Open a list of files, however the user gave them to us. */
+async function openFiles(chosen) {
   if (chosen.length === 0) return
 
   const check = checkSelection(chosen, currentMode() === "merge" ? loadedBytes : 0)
   if (!check.ok) {
     result.textContent = check.reason
-    picker.value = ""
     return
   }
   if (check.warning) result.textContent = check.warning
 
   if (currentMode() === "frimages") {
     await addImages(chosen)
-    picker.value = ""
     return
   }
 
@@ -212,9 +217,25 @@ picker.addEventListener("change", async () => {
   } catch (error) {
     result.textContent = error.message
   }
+}
 
-  // Let the same file be chosen again later.
-  picker.value = ""
+// Dropping files anywhere on the page opens them, the same as choosing them.
+acceptDroppedFiles(
+  document.body,
+  (dropped) => openFiles(dropped),
+  (over) => {
+    document.body.classList.toggle("drag-over", over)
+    if (over) result.textContent = "Drop the files to open them."
+  },
+)
+
+// Dragging thumbnails reorders them, alongside the arrow buttons.
+makeReorderable(pagesEl, (from, to) => {
+  if (modes[currentMode()].controls !== "move") return
+  const moved = order.splice(from, 1)[0]
+  order.splice(to, 0, moved)
+  drawPages()
+  result.textContent = "Order updated."
 })
 
 function reset() {
@@ -262,12 +283,16 @@ function drawPages() {
     const canvas = thumbnails.get(entry.key)
 
     const box = document.createElement("div")
+    box.dataset.position = String(position)
     box.style.display = "inline-block"
     box.style.margin = "4px"
     box.style.padding = "4px"
     box.style.textAlign = "center"
     box.style.border = "1px solid #ccc"
     box.style.verticalAlign = "top"
+
+    // Dragging moves pages, so a drag must not be read as a text selection.
+    if (kind === "move") box.style.touchAction = "none"
 
     if (canvas) {
       if (kind !== "select") {
