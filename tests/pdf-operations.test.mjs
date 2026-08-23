@@ -340,3 +340,42 @@ test("imagesToPdf explains that an unsupported format must be converted", async 
 test("imagesToPdf refuses an empty list", async () => {
   await assert.rejects(() => imagesToPdf({ images: [] }), /at least one image/)
 })
+
+test("imagesToPdf embeds a JPEG as well as a PNG", async () => {
+  // A minimal valid JPEG: 1x1 pixel, white.
+  const jpeg = Uint8Array.from(atob(
+    "/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsL" +
+    "DBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/" +
+    "wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAACf/EABQQAQAAAAAA" +
+    "AAAAAAAAAAAAAAD/2gAIAQEAAD8AKp//2Q==",
+  ), (c) => c.charCodeAt(0))
+
+  assert.equal(imageKind(jpeg), "jpg")
+
+  const { bytes, pageCount } = await imagesToPdf({
+    images: [{ name: "photo.jpg", bytes: jpeg }],
+  })
+
+  assert.equal(pageCount, 1)
+  const doc = await PDFDocument.load(bytes)
+  assert.equal(doc.getPageCount(), 1)
+})
+
+test("imagesToPdf handles a mix of JPEG and PNG in one document", async () => {
+  const jpeg = Uint8Array.from(atob(
+    "/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsL" +
+    "DBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/" +
+    "wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAACf/EABQQAQAAAAAA" +
+    "AAAAAAAAAAAAAAD/2gAIAQEAAD8AKp//2Q==",
+  ), (c) => c.charCodeAt(0))
+
+  const { pageCount } = await imagesToPdf({
+    images: [
+      { name: "a.png", bytes: ONE_PIXEL_PNG },
+      { name: "b.jpg", bytes: jpeg },
+      { name: "c.png", bytes: ONE_PIXEL_PNG },
+    ],
+  })
+
+  assert.equal(pageCount, 3)
+})
