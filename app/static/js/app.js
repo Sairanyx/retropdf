@@ -3,6 +3,7 @@ import { call } from "/static/js/pdf-worker.js"
 // splitRanges is plain arithmetic with no PDF work, so it runs here rather
 // than costing a round trip to the worker.
 import { splitRanges, imageKind } from "/static/js/pdf-operations.js"
+import { checkSelection, looksLikePdf } from "/static/js/limits.js"
 
 // pdf.js parses on its own background thread and needs to know where that
 // code lives. Without this it fails with an unhelpful error.
@@ -35,6 +36,10 @@ const thumbnails = new Map()
 // Chosen images, for the images to PDF tool. Kept as bytes because they are
 // not PDFs and never reach the worker as documents.
 let chosenImages = []
+
+// Bytes of everything currently loaded, to keep one operation within what
+// a browser tab can hold.
+let loadedBytes = 0
 
 // pdf.js documents kept for exporting pages as images, keyed by worker
 // document id, so the bytes are only fetched back once per file.
@@ -137,6 +142,14 @@ picker.addEventListener("change", async () => {
   const chosen = Array.from(picker.files)
   if (chosen.length === 0) return
 
+  const check = checkSelection(chosen, currentMode() === "merge" ? loadedBytes : 0)
+  if (!check.ok) {
+    result.textContent = check.reason
+    picker.value = ""
+    return
+  }
+  if (check.warning) result.textContent = check.warning
+
   if (currentMode() === "frimages") {
     await addImages(chosen)
     picker.value = ""
@@ -152,6 +165,14 @@ picker.addEventListener("change", async () => {
     for (const file of chosen) {
       result.textContent = `Reading ${file.name}...`
       const bytes = await file.arrayBuffer()
+
+      // The name can say anything, so check what the file actually is.
+      if (!looksLikePdf(bytes)) {
+        result.textContent = `${file.name} is not a PDF file.`
+        continue
+      }
+
+      loadedBytes += bytes.byteLength
 
       // pdf.js needs its own copy because the worker takes ownership of the
       // buffer it is given.
@@ -184,6 +205,7 @@ picker.addEventListener("change", async () => {
 })
 
 function reset() {
+  loadedBytes = 0
   chosenImages = []
   renderCache.clear()
   for (const id of files.keys()) call("close", { id })
