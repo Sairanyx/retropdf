@@ -1,0 +1,10 @@
+# Vendored libraries are third-party builds. Never rewrite their line endings.
+app/static/js/vendor/** -text
+
+# Keep web sources consistent regardless of who checks them out.
+*.js   text eol=lf
+*.mjs  text eol=lf
+*.css  text eol=lf
+*.html text eol=lf
+*.py   text eol=lf
+*.md   text eol=lf
