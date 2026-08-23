@@ -82,3 +82,40 @@ def test_sitemap_lists_every_page():
     assert response.status_code == 200
     for tool in TOOLS:
         assert f"/{tool.slug}</loc>" in response.text
+
+
+# --- security headers --------------------------------------------------
+
+
+def test_pages_forbid_all_outbound_requests():
+    """connect-src 'none' is what makes the privacy claim enforceable."""
+    csp = client.get("/").headers["content-security-policy"]
+    assert "connect-src 'none'" in csp
+
+
+def test_pages_allow_no_third_party_scripts_or_eval():
+    csp = client.get("/").headers["content-security-policy"]
+    assert "script-src 'self'" in csp
+    assert "unsafe-eval" not in csp
+    assert "unsafe-inline" not in csp
+
+
+def test_pages_cannot_be_framed():
+    headers = client.get("/").headers
+    assert "frame-ancestors 'none'" in headers["content-security-policy"]
+    assert headers["x-frame-options"] == "DENY"
+
+
+def test_pages_do_not_sniff_content_types():
+    assert client.get("/").headers["x-content-type-options"] == "nosniff"
+
+
+def test_hsts_is_off_without_https():
+    """Pinning localhost to HTTPS would break local development."""
+    assert "strict-transport-security" not in client.get("/").headers
+
+
+def test_every_tool_page_carries_the_headers():
+    for tool in TOOLS:
+        headers = client.get(f"/{tool.slug}").headers
+        assert "connect-src 'none'" in headers["content-security-policy"]

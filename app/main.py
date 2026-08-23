@@ -9,6 +9,7 @@ lands on a page about that job. All of them render the same template with a
 different tool selected.
 """
 
+import os
 from pathlib import Path
 
 from fastapi import FastAPI, Request
@@ -16,17 +17,24 @@ from fastapi.responses import HTMLResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
+from app.security import SecurityHeaders
 from app.tools import TOOLS, BY_SLUG
 
 APP_DIR = Path(__file__).resolve().parent
 STATIC_DIR = APP_DIR / "static"
 
 # Used for canonical URLs and the sitemap. Set REDPDF_BASE_URL in production.
-import os
-
 BASE_URL = os.environ.get("REDPDF_BASE_URL", "http://127.0.0.1:8000").rstrip("/")
 
 app = FastAPI(title="RedPDF", docs_url=None, redoc_url=None)
+
+# HSTS is only meaningful over HTTPS, so it stays off unless this is running
+# behind the production proxy.
+app.add_middleware(
+    SecurityHeaders,
+    hsts=os.environ.get("REDPDF_HTTPS", "").lower() in {"1", "true", "yes"},
+)
+
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 templates = Jinja2Templates(directory=APP_DIR / "templates")
@@ -95,6 +103,22 @@ def make_tool_route(slug: str):
 
 for _tool in TOOLS:
     app.get(f"/{_tool.slug}", response_class=HTMLResponse)(make_tool_route(_tool.slug))
+
+
+# Development only. Kept out of the sitemap and hidden in production so it
+# never appears to users or search engines.
+if os.environ.get("REDPDF_DEV", "").lower() in {"1", "true", "yes"}:
+
+    @app.get("/bench", response_class=HTMLResponse)
+    def bench(request: Request) -> HTMLResponse:
+        """Measure where merging actually stops working on this device."""
+        return render(
+            request,
+            "bench.html",
+            page_title="RedPDF memory test",
+            page_description="Development page.",
+            canonical=f"{BASE_URL}/bench",
+        )
 
 
 @app.get("/robots.txt", response_class=PlainTextResponse)
