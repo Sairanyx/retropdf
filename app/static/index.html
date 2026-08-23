@@ -8,12 +8,16 @@
 <body>
   <h1>RedPDF</h1>
 
+  <p>
+    <label><input type="radio" name="mode" value="remove" checked> Remove pages</label>
+    <label><input type="radio" name="mode" value="extract"> Extract pages</label>
+    <label><input type="radio" name="mode" value="reorder"> Reorder pages</label>
+  </p>
+
   <input type="file" id="picker" accept="application/pdf">
   <p id="result">Choose a PDF.</p>
-  <button id="download" disabled>Remove marked pages and download</button>
+  <button id="download" disabled>Download</button>
   <div id="pages"></div>
-
-
 
   <script type="module" src="/static/js/app.js"></script>
 </body>
