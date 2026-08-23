@@ -1,5 +1,5 @@
-import { PDFDocument } from "/static/js/vendor/pdf-lib.esm.min.js"
 import * as pdfjs from "/static/js/vendor/pdf.min.mjs"
+import { call } from "/static/js/pdf-worker.js"
 
 // pdf.js parses on its own background thread and needs to know where that
 // code lives. Without this it fails with an unhelpful error.
@@ -13,8 +13,9 @@ const downloadBtn = document.querySelector("#download")
 // Page numbers the user marked for removal, counting from 1.
 const marked = new Set()
 
-// Bytes of the chosen file, kept so the output can be rebuilt from them.
-let sourceBytes = null
+// The document the worker is holding for us.
+let docId = null
+let pageCount = 0
 let sourceName = "document.pdf"
 
 picker.addEventListener("change", async () => {
@@ -22,21 +23,36 @@ picker.addEventListener("change", async () => {
   if (!file) return
 
   result.textContent = "Reading..."
-  const bytes = await file.arrayBuffer()
-
+  downloadBtn.disabled = true
   marked.clear()
-  sourceBytes = bytes.slice(0)
-  sourceName = file.name
-  downloadBtn.disabled = false
-
-  // pdf-lib reads the structure, so it can tell us the page count.
-  const doc = await PDFDocument.load(bytes)
-  result.textContent = `${file.name}, ${doc.getPageCount()} pages`
-
-  // pdf.js draws each page into its own small canvas.
   pagesEl.replaceChildren()
 
-  const task = pdfjs.getDocument({ data: bytes.slice(0), isEvalSupported: false })
+  const bytes = await file.arrayBuffer()
+  sourceName = file.name
+
+  try {
+    // Tell the worker to forget the previous document before loading another.
+    if (docId !== null) await call("close", { id: docId })
+
+    // pdf.js needs its own copy because the worker takes ownership of the
+    // buffer it is given.
+    const forRendering = bytes.slice(0)
+
+    const loaded = await call("load", { bytes }, [bytes])
+    docId = loaded.id
+    pageCount = loaded.pageCount
+
+    downloadBtn.disabled = false
+    await renderThumbnails(forRendering)
+
+    result.textContent = `${file.name}, ${pageCount} pages. Click pages to remove them.`
+  } catch (error) {
+    result.textContent = error.message
+  }
+})
+
+async function renderThumbnails(bytes) {
+  const task = pdfjs.getDocument({ data: bytes, isEvalSupported: false })
   const pdf = await task.promise
 
   for (let n = 1; n <= pdf.numPages; n++) {
@@ -62,7 +78,7 @@ picker.addEventListener("change", async () => {
         canvas.style.opacity = "0.4"
         canvas.style.borderColor = "#c8452a"
       }
-      result.textContent = `${marked.size} of ${pdf.numPages} pages marked for removal`
+      result.textContent = `${marked.size} of ${pageCount} pages marked for removal`
     })
 
     await page.render({
@@ -70,41 +86,33 @@ picker.addEventListener("change", async () => {
       viewport,
     }).promise
 
-    result.textContent = `${file.name}: rendered ${n} of ${pdf.numPages}`
+    result.textContent = `Rendering ${n} of ${pdf.numPages}...`
   }
-
-  result.textContent = `${file.name}, ${pdf.numPages} pages. Click pages to remove them.`
-})
+}
 
 downloadBtn.addEventListener("click", async () => {
-  if (!sourceBytes) return
+  if (docId === null) return
 
-  const source = await PDFDocument.load(sourceBytes.slice(0))
-  const output = await PDFDocument.create()
-
-  // pdf-lib counts pages from 0, the interface counts from 1.
   const keep = []
-  for (let n = 1; n <= source.getPageCount(); n++) {
-    if (!marked.has(n)) keep.push(n - 1)
+  for (let n = 1; n <= pageCount; n++) {
+    if (!marked.has(n)) keep.push(n)
   }
 
-  if (keep.length === 0) {
-    result.textContent = "That would remove every page."
-    return
+  try {
+    result.textContent = "Building..."
+    const { bytes } = await call("build", { id: docId, pages: keep })
+
+    const blob = new Blob([bytes], { type: "application/pdf" })
+    const url = URL.createObjectURL(blob)
+
+    const link = document.createElement("a")
+    link.href = url
+    link.download = sourceName.replace(/\.pdf$/i, "") + "-edited.pdf"
+    link.click()
+
+    URL.revokeObjectURL(url)
+    result.textContent = `Saved ${keep.length} pages, removed ${marked.size}`
+  } catch (error) {
+    result.textContent = error.message
   }
-
-  const copied = await output.copyPages(source, keep)
-  for (const page of copied) output.addPage(page)
-
-  const bytes = await output.save()
-  const blob = new Blob([bytes], { type: "application/pdf" })
-  const url = URL.createObjectURL(blob)
-
-  const link = document.createElement("a")
-  link.href = url
-  link.download = sourceName.replace(/\.pdf$/i, "") + "-edited.pdf"
-  link.click()
-
-  URL.revokeObjectURL(url)
-  result.textContent = `Saved ${keep.length} pages, removed ${marked.size}`
 })
