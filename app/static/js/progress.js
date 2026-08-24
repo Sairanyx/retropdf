@@ -96,15 +96,6 @@ function startRoute() {
       ? Math.min(width - 28, width * 0.92)
       : Math.min(width - 28, width * 0.13)
 
-    // One turning point per section, alternating side to side.
-    const turns = sections.map((section, index) => {
-      const box = section.getBoundingClientRect()
-      return {
-        x: index % 2 === 0 ? near : far,
-        y: box.top + window.scrollY + box.height / 2,
-      }
-    })
-
     // The mark sets off from the icon in the brand plate, which is where the
     // opening sequence left it, so the logo is the start of the journey.
     const icon = document.querySelector("#brand-plate svg")
@@ -116,7 +107,23 @@ function startRoute() {
             y: box.top + window.scrollY + box.height / 2,
           }
         })()
-      : { x: turns[0].x, y: -80 }
+      : { x: near, y: -80 }
+
+    // One turning point per section, alternating side to side.
+    //
+    // The first turn goes to whichever side is further from the logo, so the
+    // route leaves it heading outward. Turning toward the near side first
+    // would send the mark backwards across the short gap to the page edge.
+    const startsFar = Math.abs(from.x - near) < Math.abs(from.x - far)
+
+    const turns = sections.map((section, index) => {
+      const box = section.getBoundingClientRect()
+      const onFarSide = startsFar ? index % 2 === 0 : index % 2 === 1
+      return {
+        x: onFarSide ? far : near,
+        y: box.top + window.scrollY + box.height / 2,
+      }
+    })
 
     const points = [from, ...turns, {
       x: turns[turns.length - 1].x,
