@@ -109,6 +109,73 @@ function startRoute() {
         })()
       : { x: near, y: -80 }
 
+    // The first turn goes to whichever side is further from the logo, so the
+    // route leaves it heading outward rather than doubling back.
+    const startsFar = Math.abs(from.x - near) < Math.abs(from.x - far)
+
+    // The route hugs one edge, runs the length of a section, then curves
+    // across to the other edge for the next one. Long straight diagonals
+    // across the middle would cut through the text, which is what makes a
+    // route read as a stray line rather than a path around the content.
+    const points = [from]
+
+    sections.forEach((section, index) => {
+      const box = section.getBoundingClientRect()
+      const top = box.top + window.scrollY
+      const bottom = top + box.height
+      const onFarSide = startsFar ? index % 2 === 0 : index % 2 === 1
+      const side = onFarSide ? far : near
+
+      // Arrive at this edge, then run down it.
+      points.push({ x: side, y: top + box.height * 0.18 })
+      points.push({ x: side, y: bottom - box.height * 0.18 })
+    })
+
+    // Off the bottom, on whichever side the route finished.
+    points.push({ x: points[points.length - 1].x, y: height })
+
+    return points
+  }
+
+  /**
+   * Lay out the trail.
+   *
+   * The route runs down the page, bending toward each section in turn so it
+   * weaves rather than running straight. Squares are placed along it at a
+   * fixed spacing, which is what gives the stepped look.
+   */
+  function layout() {
+    trail.replaceChildren()
+    dots = []
+
+    const width = document.documentElement.scrollWidth
+    const height = document.documentElement.scrollHeight
+
+    // Kept clear of the text, which sits in the middle of the page.
+    //
+    // The home page swings the full width, so the route crosses the screen
+    // between sections and each one feels like a stop along the way. Other
+    // pages keep a narrow weave down one side, since a tool page is
+    // somewhere you work rather than travel through.
+    const wide = document.body.dataset.route === "snake"
+    const near = wide ? Math.max(28, width * 0.05) : Math.max(28, width * 0.06)
+    const far = wide
+      ? Math.min(width - 28, width * 0.92)
+      : Math.min(width - 28, width * 0.13)
+
+    // The mark sets off from the icon in the brand plate, which is where the
+    // opening sequence left it, so the logo is the start of the journey.
+    const icon = document.querySelector("#brand-plate svg")
+    const from = icon
+      ? (() => {
+          const box = icon.getBoundingClientRect()
+          return {
+            x: box.left + window.scrollX + box.width / 2,
+            y: box.top + window.scrollY + box.height / 2,
+          }
+        })()
+      : { x: near, y: -80 }
+
     // One turning point per section, alternating side to side.
     //
     // The first turn goes to whichever side is further from the logo, so the
