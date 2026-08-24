@@ -1,4 +1,4 @@
-"""The tools RedPDF offers, and the URLs they live at.
+"""The tools RetroPDF offers, and the URLs they live at.
 
 One definition drives the routes, the home page listing, and the page titles,
 so adding a tool means adding one entry here.

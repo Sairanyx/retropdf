@@ -1,6 +1,6 @@
 # Architecture
 
-How RedPDF is built, and why. Read this before making structural changes.
+How RetroPDF is built, and why. Read this before making structural changes.
 
 ## The one decision everything follows from
 

@@ -1,4 +1,4 @@
-"""RedPDF web server.
+"""RetroPDF web server.
 
 Serves the HTML pages and the static files. It never receives or processes a
 PDF: that happens entirely in the browser, so there is no upload endpoint and
@@ -27,7 +27,7 @@ STATIC_DIR = APP_DIR / "static"
 # Used for canonical URLs and the sitemap. Set REDPDF_BASE_URL in production.
 BASE_URL = os.environ.get("REDPDF_BASE_URL", "http://127.0.0.1:8000").rstrip("/")
 
-app = FastAPI(title="RedPDF", docs_url=None, redoc_url=None)
+app = FastAPI(title="RetroPDF", docs_url=None, redoc_url=None)
 
 # HSTS is only meaningful over HTTPS, so it stays off unless this is running
 # behind the production proxy.
@@ -59,7 +59,7 @@ def home(request: Request) -> HTMLResponse:
     return render(
         request,
         "home.html",
-        page_title="RedPDF: PDF tools that never upload your files",
+        page_title="RetroPDF: PDF tools that never upload your files",
         page_description=(
             "Merge, split, rotate and edit PDFs in your browser. Your files "
             "stay on your device. No account, no limits, no uploads."
@@ -76,7 +76,7 @@ def workspace(request: Request) -> HTMLResponse:
     return render(
         request,
         "workspace.html",
-        page_title="RedPDF workspace: every PDF tool on one page",
+        page_title="RetroPDF workspace: every PDF tool on one page",
         page_description=(
             "Load a PDF once and merge, remove, reorder, rotate or split it "
             "without uploading anything."
@@ -122,7 +122,7 @@ if os.environ.get("REDPDF_DEV", "").lower() in {"1", "true", "yes"}:
         return render(
             request,
             "bench.html",
-            page_title="RedPDF memory test",
+            page_title="RetroPDF memory test",
             page_description="Development page.",
             canonical=f"{BASE_URL}/bench",
         )

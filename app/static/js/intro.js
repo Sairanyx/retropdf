@@ -24,7 +24,7 @@
 // Kept per page in sessionStorage, so it lasts for reloads within this tab
 // and is gone when the tab closes. A page carrying a #section is left alone,
 // since there the position is asked for rather than remembered.
-const WHERE = "redpdf-scroll-" + location.pathname
+const WHERE = "retropdf-scroll-" + location.pathname
 
 if ("scrollRestoration" in history) {
   history.scrollRestoration = "manual"
@@ -131,8 +131,8 @@ function restoreScroll() {
 // A cookie would have been the obvious alternative and is the wrong choice:
 // cookies are sent to the server on every request, which is exactly the
 // thing this site does not do.
-const SEEN_INTRO = "redpdf-seen-intro"
-const SEEN_PAGES = "redpdf-seen-pages"
+const SEEN_INTRO = "retropdf-seen-intro"
+const SEEN_PAGES = "retropdf-seen-pages"
 
 const wantsLessMotion =
   window.matchMedia("(prefers-reduced-motion: reduce)").matches
