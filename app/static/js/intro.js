@@ -76,7 +76,7 @@ function run() {
   //   dock    1400 + 700   lands at    2100
   //   brand   2100 + 450   plate up at 2550
   //   typing  2550         starts as the plate settles
-  //   reveal  2750         the rest arrives while the heading writes
+  //   reveal                 once the heading has finished writing
 
   const DROP_AT = 80
   const DROP_MS = 900
@@ -87,7 +87,6 @@ function run() {
   const dockAt = DROP_AT + DROP_MS + REST_MS
   const brandAt = dockAt + DOCK_MS
   const typeAt = brandAt + BRAND_MS
-  const revealAt = typeAt + 200
 
   // 1. The mark arrives on the dark ground, alone, and rests there.
   setTimeout(() => document.body.classList.add("intro-drop"), DROP_AT)
@@ -99,24 +98,27 @@ function run() {
   //    the logo rather than disappearing and being replaced.
   setTimeout(() => document.body.classList.add("intro-brand"), brandAt)
 
-  // 4. The heading appears, empty, and types itself in.
+  // 4. The heading appears, empty, and types itself in. The rest of the
+  //    page waits for it, so the line is finished before anything else
+  //    arrives rather than the two competing for attention.
   setTimeout(() => {
     document.body.classList.add("intro-typing")
-    typeHeadline()
+    typeHeadline(finish)
   }, typeAt)
 
-  // 5. Everything else arrives, while the heading is still being written,
-  //    so the page is filling in rather than waiting on the typing.
-  setTimeout(() => document.body.classList.add("intro-reveal"), revealAt)
+  function finish() {
+    // 5. Everything else arrives, once the heading has been written.
+    document.body.classList.add("intro-reveal")
 
-  setTimeout(() => {
-    document.body.classList.add("intro-done")
-    document.body.classList.remove(
-      "intro-running", "intro-drop", "intro-dock", "intro-brand",
-      "intro-typing", "intro-reveal",
-    )
-    window.removeEventListener("resize", aimAtBrand)
-  }, revealAt + 900)
+    setTimeout(() => {
+      document.body.classList.add("intro-done")
+      document.body.classList.remove(
+        "intro-running", "intro-drop", "intro-dock", "intro-brand",
+        "intro-typing", "intro-reveal",
+      )
+      window.removeEventListener("resize", aimAtBrand)
+    }, 900)
+  }
 }
 
 /**
@@ -153,8 +155,11 @@ function aimAtBrand() {
  * The finished text lives in data-type, so it is in the markup for search
  * engines and for anyone with scripting off.
  */
-function typeHeadline() {
-  if (!headline || wantsLessMotion || headline.dataset.typed === "1") return
+function typeHeadline(onDone) {
+  if (!headline || wantsLessMotion || headline.dataset.typed === "1") {
+    onDone?.()
+    return
+  }
 
   headline.dataset.typed = "1"
   const text = headline.dataset.type
@@ -173,6 +178,8 @@ function typeHeadline() {
         headline.classList.remove("typing")
         headline.style.minHeight = ""
       }, 120)
+      // A short beat on the finished line before the page follows.
+      setTimeout(() => onDone?.(), 260)
     }
   }
   step()

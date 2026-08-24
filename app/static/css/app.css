@@ -114,8 +114,8 @@ body {
   background: var(--ground);
   color: var(--ink-2);
   font-family: var(--mono);
-  font-size: 14px;
-  line-height: 1.65;
+  font-size: 17px;
+  line-height: 1.7;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -146,7 +146,7 @@ body.intro-reveal {
    header instead of underneath it. */
 html {
   scroll-behavior: smooth;
-  scroll-padding-top: 7rem;
+  scroll-padding-top: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -160,8 +160,8 @@ html {
   position: sticky;
   top: 0;
   z-index: 100;
-  /* The ground shows through behind the plates, so the content scrolling
-     under them is hidden without a hard edge. */
+  /* The ground shows through behind the plates, so content scrolling under
+     them is hidden without a hard edge. */
   background: linear-gradient(
     var(--ground) 62%,
     color-mix(in srgb, var(--ground) 80%, transparent) 88%,
@@ -191,7 +191,10 @@ html {
   display: inline-flex;
   align-items: center;
   gap: 0.625rem;
-  padding: 0.6875rem 1rem;
+  /* At least 48px tall, which is the usual minimum for a comfortable
+     target on a touchscreen or with an unsteady hand. */
+  min-height: 48px;
+  padding: 0.75rem 1.25rem;
   border: 0;
   border-radius: var(--r-sm);
   background: var(--chip);
@@ -199,8 +202,8 @@ html {
   color: var(--ink-2);
   font: inherit;
   font-weight: 500;
-  font-size: 0.75rem;
-  letter-spacing: 0.13em;
+  font-size: 0.875rem;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   text-decoration: none;
   cursor: pointer;
@@ -298,13 +301,6 @@ html {
   color: var(--ink);
 }
 
-.brand-tag {
-  font-size: 0.6875rem;
-  color: var(--ink-3);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
 .navgroup {
   display: flex;
   align-items: center;
@@ -338,7 +334,7 @@ h2 {
 
 h3 {
   font-family: var(--display);
-  font-size: 1.375rem;
+  font-size: 1.625rem;
   font-weight: 500;
   color: var(--ink);
   margin: 0;
@@ -354,7 +350,7 @@ a {
 }
 
 .label {
-  font-size: 0.6875rem;
+  font-size: 0.8125rem;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--ink-3);
@@ -362,13 +358,40 @@ a {
 }
 
 .lede {
-  font-size: clamp(0.9375rem, 1vw, 1.0625rem);
+  font-size: clamp(1.0625rem, 1.1vw, 1.25rem);
   color: var(--ink-2);
   max-width: 58ch;
 }
 
 section {
   padding-block: clamp(3rem, 7vw, 5.5rem);
+}
+
+/* A screenful each.
+ *
+ * Landing on a section should show that section and nothing else, so each
+ * one fills the window and is centred within it. The effect is that clicking
+ * Tools puts you in front of the tools, with no half visible next thing
+ * pulling at the corner of your eye.
+ *
+ * min-height rather than height, so a section taller than the window still
+ * grows instead of being cut off. */
+.panel {
+  min-height: 100vh;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-block: clamp(5rem, 12vh, 9rem);
+  scroll-margin-top: 0;
+}
+
+/* Short screens would otherwise force a scroll inside the section itself. */
+@media (max-height: 620px) {
+  .panel {
+    min-height: 0;
+    padding-block: clamp(3rem, 8vh, 5rem);
+  }
 }
 
 .hero {
@@ -430,7 +453,7 @@ h1.typing::after {
 }
 
 .tool .k {
-  font-size: 0.625rem;
+  font-size: 0.75rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--ink-4);
@@ -442,7 +465,7 @@ h1.typing::after {
 
 .tool p {
   margin: 0;
-  font-size: 0.8125rem;
+  font-size: 0.9375rem;
   color: var(--ink-3);
 }
 
@@ -476,14 +499,14 @@ input[type="file"] {
 }
 
 .readout {
-  font-size: 0.8125rem;
+  font-size: 1rem;
   color: var(--ink-2);
   margin: 0 0 0.375rem;
   min-height: 1.65em;
 }
 
 .note {
-  font-size: 0.6875rem;
+  font-size: 0.8125rem;
   color: var(--ink-4);
   margin: 0 0 1rem;
 }
@@ -502,7 +525,7 @@ fieldset {
 }
 
 legend {
-  font-size: 0.625rem;
+  font-size: 0.75rem;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--ink-3);
@@ -681,7 +704,7 @@ body.dragging-page {
 footer {
   padding-block: 2rem 3rem;
   color: var(--ink-3);
-  font-size: 0.75rem;
+  font-size: 0.875rem;
 }
 
 footer nav {
@@ -818,6 +841,13 @@ html.reveal-on [data-reveal] {
   transform: translateY(18px);
 }
 
+/* A section arriving with the page is already being animated by the page
+   transition, so the scroll reveal must not also hold it back. */
+body.intro-skipped .wrap > section[data-reveal] {
+  opacity: 1;
+  transform: none;
+}
+
 html.reveal-on [data-reveal].shown {
   opacity: 1;
   transform: none;
@@ -876,14 +906,15 @@ html.reveal-on [data-reveal].shown .tools > li {
   align-items: center;
   gap: 0.5rem;
   cursor: pointer;
-  padding: 0.4375rem 0.6875rem;
+  padding: 0.5rem 0.875rem;
   border-radius: var(--r-sm);
   background: var(--chip);
   box-shadow: var(--raise);
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ink-3);
+  min-height: 44px;
   transition: background var(--t), color var(--t), box-shadow var(--t);
 }
 
@@ -925,7 +956,7 @@ input[type="number"],
 select {
   appearance: none;
   font: inherit;
-  font-size: 0.8125rem;
+  font-size: 0.9375rem;
   padding: 0.4375rem 0.625rem;
   border: 0;
   border-radius: var(--r-xs);
@@ -960,7 +991,7 @@ select:focus-visible {
     opacity: 1 !important;
     transform: none !important;
   }
-  body.intro-running .topbar,
+  body.intro-running .topbar-wrap,
   body.intro-running main,
   body.intro-running footer,
   body.intro-running .wrap > section {
@@ -1058,9 +1089,9 @@ input[type="number"]::-webkit-inner-spin-button {
 .stepper button.mini,
 .stepper button {
   font: inherit;
-  font-size: 0.625rem;
+  font-size: 0.875rem;
   line-height: 1;
-  width: 1.5rem;
+  width: 2rem;
   border: 0;
   border-radius: var(--r-xs);
   background: var(--chip);
@@ -1105,15 +1136,16 @@ input[type="number"]::-webkit-inner-spin-button {
   display: inline-flex;
   align-items: center;
   gap: 0.75rem;
-  min-width: 9rem;
-  padding: 0.5rem 0.75rem;
+  min-width: 10rem;
+  min-height: 44px;
+  padding: 0.5rem 0.875rem;
   border: 0;
   border-radius: var(--r-sm);
   background: var(--chip);
   box-shadow: var(--raise);
   color: var(--ink);
   font: inherit;
-  font-size: 0.8125rem;
+  font-size: 0.9375rem;
   text-align: left;
   cursor: pointer;
   transition: background var(--t), box-shadow var(--t);
@@ -1175,9 +1207,9 @@ input[type="number"]::-webkit-inner-spin-button {
 }
 
 .picker-option {
-  padding: 0.4375rem 0.625rem;
+  padding: 0.5rem 0.75rem;
   border-radius: var(--r-xs);
-  font-size: 0.8125rem;
+  font-size: 0.9375rem;
   color: var(--ink-2);
   cursor: pointer;
   white-space: nowrap;
@@ -1289,4 +1321,47 @@ body.leaving .topbar-wrap {
     transform: none;
     transition: none;
   }
+}
+
+/* ============================================================
+   Scrollbar
+   ============================================================ */
+
+/* The browser's own scrollbar is a bright strip down the side of a dark
+   page, which is the first thing your eye lands on. These make it part of
+   the page instead: a recessed channel with a raised handle, matching every
+   other surface here. */
+
+/* Firefox. It offers colours only, not shape. */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: var(--ink-4) var(--ground-low);
+}
+
+/* Chrome, Edge and Safari, which allow the full treatment. */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--ground-low);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--chip);
+  border-radius: 999px;
+  /* The border shows the track through it, so the handle reads as floating
+     in the channel rather than filling it. */
+  border: 3px solid var(--ground-low);
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ink-4);
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-corner {
+  background: var(--ground-low);
 }
