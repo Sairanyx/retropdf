@@ -146,17 +146,30 @@ function showLimit() {
     (LIMITS.mobile ? " A computer will handle more than a phone." : "")
 }
 
+/**
+ * Show only the options belonging to the current tool.
+ *
+ * A focused tool page renders just its own panel, so most of these are
+ * absent there. The workspace has all three and swaps between them.
+ */
+function showOptionsForMode() {
+  const mode = currentMode()
+  if (splitOptions) splitOptions.hidden = mode !== "split"
+  if (imageOptions) imageOptions.hidden = mode !== "frimages"
+  if (exportOptions) exportOptions.hidden = mode !== "toimages"
+}
+
+// Run once on load as well as on every change, or the workspace opens with
+// every panel showing at once.
+showOptionsForMode()
+
 for (const radio of document.querySelectorAll('input[name="mode"]')) {
   radio.addEventListener("change", () => {
-    const mode = currentMode()
     marked.clear()
-    if (splitOptions) splitOptions.hidden = mode !== "split"
-    if (imageOptions) imageOptions.hidden = mode !== "frimages"
-    if (exportOptions) exportOptions.hidden = mode !== "toimages"
-
+    showOptionsForMode()
     applyAccept()
     reset()
-    result.textContent = modes[mode].hint
+    result.textContent = modes[currentMode()].hint
   })
 }
 
