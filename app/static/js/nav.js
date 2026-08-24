@@ -60,6 +60,11 @@ if (!wantsLessMotion) {
     // place you can see is wasteful, so it scrolls back up instead.
     if (samePage && !url.hash) {
       event.preventDefault()
+      // The address still names whichever section you jumped to last, so it
+      // is cleared: you are at the top of the page now, not in a section.
+      // replaceState rather than pushState, since going back to "the same
+      // page with a stale hash" is not a step worth keeping.
+      history.replaceState(null, "", url.pathname + url.search)
       window.scrollTo({ top: 0, behavior: "smooth" })
       return
     }

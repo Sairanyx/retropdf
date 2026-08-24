@@ -1704,6 +1704,11 @@ html {
 }
 
 /* Chrome, Edge and Safari, which allow the full treatment. */
+/* No cursor rule here. The scrollbar is drawn by the browser rather than
+   being part of the page, so the pointer over it belongs to the operating
+   system and a cursor declared on this pseudo element is ignored. The site's
+   own arrow stops at the edge of the content, which is the browser's rule
+   rather than an oversight. */
 ::-webkit-scrollbar {
   width: 12px;
   height: 12px;
@@ -2042,6 +2047,11 @@ button:not(:disabled),
 .tool,
 .chip:not(:disabled),
 [data-position],
+/* The switches wrap their input rather than pointing at one with a for
+   attribute, so label[for] above does not reach them. */
+.switchbox,
+.picker-button,
+.picker-option,
 /* The travelling mark. It sits inside the logo link, but an SVG does not
    take the cursor from its parent the way an HTML element does, so without
    naming it here it falls back to the system hand. */
