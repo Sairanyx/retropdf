@@ -118,8 +118,9 @@ body {
   margin: 0;
   background: var(--ground);
   color: var(--ink-2);
-  font-family: var(--mono);
-  font-size: 17px;
+  font-family: var(--display);
+  font-size: 22px;
+  letter-spacing: 0.01em;
   line-height: 1.7;
   -webkit-font-smoothing: antialiased;
 }
@@ -216,8 +217,8 @@ html {
   color: var(--ink-2);
   font: inherit;
   font-weight: 500;
-  font-size: 0.875rem;
-  letter-spacing: 0.1em;
+  font-size: 1.0625rem;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   text-decoration: none;
   cursor: pointer;
@@ -433,16 +434,19 @@ a {
   color: var(--accent);
 }
 
+/* Names the page above its heading. Larger and darker than it was, because
+   a pixel face at 13px with wide tracking loses its shapes and the line
+   turns into a grey smudge. */
 .label {
-  font-size: 0.8125rem;
-  letter-spacing: 0.16em;
+  font-size: 1.0625rem;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--ink-3);
+  color: var(--ink-2);
   margin: 0 0 0.875rem;
 }
 
 .lede {
-  font-size: clamp(1.0625rem, 1.1vw, 1.25rem);
+  font-size: clamp(1.375rem, 1.5vw, 1.75rem);
   color: var(--ink-2);
   max-width: 58ch;
 }
@@ -451,67 +455,6 @@ section {
   padding-block: clamp(3rem, 7vw, 5.5rem);
 }
 
-/* The landing page in a single face.
- *
- * Everything inherits the mono from body, so setting the display face here
- * carries it to the whole page. Handjet is a pixel face drawn for headings:
- * its stepped edges close up at body size, so anything set in it needs a
- * size and a little tracking to stay readable.
- *
- * Only the landing page. The tool pages carry instructions and file names,
- * which want the mono. */
-.home {
-  font-family: var(--display);
-  font-size: 1.375rem;
-  letter-spacing: 0.01em;
-}
-
-.home .lede {
-  font-size: clamp(1.375rem, 1.5vw, 1.75rem);
-}
-
-.home .proof li {
-  font-size: 1.4375rem;
-}
-
-.home .tool p {
-  font-size: 1.25rem;
-}
-
-/* The card numbers in the same face as everything else. A pixel face needs
-   whole pixels to form a letter, so at the original 12px they were
-   unreadable: the size here is the smallest that still draws cleanly. */
-.home .tool .k {
-  font-size: 1.125rem;
-  letter-spacing: 0.12em;
-  /* Same reason as the footer: the lightest grey in the scale vanishes in a
-     pixel face. */
-  color: var(--ink-3);
-}
-
-/* Bigger across the smaller type on the page. All of it was sized for the
-   mono, which has a larger apparent height than Handjet at the same point
-   size, so keeping those numbers left everything reading a step too small. */
-.home .chip {
-  font-size: 1.0625rem;
-  letter-spacing: 0.08em;
-}
-
-.home footer {
-  font-size: 1.25rem;
-  /* A step darker than the mono needed. Handjet draws thinner strokes, so
-     the same grey reads fainter in it, and the footer was disappearing into
-     the ground. */
-  color: var(--ink-2);
-}
-
-.home footer nav {
-  gap: 1.5rem;
-}
-
-.home footer a {
-  font-size: 1.25rem;
-}
 
 /* A screenful each.
  *
@@ -601,9 +544,31 @@ h1.typing::after {
   transition: transform var(--t), box-shadow var(--t);
 }
 
+/* Hovering warms the card, the way an indicator lamp comes on.
+ *
+ * Three shadows over the raised one: a tight ring that reads as the edge
+ * catching the light, a soft bloom around it, and the existing drop shadow
+ * underneath. All spread rather than offset, so the glow sits behind the
+ * card evenly instead of falling to one side.
+ *
+ * Kept low in opacity on purpose. The point is that something switched on,
+ * not that the card is lit up. */
 .tool:hover {
   transform: translateY(-2px);
-  box-shadow: var(--raise-lg), 0 10px 24px -12px var(--shade);
+  box-shadow:
+    var(--raise-lg),
+    0 10px 24px -12px var(--shade),
+    /* The same two shadows a lit indicator carries, scaled up to a card:
+       a tight halo and a wider bloom, both in the accent. Matching the LED
+       is the point, so the card reads as the same lamp switching on. */
+    0 0 18px color-mix(in srgb, var(--accent) 38%, transparent),
+    0 0 6px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+/* Slower coming on than going off, which is how a lamp behaves: it warms up
+   and then drops away. */
+.tool {
+  transition: transform var(--t), box-shadow 0.32s ease-out;
 }
 
 .tool:focus-visible {
@@ -611,11 +576,15 @@ h1.typing::after {
   outline-offset: 3px;
 }
 
+/* The card numbers. A pixel face needs whole pixels to form a letter, so at
+   the original 12px they were unreadable: this is the smallest that still
+   draws cleanly, and a step darker because the lightest grey in the scale
+   vanishes in a thin stroked face. */
 .tool .k {
-  font-size: 0.75rem;
-  letter-spacing: 0.18em;
+  font-size: 1.125rem;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--ink-4);
+  color: var(--ink-3);
 }
 
 .tool h3 {
@@ -624,7 +593,7 @@ h1.typing::after {
 
 .tool p {
   margin: 0;
-  font-size: 0.9375rem;
+  font-size: 1.25rem;
   color: var(--ink-3);
 }
 
@@ -657,7 +626,16 @@ input[type="file"] {
   pointer-events: none;
 }
 
+/* The two lines that report what is happening: what is loaded, and how large
+   a file this device can take.
+ *
+ * Kept in the mono while the rest of the site is in the display face. They
+ * carry file names and figures, and a fixed width face keeps digits apart
+ * and the line from reflowing as the numbers change. This is also the line
+ * that explains why a file was refused, so it has to be plainly readable
+ * rather than characterful. */
 .readout {
+  font-family: var(--mono);
   font-size: 1rem;
   color: var(--ink-2);
   margin: 0 0 0.375rem;
@@ -665,8 +643,9 @@ input[type="file"] {
 }
 
 .note {
+  font-family: var(--mono);
   font-size: 0.8125rem;
-  color: var(--ink-4);
+  color: var(--ink-3);
   margin: 0 0 1rem;
 }
 
@@ -862,19 +841,22 @@ body.dragging-page {
 
 footer {
   padding-block: 2rem 3rem;
-  color: var(--ink-3);
-  font-size: 0.875rem;
+  /* A step darker and larger than the mono needed: Handjet draws thinner
+     strokes, so the same grey at the same size disappears into the ground. */
+  color: var(--ink-2);
+  font-size: 1.25rem;
 }
 
 footer nav {
   display: flex;
-  gap: 1rem;
+  gap: 1.5rem;
   flex-wrap: wrap;
   margin-bottom: 1rem;
 }
 
 footer a {
   color: var(--ink-2);
+  font-size: 1.25rem;
   text-decoration: none;
 }
 
@@ -1620,7 +1602,7 @@ html {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  font-size: 1rem;
+  font-size: 1.4375rem;
   color: var(--ink-2);
 }
 
