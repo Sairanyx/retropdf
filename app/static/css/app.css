@@ -823,35 +823,16 @@ body.intro-typing .wrap > section.tool-head {
   transition: opacity 0.35s ease-out;
 }
 
-body.intro-typing .wrap > section.hero > *:not(h1),
-body.intro-typing .wrap > section.tool-head > *:not(h1) {
-  opacity: 0;
-}
-
 /* 5. Everything the earlier steps have not already brought in: the rest of
  * the heading's own section, the sections below it, and the footer.
  *
  * The header arrived at step 3 and the heading at step 4, so neither is
  * named here. Naming them again would fade them in a second time, which
  * reads as the whole page reloading. */
-body.intro-reveal .wrap > section.hero > *,
-body.intro-reveal .wrap > section.tool-head > *,
 body.intro-reveal footer,
 body.intro-reveal .wrap > section:not(.hero):not(.tool-head) {
   opacity: 1;
   transition: opacity 0.55s ease-out;
-}
-
-/* The lines under the heading arrive one after another rather than as a
-   block, which carries the same rhythm as the typing that preceded them. */
-body.intro-reveal .wrap > section.hero > *:nth-child(2),
-body.intro-reveal .wrap > section.tool-head > *:nth-child(2) {
-  transition-delay: 0.05s;
-}
-
-body.intro-reveal .wrap > section.hero > *:nth-child(3),
-body.intro-reveal .wrap > section.tool-head > *:nth-child(3) {
-  transition-delay: 0.14s;
 }
 
 /* ============================================================

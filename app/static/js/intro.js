@@ -29,12 +29,28 @@ const stage = document.querySelector("[data-intro]")
 const mark = document.querySelector(".intro-mark svg")
 const headline = document.querySelector("[data-type]")
 
-// Empty the headline before anything paints, so the finished text is never
+// Everything sharing the heading's section, held back so the line can be
+// written on an otherwise empty screen.
+const afterHeading = headline
+  ? Array.from(headline.parentElement.children).filter((el) => el !== headline)
+  : []
+
+// Empty the heading before anything paints, so the finished text is never
 // briefly visible before the typing starts. The text lives in data-type, so
 // nothing is lost for search engines or without scripting.
 if (headline && !wantsLessMotion) {
   headline.style.minHeight = `${headline.offsetHeight}px`
   headline.textContent = ""
+  for (const el of afterHeading) el.style.opacity = "0"
+}
+
+/** Bring in the lines below the heading, one after another. */
+function showAfterHeading() {
+  afterHeading.forEach((el, index) => {
+    el.style.transition = "opacity 0.5s ease-out"
+    el.style.transitionDelay = `${index * 0.09}s`
+    el.style.opacity = "1"
+  })
 }
 
 function reveal() {
@@ -46,7 +62,7 @@ if (!stage || !mark || wantsLessMotion || alreadySeen) {
   document.body.classList.add("intro-done", "intro-skipped")
   // Wait for the heading's own section to have risen into place before
   // writing into it, so the two are sequential rather than overlapping.
-  setTimeout(typeHeadline, wantsLessMotion ? 0 : 320)
+  setTimeout(() => typeHeadline(showAfterHeading), wantsLessMotion ? 0 : 320)
 } else {
   try {
     sessionStorage.setItem(SEEN, "1")
@@ -108,6 +124,7 @@ function run() {
 
   function finish() {
     // 5. Everything else arrives, once the heading has been written.
+    showAfterHeading()
     document.body.classList.add("intro-reveal")
 
     setTimeout(() => {
