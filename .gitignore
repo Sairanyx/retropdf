@@ -12,3 +12,6 @@ docs/
 
 # Node
 node_modules/
+
+# Development screenshots, not part of the project.
+shots/
