@@ -76,17 +76,27 @@ function startRoute() {
   // position is not, and the origin has to be a fixed point on the page.
   let cachedOrigin = null
 
-  /** Where the mark sets off from: the icon in the brand plate. */
+  /**
+   * Where the mark sets off from: the underside of the brand plate.
+   *
+   * The plate rather than the icon inside it, so the trail appears to leave
+   * the logo itself. Starting at the icon's centre puts the first square
+   * below the plate with a visible gap above it.
+   */
   function origin() {
     if (cachedOrigin) return cachedOrigin
 
-    const icon = document.querySelector("#brand-plate svg")
-    if (!icon) return { x: 60, y: 0 }
+    const plate = document.querySelector("#brand-plate")
+    if (!plate) return { x: 60, y: 0 }
 
-    const box = icon.getBoundingClientRect()
+    // The plate is sticky, so its viewport position is wherever the scroll
+    // has parked it, not where it sits on the page. Adding scrollY to that
+    // would put the origin thousands of pixels down when measured after
+    // scrolling. offsetTop is the home position and does not move.
+    const box = plate.getBoundingClientRect()
     cachedOrigin = {
       x: box.left + window.scrollX + box.width / 2,
-      y: box.top + window.scrollY + box.height / 2,
+      y: plate.offsetTop + plate.offsetHeight - 6,
     }
     return cachedOrigin
   }
@@ -142,13 +152,24 @@ function startRoute() {
 
     // The first stretch leads away from the logo, so the mark visibly leaves
     // it rather than appearing somewhere else on the page.
-    const settle = 260
+    //
+    // Its length is set by how far there is to move sideways rather than
+    // being a fixed number. A wide screen puts the lane a long way from the
+    // logo, and covering that in a short drop is what made the opening look
+    // like a diagonal slash. Roughly two units down per unit across keeps
+    // the steepest part of the curve gentle at any width.
+    const across = Math.abs(lane.left - from.x)
+    const settle = Math.min(620, Math.max(320, across * 2.2))
     const travelled = y - from.y
 
     if (travelled < settle) {
       const into = Math.max(0, travelled) / settle
-      // Eased, so it pulls away gently rather than shooting off.
-      return { x: from.x + (lane.left - from.x) * (into * into), y }
+      // An S curve: it leaves the logo straight down, bends across the
+      // middle of the stretch, and arrives at the lane straight down again.
+      // A squared ease starts flat but arrives at an angle, which is what
+      // made the join look like a corner.
+      const eased = (1 - Math.cos(into * Math.PI)) / 2
+      return { x: from.x + (lane.left - from.x) * eased, y }
     }
 
     // Then the route runs down one lane, and stays there.
@@ -195,6 +216,16 @@ function startRoute() {
     // Lay squares for every step between the logo and here that is not
     // already marked. They come from the same function that places the mark,
     // so the trail is exactly the path it took.
+    //
+    // The loop always starts at the logo, so arriving partway down the page,
+    // which happens when a link carries a #section, fills in everything
+    // above rather than leaving the trail starting in mid air.
+    // Collected into a fragment and appended once. A jump from a nav link
+    // can ask for several hundred squares in a single frame, and appending
+    // them one at a time makes the browser recalculate layout for each,
+    // which is what made those jumps stutter.
+    const batch = document.createDocumentFragment()
+
     for (let at = from.y; at <= y; at += STEP) {
       const key = Math.round(at / STEP)
       if (laid.has(key)) continue
@@ -204,9 +235,11 @@ function startRoute() {
       dot.className = "route-dot lit"
       dot.style.left = point.x - DOT / 2 + "px"
       dot.style.top = point.y - DOT / 2 + "px"
-      trail.append(dot)
+      batch.append(dot)
       laid.set(key, dot)
     }
+
+    if (batch.childNodes.length) trail.append(batch)
   }
 
   function onScroll() {
@@ -216,6 +249,16 @@ function startRoute() {
   }
 
   window.addEventListener("scroll", onScroll, { passive: true })
+
+  // Returning with the back button restores the scroll position without a
+  // scroll event, so the trail would be missing until something moved.
+  window.addEventListener("pageshow", () => {
+    cachedOrigin = null
+    cachedLanes = null
+    trail.replaceChildren()
+    laid.clear()
+    requestAnimationFrame(update)
+  })
 
   window.addEventListener(
     "resize",
