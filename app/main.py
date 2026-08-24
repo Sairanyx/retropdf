@@ -63,6 +63,7 @@ def home(request: Request) -> HTMLResponse:
         ),
         canonical=f"{BASE_URL}/",
         on_home=True,
+        route="snake",
     )
 
 

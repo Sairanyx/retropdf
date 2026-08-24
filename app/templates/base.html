@@ -20,7 +20,7 @@
   <script>document.documentElement.classList.add("intro-pending")</script>
   <noscript><style>.intro-pending body { visibility: visible !important; }</style></noscript>
 </head>
-<body data-intro="1">
+<body data-intro="1"{% if route %} data-route="{{ route }}"{% endif %}>
   <!-- Falls from above on first load, then settles into the brand plate. -->
   <div class="intro-mark" aria-hidden="true">
     <svg viewBox="0 0 22 26" fill="none">
