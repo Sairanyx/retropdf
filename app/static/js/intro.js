@@ -13,18 +13,72 @@
 // Skipped for anyone who has asked for less motion, and skipped on repeat
 // visits within the session so it never becomes an obstacle.
 
-// Reloading should put you back at the top of the page.
+// Reloading should leave you where you were.
 //
-// Browsers restore the previous scroll position by default, which is right
-// for a long article and wrong here: the opening sequence lays the page out
-// in stages, so the position being restored was measured against a page that
-// had not finished arriving, and it lands a few dozen pixels down for no
-// reason the reader can see.
+// The browser's own restoring is turned off and the position is remembered
+// here instead. Its version runs while the opening sequence is still laying
+// the page out in stages, so it measures against a page that has not
+// finished arriving and lands a few dozen pixels off. Putting it back after
+// the layout has settled restores the exact place instead.
 //
-// A page carrying a #section is left alone, since there the position is
-// asked for rather than remembered.
-if ("scrollRestoration" in history && !location.hash) {
+// Kept per page in sessionStorage, so it lasts for reloads within this tab
+// and is gone when the tab closes. A page carrying a #section is left alone,
+// since there the position is asked for rather than remembered.
+const WHERE = "redpdf-scroll-" + location.pathname
+
+if ("scrollRestoration" in history) {
   history.scrollRestoration = "manual"
+}
+
+if (!location.hash) {
+  // Saved continuously rather than on unload, which is not reliably reached
+  // on a reload or when a tab is closed.
+  let saving = null
+  window.addEventListener(
+    "scroll",
+    () => {
+      if (saving) return
+      saving = setTimeout(() => {
+        saving = null
+        try {
+          sessionStorage.setItem(WHERE, String(Math.round(window.scrollY)))
+        } catch {
+          // Private browsing can refuse storage. Nothing here needs it.
+        }
+      }, 150)
+    },
+    { passive: true },
+  )
+
+  restoreScroll()
+}
+
+/**
+ * Put the page back where it was before the reload.
+ *
+ * Waits for the fonts, because the display face is a different width from
+ * its fallback and the page is a different height until it has arrived.
+ * Scrolling before then lands somewhere that shifts a moment later.
+ */
+function restoreScroll() {
+  let saved = null
+  try {
+    saved = sessionStorage.getItem(WHERE)
+  } catch {
+    return
+  }
+
+  const y = Number(saved)
+  if (!saved || !Number.isFinite(y) || y <= 0) return
+
+  const go = () => {
+    // Only as far as the page actually goes, in case it is shorter now.
+    const limit = document.documentElement.scrollHeight - window.innerHeight
+    window.scrollTo(0, Math.min(y, Math.max(0, limit)))
+  }
+
+  if (document.fonts?.ready) document.fonts.ready.then(() => requestAnimationFrame(go))
+  else window.addEventListener("load", () => requestAnimationFrame(go), { once: true })
 }
 
 // What has been seen this visit.

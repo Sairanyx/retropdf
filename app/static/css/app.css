@@ -470,22 +470,47 @@ section {
   font-size: clamp(1.375rem, 1.5vw, 1.75rem);
 }
 
-.home .proof li,
+.home .proof li {
+  font-size: 1.4375rem;
+}
+
 .home .tool p {
   font-size: 1.25rem;
 }
 
-/* The two pieces of small tracked-out type stay in the mono.
- *
- * A pixel face needs whole pixels to draw a letter, and these are set at
- * 12 and 13 pixels with wide letter spacing, which is below the size where
- * Handjet can form its shapes: the section labels turn faint and the card
- * numbers become unreadable. Nudged up a little as well, since they were
- * sized for a face with a smaller apparent height. */
-.home .label,
+/* The card numbers in the same face as everything else. A pixel face needs
+   whole pixels to form a letter, so at the original 12px they were
+   unreadable: the size here is the smallest that still draws cleanly. */
 .home .tool .k {
-  font-family: var(--mono);
-  font-size: 0.875rem;
+  font-size: 1.125rem;
+  letter-spacing: 0.12em;
+  /* Same reason as the footer: the lightest grey in the scale vanishes in a
+     pixel face. */
+  color: var(--ink-3);
+}
+
+/* Bigger across the smaller type on the page. All of it was sized for the
+   mono, which has a larger apparent height than Handjet at the same point
+   size, so keeping those numbers left everything reading a step too small. */
+.home .chip {
+  font-size: 1.0625rem;
+  letter-spacing: 0.08em;
+}
+
+.home footer {
+  font-size: 1.25rem;
+  /* A step darker than the mono needed. Handjet draws thinner strokes, so
+     the same grey reads fainter in it, and the footer was disappearing into
+     the ground. */
+  color: var(--ink-2);
+}
+
+.home footer nav {
+  gap: 1.5rem;
+}
+
+.home footer a {
+  font-size: 1.25rem;
 }
 
 /* A screenful each.
