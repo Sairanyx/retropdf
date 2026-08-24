@@ -35,9 +35,15 @@ function waitThenStart() {
   waiting.observe(document.body, { attributes: true, attributeFilter: ["class"] })
 }
 
+// Below this there is no clear space beside the content for the route to
+// run in, so it is not drawn at all. On a phone the text fills the screen,
+// and a line through it is worse than no line.
+const NARROWEST = 700
+
 function startRoute() {
   const sections = Array.from(document.querySelectorAll(".wrap > section"))
   if (sections.length < 2) return
+  if (window.innerWidth < NARROWEST) return
 
   const layer = document.createElement("div")
   layer.className = "route"
@@ -67,16 +73,35 @@ function startRoute() {
   /**
    * The corners the route turns at.
    *
-   * The route leaves the logo, runs straight down one margin, steps across
-   * to the other, and continues. Straight runs and square corners rather
-   * than curves or diagonals: the shape is built from the same right angles
-   * as the pixel type, and a diagonal across the page would cut through
-   * whatever is being read.
+   * The route leaves the logo, runs straight down one side of the content,
+   * steps across to the other, and continues. Straight runs and square
+   * corners rather than curves: the shape is built from the same right
+   * angles as the pixel type.
+   *
+   * The sides are measured from where the content actually ends rather than
+   * from the window edge. The content stops widening past about 1400px, so
+   * on a wide screen the clear space either side is several hundred pixels
+   * and on a narrow one it is barely sixty. A fixed percentage of the window
+   * puts the route far out in space on one screen and through the text on
+   * another.
    */
   function corners(width) {
-    const margin = Math.max(28, width * 0.045)
-    const near = margin
-    const far = width - margin
+    // Where the content really sits, so the route can sit beside it.
+    let contentLeft = width
+    let contentRight = 0
+    for (const el of document.querySelectorAll(".wrap h1, .wrap p, .wrap .tools")) {
+      const box = el.getBoundingClientRect()
+      if (box.width < 4) continue
+      contentLeft = Math.min(contentLeft, box.left)
+      contentRight = Math.max(contentRight, box.right)
+    }
+
+    // Centred in whatever gap there is, and never closer than 20px to the
+    // text or the window edge.
+    const leftGap = Math.max(0, contentLeft)
+    const rightGap = Math.max(0, width - contentRight)
+    const near = Math.max(20, Math.min(contentLeft - 20, leftGap / 2))
+    const far = Math.min(width - 20, Math.max(contentRight + 20, width - rightGap / 2))
 
     // The mark sets off from the icon in the brand plate, which is where the
     // opening sequence left it, so the logo is the start of the journey.
@@ -187,6 +212,14 @@ function startRoute() {
   window.addEventListener(
     "resize",
     function () {
+      // Narrow enough that the content fills the screen: clear the route
+      // rather than drawing it through the text.
+      if (window.innerWidth < NARROWEST) {
+        trail.replaceChildren()
+        dots = []
+        mark.style.opacity = "0"
+        return
+      }
       layout()
       update()
     },
