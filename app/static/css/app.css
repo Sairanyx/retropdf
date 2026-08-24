@@ -226,13 +226,24 @@ html {
   box-shadow: var(--raise);
 }
 
+/* The one filled chip in the nav. It lifts on hover like every other chip
+   rather than going darker, which read as a disabled button. */
 .chip.solid {
   background: var(--ink);
   color: var(--ground);
 }
+
 .chip.solid:hover {
-  background: #000;
+  background: color-mix(in srgb, var(--ink) 82%, var(--accent));
   color: #fff;
+}
+
+/* A lit LED has to stay visible against the filled background, so it is
+   given its own rule rather than relying on the shared one. */
+.chip.solid.on .led,
+.chip.solid[aria-current="true"] .led {
+  background: var(--accent);
+  box-shadow: 0 0 7px var(--accent), 0 0 2px var(--accent);
 }
 
 .chip.accent {
@@ -366,7 +377,9 @@ section {
   padding-block: clamp(3rem, 8vw, 6rem) clamp(2rem, 5vw, 3.5rem);
 }
 
-/* A block cursor while the headline types itself in. */
+/* A block cursor while the headline types itself in, and afterwards, so the
+   line always looks like something is about to be written. */
+h1[data-type]::after,
 h1.typing::after {
   content: "";
   display: inline-block;
@@ -375,7 +388,13 @@ h1.typing::after {
   margin-left: 0.08em;
   background: var(--accent);
   vertical-align: -0.08em;
-  animation: blink 0.7s steps(1) infinite;
+  animation: blink 1.1s steps(1) infinite;
+}
+
+/* While typing it holds steady so it reads as a cursor being pushed along.
+   Once finished it blinks slowly, as if waiting for the next word. */
+h1.typing::after {
+  animation: none;
 }
 
 @keyframes blink {
@@ -982,4 +1001,122 @@ select:focus-visible {
 
 .toolbar .switchbox {
   justify-content: flex-start;
+}
+
+/* ============================================================
+   Number inputs and selects
+   ============================================================ */
+
+/* The browser draws its own spinner arrows and dropdown, which look like
+   Windows rather than like this page. Both are replaced below. */
+
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+
+/* A number and its two stepper buttons, held together as one control. */
+.stepper {
+  display: inline-flex;
+  align-items: stretch;
+  gap: 2px;
+  padding: 2px;
+  border-radius: var(--r-sm);
+  background: var(--inset);
+  box-shadow: var(--press);
+}
+
+.stepper input[type="number"] {
+  width: 3em;
+  background: none;
+  box-shadow: none;
+  padding: 0.3125rem 0.25rem;
+}
+
+.stepper input[type="number"]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+  border-radius: var(--r-xs);
+}
+
+.stepper button.mini,
+.stepper button {
+  font: inherit;
+  font-size: 0.625rem;
+  line-height: 1;
+  width: 1.5rem;
+  border: 0;
+  border-radius: var(--r-xs);
+  background: var(--chip);
+  box-shadow: var(--raise);
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: background var(--t), color var(--t), box-shadow var(--t);
+}
+
+.stepper button:hover {
+  background: var(--chip-hover);
+  color: var(--accent);
+}
+
+.stepper button:active {
+  box-shadow: var(--press);
+}
+
+.stepper button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* The select keeps the native dropdown, which is the only accessible option,
+   but the closed control and its arrow are drawn to match everything else.
+   The open list is painted by the operating system and cannot be styled. */
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  font: inherit;
+  font-size: 0.8125rem;
+  padding: 0.5rem 2.25rem 0.5rem 0.75rem;
+  border: 0;
+  border-radius: var(--r-sm);
+  background-color: var(--chip);
+  box-shadow: var(--raise);
+  color: var(--ink);
+  cursor: pointer;
+  /* Two short strokes forming a chevron, drawn with gradients so there is no
+     image to load and it follows the text colour. */
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(100% - 17px) 53%, calc(100% - 12px) 53%;
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+  transition: background-color var(--t), box-shadow var(--t);
+}
+
+select:hover {
+  background-color: var(--chip-hover);
+}
+
+select:active {
+  box-shadow: var(--press);
+}
+
+select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* The dropdown list itself, as far as browsers allow. */
+select option {
+  background: var(--chip);
+  color: var(--ink);
 }
