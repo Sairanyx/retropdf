@@ -34,6 +34,9 @@ app = FastAPI(title="RedPDF", docs_url=None, redoc_url=None)
 app.add_middleware(
     SecurityHeaders,
     hsts=os.environ.get("REDPDF_HTTPS", "").lower() in {"1", "true", "yes"},
+    # Development only: stops the browser serving a cached script, which
+    # makes a change look as though it did not take effect.
+    no_cache=os.environ.get("REDPDF_DEV", "").lower() in {"1", "true", "yes"},
 )
 
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")

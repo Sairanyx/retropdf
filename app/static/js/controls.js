@@ -123,7 +123,28 @@ function enhanceSelect(select) {
     button.setAttribute("aria-expanded", "true")
     wrap.classList.add("open")
     paint()
-    options[active].scrollIntoView({ block: "nearest" })
+    keepInView()
+  }
+
+  /**
+   * Scroll the option list so the active item is visible.
+   *
+   * Done by setting the list's own scrollTop rather than with
+   * scrollIntoView, which would scroll every scrollable ancestor including
+   * the page itself.
+   */
+  function keepInView() {
+    const item = options[active]
+    if (!item) return
+
+    const itemTop = item.offsetTop
+    const itemBottom = itemTop + item.offsetHeight
+
+    if (itemTop < list.scrollTop) {
+      list.scrollTop = itemTop
+    } else if (itemBottom > list.scrollTop + list.clientHeight) {
+      list.scrollTop = itemBottom - list.clientHeight
+    }
   }
 
   function close(refocus = true) {
@@ -229,7 +250,7 @@ function enhanceSelect(select) {
     }
 
     paint()
-    if (!list.hidden) options[active].scrollIntoView({ block: "nearest" })
+    if (!list.hidden) keepInView()
   })
 
   // Clicking anywhere else closes the list.

@@ -63,14 +63,23 @@ HEADERS = {
 class SecurityHeaders(BaseHTTPMiddleware):
     """Attach the headers above to every response."""
 
-    def __init__(self, app: ASGIApp, hsts: bool = False) -> None:
+    def __init__(
+        self, app: ASGIApp, hsts: bool = False, no_cache: bool = False
+    ) -> None:
         super().__init__(app)
         self.hsts = hsts
+        self.no_cache = no_cache
 
     async def dispatch(self, request, call_next):
         response = await call_next(request)
         for name, value in HEADERS.items():
             response.headers[name] = value
+
+        # In development the browser must never serve a cached script, or a
+        # change appears not to have taken effect. In production the opposite
+        # is wanted: these files rarely change and should be cached hard.
+        if self.no_cache and request.url.path.startswith("/static/"):
+            response.headers["Cache-Control"] = "no-store, must-revalidate"
 
         # Only meaningful over HTTPS, and actively unhelpful in local
         # development, where it would pin localhost to HTTPS in your browser.
