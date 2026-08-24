@@ -1440,31 +1440,55 @@ html {
   }
 }
 
-/* A hairline down the left edge, filling as the page is read.
+/* The route: one dashed line running the length of the page.
  *
- * This is the "indicate progress" point: without it a long page gives no
- * sense of its own length, and people stop early assuming they have
- * reached the end. It never moves the content and never takes the scroll
- * away from the reader. */
+ * It sits behind everything, weaving past each section, and draws itself as
+ * the page is scrolled. A long page otherwise gives no sense of its own
+ * length, and people stop early assuming they have reached the end.
+ *
+ * Purely decorative: it never moves the content, never intercepts the
+ * scroll, and is hidden from screen readers. */
 
-.progress {
-  position: fixed;
-  left: 0;
+.route {
+  position: absolute;
   top: 0;
-  width: 2px;
+  left: 0;
+  width: 100%;
   height: 100%;
-  z-index: 90;
+  z-index: 0;
   pointer-events: none;
-  background: color-mix(in srgb, var(--ink) 8%, transparent);
 }
 
-.progress-fill {
-  width: 100%;
-  height: 0;
-  background: var(--accent);
-  /* Set from the scroll position, so it follows the reader exactly rather
-     than animating towards where they are. */
-  transition: height 0.08s linear;
+.route-line {
+  fill: none;
+  stroke: var(--ink-4);
+  stroke-width: 2;
+  stroke-dasharray: 8 9;
+  stroke-linecap: square;
+  opacity: 0.35;
+}
+
+/* A page travelling at the head of the line, which is the document being
+   carried from one tool to the next. */
+.route-mark {
+  fill: var(--ground);
+  stroke: var(--accent);
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+  opacity: 0;
+  transition: opacity 0.3s ease-out;
+}
+
+.route-mark-bar {
+  fill: var(--accent);
+  stroke: none;
+}
+
+/* Content sits above the route, or the line would draw over the text. */
+.wrap,
+.topbar-wrap {
+  position: relative;
+  z-index: 1;
 }
 
 @media (prefers-reduced-motion: reduce) {
