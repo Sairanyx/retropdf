@@ -54,6 +54,24 @@ if (!location.hash) {
 }
 
 /**
+ * Should this arrival put you back where you were?
+ *
+ * Only for a reload or the back button. Both are a request to return to
+ * something, so losing your place is the wrong answer.
+ *
+ * Following a link is not: clicking the logo, or any other link to a page,
+ * asks to start at the top of it, and restoring a remembered position there
+ * makes the logo look broken.
+ *
+ * Treated as a fresh arrival when the browser does not say, since landing at
+ * the top is the safer of the two to get wrong.
+ */
+function shouldRestore() {
+  const [entry] = performance.getEntriesByType?.("navigation") ?? []
+  return entry?.type === "reload" || entry?.type === "back_forward"
+}
+
+/**
  * Put the page back where it was before the reload.
  *
  * Waits for the fonts, because the display face is a different width from
@@ -70,6 +88,18 @@ function restoreScroll() {
 
   const y = Number(saved)
   if (!saved || !Number.isFinite(y) || y <= 0) return
+
+  // Following a link starts at the top, so the remembered place is dropped
+  // rather than used. It is cleared as well, or the next reload of this page
+  // would jump to a position from before the link was followed.
+  if (!shouldRestore()) {
+    try {
+      sessionStorage.removeItem(WHERE)
+    } catch {
+      // Storage can be refused. Nothing here depends on it.
+    }
+    return
+  }
 
   const go = () => {
     // Only as far as the page actually goes, in case it is shorter now.
