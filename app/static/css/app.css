@@ -727,7 +727,9 @@ select {
 }
 
 #pages:empty::after {
-  content: "Nothing loaded yet.";
+  /* Not "loaded", which reads as "uploaded" to anyone not thinking about it,
+     and this is the one site where that impression is worth avoiding. */
+  content: "No files selected yet.";
   /* Larger and a step darker: this sits alone in a big empty panel, so at
      13px in the lightest grey it read as a stray mark rather than a line
      telling you the panel is waiting for a file. */
@@ -1629,6 +1631,15 @@ html {
 .proof .led {
   background: var(--accent);
   box-shadow: 0 0 6px var(--accent), 0 0 2px var(--accent);
+}
+
+/* Selected text carries the accent rather than the browser's blue, which is
+   the one colour on the page that belongs to nobody. The ground colour for
+   the text on top of it, so the selection reads as the page inverted rather
+   than as a highlighter pen. */
+::selection {
+  background: var(--accent);
+  color: var(--ground);
 }
 
 /* ---------- cursors ---------- */
