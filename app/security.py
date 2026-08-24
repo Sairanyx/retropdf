@@ -75,11 +75,15 @@ class SecurityHeaders(BaseHTTPMiddleware):
         for name, value in HEADERS.items():
             response.headers[name] = value
 
-        # In development the browser must never serve a cached script, or a
-        # change appears not to have taken effect. In production the opposite
-        # is wanted: these files rarely change and should be cached hard.
+        # In development the browser must never serve a cached script or
+        # stylesheet, or a change appears not to have taken effect.
+        #
+        # Fonts are deliberately left cached even here: they never change
+        # while working, and re-fetching them on every reload makes the page
+        # flash its fallback typeface before the real one arrives.
         if self.no_cache and request.url.path.startswith("/static/"):
-            response.headers["Cache-Control"] = "no-store, must-revalidate"
+            if not request.url.path.startswith("/static/fonts/"):
+                response.headers["Cache-Control"] = "no-store, must-revalidate"
 
         # Only meaningful over HTTPS, and actively unhelpful in local
         # development, where it would pin localhost to HTTPS in your browser.

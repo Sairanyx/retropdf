@@ -1425,10 +1425,18 @@ html {
   transition: opacity 0.35s ease-out;
 }
 
-/* Lit once the reader has passed it. They stay lit, so the route behind is
-   a record of where you have been. */
+/* Lit once the mark has passed it. They stay lit, so the route behind is a
+   record of where you have been. */
 .route-dot.lit {
-  opacity: 0.5;
+  opacity: 0.28;
+}
+
+/* The run immediately behind the mark, brighter so the trail reads as
+   something the mark is leaving rather than a line it happens to sit on.
+   Which side counts as behind depends on the direction of travel, which is
+   worked out in progress.js. */
+.route-dot.lit.fresh {
+  opacity: 0.85;
 }
 
 /* The mark itself, the same shape that falls during the opening. */
@@ -1441,9 +1449,10 @@ html {
   margin: -13px 0 0 -11px;
   color: var(--ink-2);
   opacity: 0;
-  /* Follows the scroll closely enough to feel attached to it, with just
-     enough lag to read as travelling rather than jumping. */
-  transition: transform 0.12s linear, opacity 0.4s ease-out;
+  /* The mark is placed at whichever square it has reached, and those are
+     sixteen pixels apart, so without a transition it would visibly hop
+     between them. This smooths the gap without lagging behind the scroll. */
+  transition: transform 0.18s cubic-bezier(0.3, 0, 0.2, 1), opacity 0.4s ease-out;
 }
 
 .route-mark svg {
