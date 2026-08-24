@@ -3,20 +3,24 @@
 {% block content %}
 <div class="wrap">
   <section class="hero panel">
-    <!-- Types itself in on load. The text is in the markup so it is there for
-         search engines and for anyone with scripting off. -->
-    <h1 id="headline" data-type="Work with PDFs, without the noise">Work with PDFs, without the noise</h1>
+    <!-- The heading is in data-type as well as in the element, so it is in
+         the markup for search engines and for anyone with scripting off. -->
+    <h1 id="headline" data-type="Simple PDF tools that never see your files">Simple PDF tools that never see your files</h1>
 
     <p class="lede">
-      Free tools to combine, split and tidy up PDF files. Your documents stay
-      on your own computer. Nothing to sign up for, no limit on how often you
-      use them.
+      Everything runs on your own device. No sign up, no limits.
     </p>
 
-    <p>
-      <a class="chip accent" href="/merge-pdf">Start with merge <span class="led"></span></a>
-      <a class="chip" href="/workspace">Open the workspace</a>
-    </p>
+    <!-- A trail of pages leading to the tools below, rather than a button.
+         It doubles as the scroll cue. -->
+    <a class="trail" href="#tools" aria-label="See the tools">
+      <span class="trail-pages" aria-hidden="true">
+        <svg viewBox="0 0 14 18" fill="none"><path d="M1 1h8l4 4v12H1z" stroke="currentColor" stroke-width="1.4"/><path d="M9 1v4h4" stroke="currentColor" stroke-width="1.4"/></svg>
+        <svg viewBox="0 0 14 18" fill="none"><path d="M1 1h8l4 4v12H1z" stroke="currentColor" stroke-width="1.4"/><path d="M9 1v4h4" stroke="currentColor" stroke-width="1.4"/></svg>
+        <svg viewBox="0 0 14 18" fill="none"><path d="M1 1h8l4 4v12H1z" stroke="currentColor" stroke-width="1.4"/><path d="M9 1v4h4" stroke="currentColor" stroke-width="1.4"/></svg>
+      </span>
+      <span class="trail-label">Eight tools below</span>
+    </a>
   </section>
 
   <section id="tools" class="panel" data-reveal>
