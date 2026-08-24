@@ -125,24 +125,51 @@ function restoreScroll() {
 //   - it never leaves the device, and cannot: connect-src 'none' forbids
 //     every outbound request, so there is nothing that could send it
 //   - the server never sees it, and has no way to ask for it
-//   - it holds no identifier, only which pages this tab has opened
-//   - closing the tab erases it
+//   - it holds no identifier, only what this browser has already watched
+//   - it cannot leave the device: connect-src 'none' forbids every outbound
+//     request, so there is nothing that could send it
+//   - the server never sees it, and has no way to ask for it
 //
 // A cookie would have been the obvious alternative and is the wrong choice:
 // cookies are sent to the server on every request, which is exactly the
 // thing this site does not do.
-const SEEN_INTRO = "retropdf-seen-intro"
+
+// What this browser has already watched, shared across every tab.
+//
+// sessionStorage would be the natural home, but it is per tab by design, so
+// opening a second tab alongside the first would replay everything. These
+// live in localStorage instead and are cleared when the last tab closes.
+const SEEN_MAIN = "retropdf-seen-main"
 const SEEN_PAGES = "retropdf-seen-pages"
+
+// How many tabs of this site are open right now.
+//
+// This is what tells "still browsing" apart from "came back later". A
+// timestamp cannot: a tab left open for hours looks exactly like a tab
+// closed hours ago, so the opening would replay in the middle of a session.
+//
+// Each tab adds itself on arrival and removes itself on leaving. When the
+// count reaches zero the flags are cleared, so the next visit opens properly.
+const TAB_COUNT = "retropdf-tabs"
+
+// When the last page left. Paired with the count above, this is what makes a
+// reload look like a reload rather than the end of a visit.
+const LEFT_AT = "retropdf-left"
+
+// How long a gap still counts as the same visit. Long enough to cover a slow
+// page load or a moment spent on another site, short enough that coming back
+// later opens properly.
+const REJOIN_WINDOW = 20 * 1000
 
 const wantsLessMotion =
   window.matchMedia("(prefers-reduced-motion: reduce)").matches
 
-/** Read a flag, treating a refusal to store as simply not knowing. */
+/** Read from localStorage, treating a refusal to store as not knowing. */
 function recall(key) {
   try {
-    return sessionStorage.getItem(key)
+    return localStorage.getItem(key)
   } catch (error) {
-    // Some privacy settings refuse storage outright. Playing the sequence
+    // Private browsing can refuse storage outright. Playing the sequence
     // again is harmless, so there is nothing to handle.
     return null
   }
@@ -150,16 +177,81 @@ function recall(key) {
 
 function note(key, value) {
   try {
-    sessionStorage.setItem(key, value)
+    localStorage.setItem(key, value)
   } catch (error) {
     // As above: nothing to do.
   }
 }
 
-const alreadySeen = recall(SEEN_INTRO) === "1"
+function forget(key) {
+  try {
+    localStorage.removeItem(key)
+  } catch (error) {
+    // As above.
+  }
+}
 
-// Which pages this tab has already opened, so a heading writes itself once
-// rather than every time you come back to it.
+/**
+ * Join the count of open tabs, and leave it again on the way out.
+ *
+ * Returns true when this is the first tab, which is what makes the opening
+ * play on a genuinely new visit rather than on every tab.
+ */
+/**
+ * Did this page come from the site itself?
+ *
+ * A reload, the back button, or a link from another page here all count. A
+ * tab opened fresh does not, whatever was in the address bar, which is what
+ * separates the end of a visit from a page changing under you.
+ */
+function cameFromHere() {
+  const [entry] = performance.getEntriesByType?.("navigation") ?? []
+  if (entry?.type === "reload" || entry?.type === "back_forward") return true
+  return document.referrer.startsWith(window.location.origin)
+}
+
+function joinSession() {
+  const open = Number(recall(TAB_COUNT)) || 0
+  const leftAt = Number(recall(LEFT_AT)) || 0
+
+  // Reloading and following a link both close the old page before opening
+  // the new one, so the count dips to zero for a moment and the end of a
+  // visit looks identical to a reload.
+  //
+  // The browser knows which it was. A reload or a link followed from this
+  // site is a navigation with a type, and a tab opened fresh is not, so the
+  // count only means "the visit ended" when this page was not reached from
+  // the site itself.
+  const continuing = open > 0 || (cameFromHere() && Date.now() - leftAt < REJOIN_WINDOW)
+  const first = !continuing
+
+  if (first) {
+    // Nothing was open and nothing just left, so this is a new visit and
+    // last time's flags are stale.
+    forget(SEEN_MAIN)
+    forget(SEEN_PAGES)
+  }
+
+  note(TAB_COUNT, String(Math.max(0, open) + 1))
+
+  // pagehide rather than unload, which is not reliably reached on mobile.
+  window.addEventListener("pagehide", (event) => {
+    // A page kept alive for the back button has not really gone away.
+    if (event.persisted) return
+    const now = Number(recall(TAB_COUNT)) || 1
+    note(TAB_COUNT, String(Math.max(0, now - 1)))
+    note(LEFT_AT, String(Date.now()))
+  })
+
+  return first
+}
+
+joinSession()
+
+const alreadySeen = recall(SEEN_MAIN) === "1"
+
+// Which pages have already introduced themselves this visit, so a heading
+// writes itself once rather than every time you come back to it.
 const seenPages = new Set((recall(SEEN_PAGES) || "").split(",").filter(Boolean))
 const thisPage = window.location.pathname
 const firstTimeOnThisPage = !seenPages.has(thisPage)
@@ -207,6 +299,9 @@ function collectAfterHeading() {
 // Empty the heading before anything paints, so the finished text is never
 // briefly visible before the typing starts. The text lives in data-type, so
 // nothing is lost for search engines or without scripting.
+// Every page writes its own heading, the first time you reach it. That is
+// the shorter of the two openings and it belongs to the page rather than to
+// the visit, so it plays on the workspace and on each tool as you arrive.
 const willType = headline && !wantsLessMotion && firstTimeOnThisPage
 
 if (willType) {
@@ -265,7 +360,7 @@ if (!stage || !mark || wantsLessMotion || alreadySeen) {
     showAfterHeading()
   }
 } else {
-  note(SEEN_INTRO, "1")
+  note(SEEN_MAIN, "1")
   run()
 }
 
