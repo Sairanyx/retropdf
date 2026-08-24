@@ -1,20 +1,41 @@
-// The mark travels down the page, leaving a trail behind it.
+// The mark leaves the logo and travels down the page, laying a trail.
 //
 // It is the same document mark that falls at the start and settles into the
-// logo. Once you begin scrolling it sets off again, following a route down
-// the page and drawing a pixel trail as it goes, so the page reads as one
-// route being followed rather than a stack of separate blocks.
+// brand plate. Once you begin scrolling it sets off again from exactly
+// there, so the logo is where the journey starts rather than a separate
+// thing that happens to look similar.
 //
-// The trail is drawn as discrete squares rather than a smooth line, so it
-// matches the stepped edges of the display face.
+// The trail is a run of squares rather than a drawn line, matching the
+// stepped edges of the display face, and corners are eased through so the
+// route curves rather than turning at right angles.
 //
-// Purely decorative: it sits behind the content, never intercepts the
-// scroll, and screen readers do not see it.
+// Purely decorative: behind the content, never intercepts the scroll, and
+// hidden from screen readers.
 
 const wantsLessMotion =
   window.matchMedia("(prefers-reduced-motion: reduce)").matches
 
-if (!wantsLessMotion) startRoute()
+if (!wantsLessMotion) waitThenStart()
+
+/**
+ * Hold off until the opening sequence has finished.
+ *
+ * Laying the trail while the page is still arriving would put a line on
+ * screen before the heading it is meant to follow.
+ */
+function waitThenStart() {
+  if (document.body.classList.contains("intro-done")) {
+    startRoute()
+    return
+  }
+
+  const waiting = new MutationObserver(() => {
+    if (!document.body.classList.contains("intro-done")) return
+    waiting.disconnect()
+    startRoute()
+  })
+  waiting.observe(document.body, { attributes: true, attributeFilter: ["class"] })
+}
 
 function startRoute() {
   const sections = Array.from(document.querySelectorAll(".wrap > section"))
@@ -24,65 +45,66 @@ function startRoute() {
   layer.className = "route"
   layer.setAttribute("aria-hidden", "true")
 
-  // The trail, as a run of squares. They are placed once and then revealed
-  // in order, which is far cheaper than redrawing a path on every frame.
   const trail = document.createElement("div")
   trail.className = "route-trail"
   layer.append(trail)
 
-  // The mark itself, the same shape that falls during the opening.
   const mark = document.createElement("div")
   mark.className = "route-mark"
-  mark.innerHTML = `
-    <svg viewBox="0 0 22 26" fill="none">
-      <path d="M2 1h11l7 7v16a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1Z"
-            stroke="currentColor" stroke-width="1.6"/>
-      <path d="M13 1v7h7" stroke="currentColor" stroke-width="1.6"/>
-      <rect x="5" y="14" width="12" height="5" rx="1" fill="var(--accent)"/>
-    </svg>`
+  mark.innerHTML =
+    '<svg viewBox="0 0 22 26" fill="none">' +
+    '<path d="M2 1h11l7 7v16a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.6"/>' +
+    '<path d="M13 1v7h7" stroke="currentColor" stroke-width="1.6"/>' +
+    '<rect x="5" y="14" width="12" height="5" rx="1" fill="var(--accent)"/>' +
+    "</svg>"
   layer.append(mark)
 
   document.body.append(layer)
 
-  // Every square in the trail, in the order they are passed.
   let dots = []
 
   const DOT = 6 // square size, matched to the stepped edges of the font
   const GAP = 16 // distance between squares along the route
+  const CURVE = 110 // how far before a corner the route starts bending
 
-/**
-   * Work out the corners the route turns at.
+  /** Where the mark sets off from: the icon inside the brand plate. */
+  function startPoint() {
+    const icon = document.querySelector("#brand-plate svg")
+    if (!icon) return null
+    const box = icon.getBoundingClientRect()
+    return {
+      x: box.left + window.scrollX + box.width / 2,
+      y: box.top + window.scrollY + box.height / 2,
+    }
+  }
+
+  /**
+   * The corners the route turns at.
    *
-   * On the home page it snakes: down the left of the hero, across the page,
-   * down the right of the tools, back across, then down the left again past
-   * privacy. Crossing the full width makes each section feel like a stop on
-   * a journey rather than a block in a list.
-   *
-   * Everywhere else it stays as a narrow weave down one side, since a tool
-   * page is somewhere you work rather than somewhere you travel through.
+   * On the home page it snakes: down one side of a section, across the page,
+   * down the other side of the next. Elsewhere it stays a narrow weave, since
+   * a tool page is somewhere you work rather than travel through.
    */
   function corners(width, height) {
-    const left = Math.max(28, width * 0.05)
-    const right = Math.min(width - 28, width * 0.95)
     const snaking = document.body.dataset.route === "snake"
+    const from = startPoint() || { x: Math.max(28, width * 0.05), y: 0 }
 
     if (!snaking) {
       const near = Math.max(28, width * 0.06)
       const far = Math.min(width - 28, width * 0.13)
-      const turns = sections.map((section, index) => ({
-        x: index % 2 === 0 ? near : far,
-        y: middleOf(section),
-      }))
-      return [
-        { x: turns[0].x, y: -80 },
-        ...turns,
-        { x: turns[turns.length - 1].x, y: height },
-      ]
+      const turns = sections.map((section, index) => {
+        const box = section.getBoundingClientRect()
+        return {
+          x: index % 2 === 0 ? near : far,
+          y: box.top + window.scrollY + box.height / 2,
+        }
+      })
+      return [from, ...turns, { x: turns[turns.length - 1].x, y: height }]
     }
 
-    // Each section gets an entry corner and an exit corner on the same side,
-    // so the route runs down beside it before crossing to the next.
-    const points = [{ x: left, y: -80 }]
+    const left = Math.max(28, width * 0.05)
+    const right = Math.min(width - 28, width * 0.95)
+    const points = [from]
 
     sections.forEach((section, index) => {
       const box = section.getBoundingClientRect()
@@ -90,15 +112,14 @@ function startRoute() {
       const bottom = top + box.height
       const side = index % 2 === 0 ? left : right
 
-      // Down the side of this section.
-      points.push({ x: side, y: top + box.height * 0.15 })
-      points.push({ x: side, y: bottom - box.height * 0.15 })
+      points.push({ x: side, y: top + box.height * 0.2 })
+      points.push({ x: side, y: bottom - box.height * 0.2 })
 
-      // Then across to the other side, ready for the next one.
-      const next = sections[index + 1]
-      if (next) {
-        const otherSide = index % 2 === 0 ? right : left
-        points.push({ x: otherSide, y: bottom - box.height * 0.15 })
+      if (sections[index + 1]) {
+        points.push({
+          x: index % 2 === 0 ? right : left,
+          y: bottom - box.height * 0.2,
+        })
       }
     })
 
@@ -106,16 +127,11 @@ function startRoute() {
     return points
   }
 
-  function middleOf(section) {
-    const box = section.getBoundingClientRect()
-    return box.top + window.scrollY + box.height / 2
-  }
-
   /**
-   * Lay out the trail.
+   * Walk the route, placing a square every GAP pixels.
    *
-   * Squares are placed along the route at a fixed spacing, which is what
-   * gives the stepped look.
+   * Approaching a corner the position is nudged toward wherever the route
+   * goes next, which rounds the turn instead of leaving a right angle.
    */
   function layout() {
     trail.replaceChildren()
@@ -125,70 +141,69 @@ function startRoute() {
     const height = document.documentElement.scrollHeight
     const points = corners(width, height)
 
-    // Walk the route, placing a square every GAP pixels. Straight segments
-    // between the turning points are enough: the alternating sides already
-    // give the weave, and a curve would not survive being sampled this
-    // coarsely anyway.
     for (let i = 1; i < points.length; i++) {
       const from = points[i - 1]
       const to = points[i]
-      const dx = to.x - from.x
-      const dy = to.y - from.y
-      const distance = Math.hypot(dx, dy)
-      const steps = Math.floor(distance / GAP)
+      const next = points[i + 1]
+
+      const distance = Math.hypot(to.x - from.x, to.y - from.y)
+      const steps = Math.max(1, Math.floor(distance / GAP))
 
       for (let step = 0; step < steps; step++) {
         const along = step / steps
+        let x = from.x + (to.x - from.x) * along
+        let y = from.y + (to.y - from.y) * along
+
+        if (next && distance > 0) {
+          const remaining = distance * (1 - along)
+          if (remaining < CURVE) {
+            const bend = 1 - remaining / CURVE
+            const eased = bend * bend * 0.5
+            x += (next.x - to.x) * eased
+            y += (next.y - to.y) * eased
+          }
+        }
+
         const dot = document.createElement("span")
         dot.className = "route-dot"
-        dot.style.left = `${from.x + dx * along - DOT / 2}px`
-        dot.style.top = `${from.y + dy * along - DOT / 2}px`
+        dot.style.left = (x - DOT / 2) + "px"
+        dot.style.top = (y - DOT / 2) + "px"
         trail.append(dot)
-        // Order in this array is the order the route is walked, which is
-        // what the lighting uses. Position alone would not do: a sideways
-        // stretch shares one height and would light all at once.
-        dots.push({
-          el: dot,
-          x: from.x + dx * along,
-          y: from.y + dy * along,
-        })
+
+        // Order in this array is the order the route is walked, which is what
+        // the lighting uses. Height alone would not do: a sideways stretch
+        // shares one height and would light all at once.
+        dots.push({ el: dot, x: x, y: y })
       }
     }
   }
 
   /**
-   * Reveal the trail as far as the reader has come, and put the mark at the
-   * front of it.
+   * Light the trail as far as the reader has come.
+   *
+   * Worked out from how far down the page they are, so the mark stays beside
+   * what they are reading rather than running ahead or lagging behind.
    */
   let ticking = false
   function update() {
     ticking = false
     if (dots.length === 0) return
 
-    // The head of the trail sits a little below the middle of the window, so
-    // the mark travels alongside what is being read rather than trailing at
-    // the bottom edge.
-    const head = window.scrollY + window.innerHeight * 0.55
+    const scrollable =
+      document.documentElement.scrollHeight - window.innerHeight
+    if (scrollable <= 0) return
 
-    // Which square the reader has reached, by position along the route
-    // rather than by height, so a sideways stretch lights in sequence.
-    const reached = Math.floor(
-      dots.length * Math.min(1, Math.max(0, head / document.documentElement.scrollHeight)),
-    )
+    const through = Math.min(1, Math.max(0, window.scrollY / scrollable))
+    const reached = Math.round(dots.length * through)
 
-    let last = null
-    dots.forEach((dot, index) => {
-      const passed = index <= reached
-      dot.el.classList.toggle("lit", passed)
-      if (passed) last = dot
+    dots.forEach(function (dot, index) {
+      dot.el.classList.toggle("lit", index <= reached)
     })
 
-    if (last) {
-      mark.style.transform = `translate(${last.x}px, ${last.y}px)`
-      mark.style.opacity = "1"
-    } else {
-      mark.style.opacity = "0"
-    }
+    const head = dots[Math.min(dots.length - 1, reached)]
+    mark.style.transform = "translate(" + head.x + "px, " + head.y + "px)"
+    // Invisible at the very top, where it is still part of the logo.
+    mark.style.opacity = through > 0.004 ? "1" : "0"
   }
 
   function onScroll() {
@@ -198,13 +213,16 @@ function startRoute() {
   }
 
   window.addEventListener("scroll", onScroll, { passive: true })
-  window.addEventListener("resize", () => {
-    layout()
-    update()
-  }, { passive: true })
+  window.addEventListener(
+    "resize",
+    function () {
+      layout()
+      update()
+    },
+    { passive: true },
+  )
 
-  // Wait a frame so the layout has settled before measuring it.
-  requestAnimationFrame(() => {
+  requestAnimationFrame(function () {
     layout()
     update()
   })

@@ -1495,9 +1495,10 @@ html {
   display: block;
 }
 
-/* Content sits above the route, or the line would draw over the text. */
-.wrap,
-.topbar-wrap {
+/* Content sits above the route, or the trail would be drawn over the text.
+   The header is left out on purpose: it is already above the route through
+   its own z-index, and naming it here would override its sticky position. */
+.wrap {
   position: relative;
   z-index: 1;
 }
