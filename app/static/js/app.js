@@ -65,6 +65,10 @@ const files = new Map()
 // each page is drawn once and the canvas is then moved around.
 const thumbnails = new Map()
 
+// The opened pdf.js documents, by worker document id, so a page can be drawn
+// again at a larger size without reading the file a second time.
+const rendered = new Map()
+
 // Chosen images, for the images to PDF tool. Kept as bytes because they are
 // not PDFs and never reach the worker as documents.
 let chosenImages = []
@@ -284,7 +288,11 @@ async function openFiles(chosen) {
     }
 
     downloadBtn.disabled = false
-    result.textContent = `${countOf(order.length, "page")} ready. ${modes[currentMode()].hint}`
+    // The size as well as the count, since the limit is quoted in megabytes
+    // and someone near it has no way to tell how close they are otherwise.
+    result.textContent =
+      `${countOf(order.length, "page")}, ${formatSize(loadedBytes)}. ` +
+      modes[currentMode()].hint
     paintLamps()
   } catch (error) {
     result.textContent = error.message
@@ -321,6 +329,8 @@ function reset() {
   for (const id of files.keys()) call("close", { id })
   files.clear()
   thumbnails.clear()
+  for (const pdf of rendered.values()) pdf.destroy()
+  rendered.clear()
   marked.clear()
   order = []
   pagesEl.replaceChildren()
@@ -331,6 +341,11 @@ function reset() {
 async function renderThumbnails(docId, bytes) {
   const task = pdfjs.getDocument({ data: bytes, isEvalSupported: false })
   const pdf = await task.promise
+
+  // Kept so a page can be drawn again at full size when someone looks
+  // closer. The thumbnail is rendered at a fraction of the real size, so
+  // scaling that up shows a blurred copy rather than the page.
+  rendered.set(docId, pdf)
 
   for (let n = 1; n <= pdf.numPages; n++) {
     const page = await pdf.getPage(n)
@@ -349,6 +364,21 @@ async function renderThumbnails(docId, bytes) {
     result.textContent = `Drawing page ${n} of ${pdf.numPages}`
     drawPages()
   }
+}
+
+/**
+ * Put a rendered page in a fixed size box.
+ *
+ * Pages are not all the same shape, and letting each thumbnail keep its own
+ * height made the row ragged: a landscape page sat shorter than a portrait
+ * one, so the name and the arrows underneath it rode up. The box is a fixed
+ * size and the page is centred inside it.
+ */
+function inThumb(inner) {
+  const thumb = document.createElement("div")
+  thumb.className = "thumb"
+  thumb.appendChild(inner)
+  return thumb
 }
 
 // Rebuild the grid from `order`, wrapping each thumbnail in its controls.
@@ -376,11 +406,11 @@ function drawPages() {
         canvas.style.opacity = mode === "extract" ? "0.4" : "1"
       }
       canvas.style.transform = entry.rotate ? `rotate(${entry.rotate}deg)` : ""
-      box.appendChild(canvas)
+      box.appendChild(inThumb(canvas))
     } else {
       const placeholder = document.createElement("div")
       placeholder.className = "placeholder"
-      box.appendChild(placeholder)
+      box.appendChild(inThumb(placeholder))
     }
 
     const label = document.createElement("div")
@@ -413,8 +443,108 @@ function drawPages() {
       })
     }
 
+    // A button rather than a click on the page itself: on the delete and
+    // extract tools clicking already means "choose this one", and one
+    // gesture cannot carry two meanings.
+    box.appendChild(zoomButton(entry, label.textContent))
+
     pagesEl.appendChild(box)
   })
+}
+
+/** The button that opens a page large enough to read. */
+function zoomButton(entry, caption) {
+  const button = document.createElement("button")
+  button.type = "button"
+  button.className = "zoom"
+  button.dataset.tip = "Look closer"
+  button.setAttribute("aria-label", `Look closer at ${caption}`)
+  button.textContent = "+"
+  button.addEventListener("click", (event) => {
+    event.stopPropagation()
+    openViewer(entry, caption)
+  })
+  return button
+}
+
+/**
+ * Show one page big, over the rest of the site.
+ *
+ * A thumbnail is small enough that two pages of similar text look alike, so
+ * there has to be a way to check which is which. The page is already
+ * rendered, so this copies that canvas rather than reading the file again.
+ */
+async function openViewer(entry, caption) {
+  const backdrop = document.createElement("div")
+  backdrop.className = "viewer"
+  backdrop.setAttribute("role", "dialog")
+  backdrop.setAttribute("aria-modal", "true")
+  backdrop.setAttribute("aria-label", caption)
+
+  const big = document.createElement("canvas")
+  if (entry.rotate) big.style.transform = `rotate(${entry.rotate}deg)`
+
+  const name = document.createElement("p")
+  name.className = "viewer-name"
+  name.textContent = caption
+
+  const close = document.createElement("button")
+  close.type = "button"
+  close.className = "chip"
+  close.textContent = "Close"
+
+  const panel = document.createElement("div")
+  panel.className = "viewer-panel"
+  panel.append(big, name, close)
+  backdrop.append(panel)
+
+  const shut = () => {
+    backdrop.remove()
+    document.removeEventListener("keydown", onKey)
+  }
+  const onKey = (event) => {
+    if (event.key === "Escape") shut()
+  }
+
+  close.addEventListener("click", shut)
+  // The darkened area closes it, the page itself does not.
+  backdrop.addEventListener("click", (event) => {
+    if (event.target === backdrop) shut()
+  })
+  document.addEventListener("keydown", onKey)
+
+  document.body.append(backdrop)
+  close.focus()
+
+  // Drawn after the panel is on screen, so the viewer opens at once and the
+  // page arrives a moment later rather than everything waiting on the render.
+  const pdf = rendered.get(entry.doc)
+  if (!pdf) return
+
+  const source = thumbnails.get(entry.key)
+  if (source) {
+    // The thumbnail first, stretched, so there is something to look at
+    // immediately. The real render replaces it below.
+    big.width = source.width
+    big.height = source.height
+    big.getContext("2d").drawImage(source, 0, 0)
+  }
+
+  const page = await pdf.getPage(entry.page)
+
+  // Sized to the window rather than to a fixed scale, so the page fills the
+  // space available on a large screen and still fits on a small one.
+  const natural = page.getViewport({ scale: 1 })
+  const room = Math.min(window.innerWidth * 0.85, 900)
+  const scale = Math.min(room / natural.width, (window.innerHeight * 0.72) / natural.height)
+  const viewport = page.getViewport({ scale: Math.max(scale, 0.5) })
+
+  // The viewer may have been closed while the page was rendering.
+  if (!backdrop.isConnected) return
+
+  big.width = viewport.width
+  big.height = viewport.height
+  await page.render({ canvasContext: big.getContext("2d"), viewport }).promise
 }
 
 function shortName(name = "file") {
@@ -426,7 +556,7 @@ function moveButton(direction, from, to, disabled) {
   const button = document.createElement("button")
   button.className = "mini"
   button.textContent = direction === "left" ? "<" : ">"
-  button.title = direction === "left" ? "Move earlier" : "Move later"
+  button.dataset.tip = direction === "left" ? "Move earlier" : "Move later"
   button.disabled = disabled
   button.addEventListener("click", () => {
     const moved = order.splice(from, 1)[0]
@@ -440,7 +570,7 @@ function moveButton(direction, from, to, disabled) {
 function turnButton(entry, amount) {
   const button = document.createElement("button")
   button.className = "mini"
-  button.title = amount < 0 ? "Turn left" : "Turn right"
+  button.dataset.tip = amount < 0 ? "Turn left" : "Turn right"
   button.textContent = amount < 0 ? "↶" : "↷"
   button.addEventListener("click", () => {
     entry.rotate = (entry.rotate + amount + 360) % 360
@@ -568,7 +698,9 @@ async function addImages(chosen) {
   downloadBtn.disabled = false
   drawImages()
   paintLamps()
-  result.textContent = `${countOf(chosenImages.length, "image")} ready.`
+  const imageBytes = chosenImages.reduce((sum, i) => sum + i.bytes.byteLength, 0)
+  result.textContent =
+    `${countOf(chosenImages.length, "image")}, ${formatSize(imageBytes)}.`
 }
 
 function drawImages() {
@@ -583,7 +715,7 @@ function drawImages() {
     const url = URL.createObjectURL(new Blob([image.bytes]))
     preview.src = url
     preview.addEventListener("load", () => URL.revokeObjectURL(url))
-    box.appendChild(preview)
+    box.appendChild(inThumb(preview))
 
     const label = document.createElement("div")
     label.className = "num"
