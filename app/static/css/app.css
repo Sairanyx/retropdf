@@ -1558,8 +1558,22 @@ html {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  font-size: 1rem;
+  /* The display face, and a size up to carry it. Handjet is a pixel face
+     drawn for headings: at body size its stepped edges close up and it
+     turns muddy, so it needs the extra size to stay legible. */
+  font-family: var(--display);
+  font-size: 1.375rem;
+  letter-spacing: 0.01em;
   color: var(--ink-2);
+}
+
+/* The opening line under the headline, in the display face to match the
+   proof list below it. Scoped to the hero: the same class sets the body
+   copy in the privacy section, which stays in the mono where it belongs. */
+.hero .lede {
+  font-family: var(--display);
+  font-size: clamp(1.375rem, 1.5vw, 1.75rem);
+  letter-spacing: 0.01em;
 }
 
 .proof .led {
