@@ -422,7 +422,6 @@ html {
      page it set off from. Which is what the thing appears to offer, having
      visibly come from up there. */
   pointer-events: auto;
-  cursor: pointer;
 }
 
 /* Warms on hover the way the logo plate does, so it is discoverable as
@@ -1966,7 +1965,11 @@ button:not(:disabled),
 [role="button"]:not([aria-disabled="true"]),
 .tool,
 .chip:not(:disabled),
-[data-position] {
+[data-position],
+/* The travelling mark. It sits inside the logo link, but an SVG does not
+   take the cursor from its parent the way an HTML element does, so without
+   naming it here it falls back to the system hand. */
+.brand-slot.travelling > svg {
   cursor: url("/static/cursors/hand.svg") 9 1, pointer;
 }
 
