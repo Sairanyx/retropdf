@@ -234,16 +234,8 @@ html {
 }
 
 .chip.solid:hover {
-  background: color-mix(in srgb, var(--ink) 82%, var(--accent));
+  background: color-mix(in srgb, var(--ink) 88%, var(--ground));
   color: #fff;
-}
-
-/* A lit LED has to stay visible against the filled background, so it is
-   given its own rule rather than relying on the shared one. */
-.chip.solid.on .led,
-.chip.solid[aria-current="true"] .led {
-  background: var(--accent);
-  box-shadow: 0 0 7px var(--accent), 0 0 2px var(--accent);
 }
 
 .chip.accent {
@@ -269,7 +261,9 @@ html {
 .chip.on .led,
 .chip[aria-current="true"] .led {
   background: var(--accent);
-  box-shadow: 0 0 6px var(--accent);
+  /* No inset shadow here: a lit bulb glows outward rather than looking
+     recessed, which is what separates it from the dead state. */
+  box-shadow: 0 0 6px var(--accent), 0 0 2px var(--accent);
 }
 
 /* ---------- header ---------- */
@@ -1077,46 +1071,136 @@ input[type="number"]::-webkit-inner-spin-button {
   outline-offset: 1px;
 }
 
-/* The select keeps the native dropdown, which is the only accessible option,
-   but the closed control and its arrow are drawn to match everything else.
-   The open list is painted by the operating system and cannot be styled. */
-select {
-  appearance: none;
-  -webkit-appearance: none;
-  font: inherit;
-  font-size: 0.8125rem;
-  padding: 0.5rem 2.25rem 0.5rem 0.75rem;
+/* The picker: a select replaced by a listbox that can actually be styled.
+   The native select stays underneath for its value, hidden from view and
+   from assistive technology, which reads the listbox instead. */
+
+.picker-native {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.picker {
+  position: relative;
+  display: inline-block;
+}
+
+.picker-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 9rem;
+  padding: 0.5rem 0.75rem;
   border: 0;
   border-radius: var(--r-sm);
-  background-color: var(--chip);
+  background: var(--chip);
   box-shadow: var(--raise);
   color: var(--ink);
+  font: inherit;
+  font-size: 0.8125rem;
+  text-align: left;
   cursor: pointer;
-  /* Two short strokes forming a chevron, drawn with gradients so there is no
-     image to load and it follows the text colour. */
-  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
-    linear-gradient(135deg, currentColor 50%, transparent 50%);
-  background-position: calc(100% - 17px) 53%, calc(100% - 12px) 53%;
-  background-size: 6px 6px, 6px 6px;
-  background-repeat: no-repeat;
-  transition: background-color var(--t), box-shadow var(--t);
+  transition: background var(--t), box-shadow var(--t);
 }
 
-select:hover {
-  background-color: var(--chip-hover);
+.picker-button::after {
+  content: "";
+  margin-left: auto;
+  width: 0;
+  height: 0;
+  /* A solid triangle, so there is no image to load and it follows the
+     text colour. */
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid currentColor;
+  transition: transform var(--t);
 }
 
-select:active {
+.picker.open .picker-button::after {
+  transform: rotate(180deg);
+}
+
+.picker-button:hover {
+  background: var(--chip-hover);
+}
+
+.picker.open .picker-button {
   box-shadow: var(--press);
+  background: var(--chip-press);
 }
 
-select:focus-visible {
+.picker-button:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
-/* The dropdown list itself, as far as browsers allow. */
-select option {
+.picker-list {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 100%;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  z-index: 200;
   background: var(--chip);
+  border-radius: var(--r-sm);
+  box-shadow: var(--raise-lg), 0 10px 26px -10px var(--shade);
+  max-height: 15rem;
+  overflow-y: auto;
+  animation: picker-open 0.14s ease-out;
+}
+
+@keyframes picker-open {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+.picker-option {
+  padding: 0.4375rem 0.625rem;
+  border-radius: var(--r-xs);
+  font-size: 0.8125rem;
+  color: var(--ink-2);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+/* Whichever option the pointer or keyboard is on. */
+.picker-option.active {
+  background: var(--chip-press);
   color: var(--ink);
 }
+
+/* The one currently in effect, marked so it is clear even while the
+   keyboard is somewhere else in the list. */
+.picker-option.chosen {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.picker-option.chosen::before {
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 0.5rem;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 5px var(--accent);
+  vertical-align: 0.05em;
+}
+
+.picker-option:not(.chosen)::before {
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 0.5rem;
+  vertical-align: 0.05em;
+}
+
