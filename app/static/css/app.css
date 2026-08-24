@@ -1259,6 +1259,20 @@ html.reveal-on [data-reveal].shown .tools > li {
   box-shadow: 0 0 6px var(--accent), 0 0 2px var(--accent);
 }
 
+/* The chosen switch lights up on hover like every other control.
+ *
+ * It needs its own rule, and it has to come after the checked one: that sets
+ * a pressed shadow, and being later in the file it was overriding the hover
+ * glow. The pressed look stays underneath the glow, so the switch still
+ * reads as the one that is chosen. */
+.switchbox:has(input:checked):hover {
+  box-shadow:
+    var(--press),
+    0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent),
+    0 0 16px color-mix(in srgb, var(--accent) 30%, transparent),
+    0 0 6px color-mix(in srgb, var(--accent) 24%, transparent);
+}
+
 .switchbox:has(input:focus-visible) {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
