@@ -225,46 +225,27 @@ function startRoute() {
    * Reveal the trail as far as the reader has come, and put the mark at the
    * front of it.
    */
-  // Where the mark was on the last frame, so the direction of travel is
-  // known. The trail only ever falls behind it, never ahead.
-  let previousIndex = 0
-
   let ticking = false
   function update() {
     ticking = false
     if (dots.length === 0) return
 
+    // How far along the route the mark has travelled, taken from how far
+    // down the page the reader is. Measuring progress rather than a height
+    // on screen means the mark reaches the end of the route exactly as the
+    // page reaches its foot, instead of stalling around the middle.
     const scrollable =
       document.documentElement.scrollHeight - window.innerHeight
     const through =
       scrollable > 0 ? Math.min(1, Math.max(0, window.scrollY / scrollable)) : 0
 
-    // Position along the route, worked out from how far down the page the
-    // reader is. Using distance travelled rather than height means a
-    // sideways stretch is crossed in sequence rather than lighting at once,
-    // and the mark reaches the end of the route exactly at the foot of the
-    // page rather than stopping short.
-    const index = Math.min(dots.length - 1, Math.round(dots.length * through))
-    const goingForward = index >= previousIndex
+    const reached = Math.min(dots.length - 1, Math.round(dots.length * through))
 
-    dots.forEach((dot, at) => {
-      // Everything the mark has already passed stays lit, so the route
-      // behind is a record of where you have been.
-      const passed = at <= index
-      dot.el.classList.toggle("lit", passed)
-
-      // A brighter run immediately behind the mark, which reads as the trail
-      // it is leaving. Behind means the opposite way to travel: scrolling
-      // down it falls above, scrolling up it falls below. Without that it
-      // appears ahead of the mark, which looks like it is being pulled
-      // rather than moving.
-      const distance = goingForward ? index - at : at - index
-      dot.el.classList.toggle("fresh", distance >= 0 && distance < 9)
+    dots.forEach((dot, index) => {
+      dot.el.classList.toggle("lit", index <= reached)
     })
 
-    previousIndex = index
-
-    const head = dots[index]
+    const head = dots[reached]
     mark.style.transform = `translate(${head.x}px, ${head.y}px)`
     mark.style.opacity = through > 0.002 ? "1" : "0"
   }
