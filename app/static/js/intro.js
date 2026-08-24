@@ -37,7 +37,12 @@ if (headline && !wantsLessMotion) {
   headline.textContent = ""
 }
 
+function reveal() {
+  document.documentElement.classList.remove("intro-pending")
+}
+
 if (!stage || !mark || wantsLessMotion || alreadySeen) {
+  reveal()
   document.body.classList.add("intro-done", "intro-skipped")
   // Let the page fade start before the heading begins writing, so the two
   // read as one arrival rather than a stutter.
@@ -52,7 +57,10 @@ if (!stage || !mark || wantsLessMotion || alreadySeen) {
 }
 
 function run() {
+  // The holding classes go on first, so nothing is visible for the frame
+  // between revealing the page and the sequence taking over.
   document.body.classList.add("intro-running")
+  reveal()
 
   // Work out where the mark has to travel to before it starts moving. The
   // header is laid out already, it is only transparent, so measuring is safe.
@@ -164,7 +172,7 @@ function typeHeadline() {
       setTimeout(() => {
         headline.classList.remove("typing")
         headline.style.minHeight = ""
-      }, 500)
+      }, 120)
     }
   }
   step()

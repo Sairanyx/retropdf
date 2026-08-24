@@ -13,6 +13,12 @@
   <meta property="og:type" content="website">
   <meta property="og:url" content="{{ canonical }}">
   <link rel="stylesheet" href="/static/css/app.css">
+
+  <!-- Applied before the page paints, so a first visit never shows the
+       finished page for a frame before the opening sequence starts.
+       intro.js removes it. Without scripting the noscript rule wins. -->
+  <script>document.documentElement.classList.add("intro-pending")</script>
+  <noscript><style>.intro-pending body { visibility: visible !important; }</style></noscript>
 </head>
 <body data-intro="1">
   <!-- Falls from above on first load, then settles into the brand plate. -->

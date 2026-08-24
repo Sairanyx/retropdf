@@ -70,14 +70,20 @@ if (watched.size > 0 && "IntersectionObserver" in window) {
   if (settling) {
     const target = document.querySelector(window.location.hash)
     if (target) {
-      // Let the browser finish scrolling, then start reporting.
-      requestAnimationFrame(() => {
-        target.scrollIntoView({ behavior: "auto", block: "start" })
-        setTimeout(() => {
+      // Arriving with a #section in the address, the browser lands at the
+      // top and scrolls down. Reporting during that scroll lights every
+      // section it passes, so nothing is reported until it has stopped.
+      let quietFor = null
+      const waitForStillness = () => {
+        clearTimeout(quietFor)
+        quietFor = setTimeout(() => {
+          window.removeEventListener("scroll", waitForStillness)
           settling = false
           update()
-        }, 60)
-      })
+        }, 140)
+      }
+      window.addEventListener("scroll", waitForStillness, { passive: true })
+      waitForStillness()
     } else {
       settling = false
     }
@@ -96,8 +102,10 @@ if (watched.size > 0 && "IntersectionObserver" in window) {
       update()
     },
 
-    // A section counts as current once it covers the middle of the window.
-    { rootMargin: "-45% 0px -45% 0px" },
+    // A section counts as current only while it covers the middle third of
+    // the window. Nothing is lit at the top of the page, where the hero is,
+    // so a light means you have actually scrolled to that section.
+    { rootMargin: "-35% 0px -55% 0px" },
   )
 
   // Light only the topmost visible section, so two never compete.
