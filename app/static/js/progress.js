@@ -76,27 +76,46 @@ function startRoute() {
   // position is not, and the origin has to be a fixed point on the page.
   let cachedOrigin = null
 
+  // The icon inside the brand plate. The travelling mark is the same shape,
+  // so hiding this one while the mark is away reads as the icon itself
+  // having left rather than as a second copy appearing.
+  const plate = document.querySelector("#brand-plate")
+  const plateIcon = plate?.querySelector("svg")
+
   /**
-   * Where the mark sets off from: the underside of the brand plate.
+   * Where the mark sets off from: the logo icon itself.
    *
-   * The plate rather than the icon inside it, so the trail appears to leave
-   * the logo itself. Starting at the icon's centre puts the first square
-   * below the plate with a visible gap above it.
+   * Not the plate edge. The mark is the icon, so it has to start exactly
+   * where the icon sits or the handover shows a jump.
    */
   function origin() {
     if (cachedOrigin) return cachedOrigin
+    if (!plateIcon) return { x: 60, y: 0 }
 
-    const plate = document.querySelector("#brand-plate")
-    if (!plate) return { x: 60, y: 0 }
+    // Measured against the plate's own offset position rather than the
+    // scroll. The plate is sticky, so its viewport position is wherever the
+    // scroll has parked it: adding scrollY to that would put the origin
+    // thousands of pixels down when measured after scrolling.
+    //
+    // The icon is an SVG element, which has no offsetTop of its own, so its
+    // place inside the plate is taken from the difference between the two
+    // rectangles. That difference is unaffected by scrolling, since both
+    // move together.
+    const iconBox = plateIcon.getBoundingClientRect()
+    const plateBox = plate.getBoundingClientRect()
 
-    // The plate is sticky, so its viewport position is wherever the scroll
-    // has parked it, not where it sits on the page. Adding scrollY to that
-    // would put the origin thousands of pixels down when measured after
-    // scrolling. offsetTop is the home position and does not move.
-    const box = plate.getBoundingClientRect()
+    // offsetLeft and offsetTop are each relative to the nearest positioned
+    // ancestor, so they are summed up the chain to reach the page.
+    let plateX = 0
+    let plateY = 0
+    for (let el = plate; el; el = el.offsetParent) {
+      plateX += el.offsetLeft
+      plateY += el.offsetTop
+    }
+
     cachedOrigin = {
-      x: box.left + window.scrollX + box.width / 2,
-      y: plate.offsetTop + plate.offsetHeight - 6,
+      x: plateX + (iconBox.left - plateBox.left) + iconBox.width / 2,
+      y: plateY + (iconBox.top - plateBox.top) + iconBox.height / 2,
     }
     return cachedOrigin
   }
@@ -207,11 +226,32 @@ function startRoute() {
     // in a corner.
     const through = Math.min(1, Math.max(0, window.scrollY / scrollable))
     const band = 0.25 + through * 0.35
-    const y = Math.max(from.y, window.scrollY + window.innerHeight * band)
+    const reading = window.scrollY + window.innerHeight * band
+
+    // At the very top the mark stays in the logo, and it is only pulled out
+    // of it by scrolling. Taking the reading position straight away would
+    // park it a quarter of the way down the first screen before anything had
+    // moved, which empties the logo while the page is still at rest.
+    //
+    // Over the first screenful it eases from the logo to the reading
+    // position, so it visibly leaves rather than jumping.
+    const handover = Math.min(1, window.scrollY / (window.innerHeight * 0.6))
+    const y = Math.max(from.y, from.y + (reading - from.y) * handover)
 
     const here = positionAt(y)
     mark.style.transform = "translate(" + here.x + "px, " + here.y + "px)"
-    mark.style.opacity = window.scrollY > 4 ? "1" : "0"
+
+    // The mark and the plate icon are the same object as far as the reader
+    // is concerned, so exactly one of them is ever visible. Once the mark
+    // has pulled clear of the logo it takes over, and the slot in the plate
+    // is left empty until scrolling back to the top brings it home.
+    //
+    // The threshold is a short distance rather than any scroll at all, so a
+    // small nudge does not empty the logo while the mark is still sitting
+    // on top of it.
+    const away = here.y - from.y > 24
+    mark.style.opacity = away ? "1" : "0"
+    plate?.classList.toggle("mark-away", away)
 
     // Lay squares for every step between the logo and here that is not
     // already marked. They come from the same function that places the mark,
@@ -250,6 +290,12 @@ function startRoute() {
 
   window.addEventListener("scroll", onScroll, { passive: true })
 
+  // Leaving the page while scrolled down would otherwise be remembered as an
+  // empty slot when the browser restores it from cache.
+  window.addEventListener("pagehide", () => {
+    plate?.classList.remove("mark-away")
+  })
+
   // Returning with the back button restores the scroll position without a
   // scroll event, so the trail would be missing until something moved.
   window.addEventListener("pageshow", () => {
@@ -272,6 +318,7 @@ function startRoute() {
 
       if (window.innerWidth < NARROWEST) {
         mark.style.opacity = "0"
+        plate?.classList.remove("mark-away")
         return
       }
       update()

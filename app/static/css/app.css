@@ -300,6 +300,18 @@ html {
   color: var(--ink);
 }
 
+/* The mark travels down the page, so while it is away the plate shows an
+   empty slot where it sits. Hidden rather than removed, so the word beside
+   it never shifts, and faded rather than snapped so the handover reads as
+   the same object leaving and coming back. */
+.brand svg {
+  transition: opacity 0.25s ease-out;
+}
+
+.brand.mark-away svg {
+  opacity: 0;
+}
+
 .brand-word {
   font-family: var(--display);
   font-size: 2rem;
@@ -1444,7 +1456,7 @@ html {
   width: 22px;
   height: 26px;
   margin: -13px 0 0 -11px;
-  color: var(--ink-2);
+  color: var(--ink);
   opacity: 0;
   /* Follows the scroll closely enough to feel attached to it, with just
      enough lag to read as travelling rather than jumping. */
