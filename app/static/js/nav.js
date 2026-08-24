@@ -31,9 +31,14 @@ if (!wantsLessMotion) {
     if (url.origin !== window.location.origin) return
 
     // A link to a section of this same page scrolls, it does not navigate.
+    // Smooth scrolling is switched on just for the jump, since leaving it on
+    // would also animate the browser restoring your position on reload.
     const samePage =
       url.pathname === window.location.pathname && url.search === window.location.search
-    if (samePage && url.hash) return
+    if (samePage && url.hash) {
+      glide()
+      return
+    }
 
     event.preventDefault()
 
@@ -52,4 +57,19 @@ if (!wantsLessMotion) {
   window.addEventListener("pageshow", () => {
     document.body.classList.remove("leaving")
   })
+}
+
+/**
+ * Allow smooth scrolling for the length of one jump.
+ *
+ * A second or so covers any reasonable distance, after which it is turned
+ * off again so nothing else on the page inherits it.
+ */
+let glideTimer = null
+function glide() {
+  document.documentElement.classList.add("gliding")
+  clearTimeout(glideTimer)
+  glideTimer = setTimeout(() => {
+    document.documentElement.classList.remove("gliding")
+  }, 1200)
 }

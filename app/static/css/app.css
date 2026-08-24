@@ -142,15 +142,22 @@ body.intro-reveal {
   animation: ground-up 2.7s cubic-bezier(0.62, 0.02, 0.34, 1) forwards;
 }
 
-/* Anchor links glide rather than jumping, and stop clear of the fixed
-   header instead of underneath it. */
-html {
+/* Anchor links glide rather than jumping.
+ *
+ * Applied only while a link to a section is being followed, never globally:
+ * a global rule also animates the browser restoring your scroll position on
+ * reload, so the page creeps down instead of simply appearing where you
+ * left it. nav.js adds the class for the length of the jump. */
+html.gliding {
   scroll-behavior: smooth;
+}
+
+html {
   scroll-padding-top: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html {
+  html.gliding {
     scroll-behavior: auto;
   }
 }
@@ -1390,56 +1397,6 @@ html {
    Scroll cue and progress
    ============================================================ */
 
-/* A short dotted line under the hero.
- *
- * The article's point about false bottoms is the one that matters: a hero
- * that looks finished stops people scrolling. This is the smallest thing
- * that says otherwise. No arrow and no wording, because the shape is
- * already the instruction, and anything louder starts nagging. */
-
-.trail {
-  display: block;
-  width: 1px;
-  height: 56px;
-  margin: 3.5rem auto 0;
-  border-radius: 1px;
-}
-
-.trail-line {
-  display: block;
-  width: 1px;
-  height: 100%;
-  background-image: linear-gradient(
-    var(--ink-4) 0 3px,
-    transparent 3px 8px
-  );
-  background-size: 1px 8px;
-  background-repeat: repeat-y;
-  opacity: 0.55;
-  animation: trail-fall 2.4s ease-in-out infinite;
-}
-
-.trail:hover .trail-line {
-  opacity: 1;
-  background-image: linear-gradient(var(--accent) 0 3px, transparent 3px 8px);
-}
-
-.trail:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 6px;
-}
-
-/* The dots drift downward, so the line reads as falling rather than sitting
-   still. Slow enough not to demand attention. */
-@keyframes trail-fall {
-  from {
-    background-position-y: 0;
-  }
-  to {
-    background-position-y: 8px;
-  }
-}
-
 /* The route the mark travels.
  *
  * A trail of squares rather than a drawn line, so the edges are stepped in
@@ -1504,9 +1461,6 @@ html {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .trail-line {
-    animation: none;
-  }
   .progress-fill {
     transition: none;
   }
