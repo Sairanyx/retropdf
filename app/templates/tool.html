@@ -5,7 +5,7 @@
   <section class="tool-head first-screen">
     <p class="label">{{ tool.name }}</p>
     <h1 data-type="{{ tool.heading }}">{{ tool.heading }}</h1>
-    <p class="lede">{{ tool.blurb }}</p>
+    <p class="lede">{{ tool.steps }}</p>
   </section>
 
   <!-- The active tool. The browser code reads this rather than guessing from
@@ -89,8 +89,8 @@
       {% endfor %}
     </ul>
     <p class="workspace-note">
-      To do several things to one file:
-      <a href="/workspace">open the workspace</a>.
+      Need more than one tool on the same file?
+      <a href="/workspace">Open the workspace</a>.
     </p>
   </section>
 </div>

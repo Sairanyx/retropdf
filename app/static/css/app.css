@@ -218,17 +218,23 @@ html {
   font: inherit;
   font-weight: 500;
   font-size: 1.0625rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: 0.02em;
   text-decoration: none;
   cursor: pointer;
   transition: background var(--t), box-shadow var(--t), color var(--t),
     transform var(--t);
 }
 
+/* The same lamp behind the plate that the logo and the tool cards get, so
+   every raised thing on the site answers to a pointer the same way. */
 .chip:hover {
   background: var(--chip-hover);
   color: var(--ink);
+  box-shadow:
+    var(--raise),
+    0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent),
+    0 0 16px color-mix(in srgb, var(--accent) 30%, transparent),
+    0 0 6px color-mix(in srgb, var(--accent) 24%, transparent);
 }
 
 .chip:active {
@@ -459,8 +465,7 @@ a {
    caption for the heading rather than as part of it. */
 .label {
   font-size: 1.375rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  letter-spacing: 0.04em;
   color: var(--ink-2);
   margin: 0 0 1rem;
 }
@@ -611,8 +616,7 @@ h1.typing::after {
    vanishes in a thin stroked face. */
 .tool .k {
   font-size: 1.125rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  letter-spacing: 0.04em;
   color: var(--ink-3);
 }
 
@@ -718,9 +722,8 @@ fieldset {
 }
 
 legend {
-  font-size: 0.75rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  font-size: 1.0625rem;
+  letter-spacing: 0.03em;
   color: var(--ink-3);
   padding: 0;
 }
@@ -1115,9 +1118,8 @@ html.reveal-on [data-reveal].shown .tools > li {
   border-radius: var(--r-sm);
   background: var(--chip);
   box-shadow: var(--raise);
-  font-size: 0.8125rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: 1.0625rem;
+  letter-spacing: 0.02em;
   color: var(--ink-3);
   min-height: 44px;
   transition: background var(--t), color var(--t), box-shadow var(--t);
@@ -1140,15 +1142,20 @@ html.reveal-on [data-reveal].shown .tools > li {
   height: 10px;
 }
 
+/* Chosen. The lamp says so, the way it does on the download button, rather
+   than the whole switch inverting to white. Two ways of saying "this one is
+   on" in one row of controls read as two different kinds of thing.
+
+   The plate still presses in, so the state is not carried by colour alone
+   for anyone who cannot see the lamp. */
 .switchbox:has(input:checked) {
-  background: var(--ink);
-  color: var(--ground);
+  color: var(--ink);
   box-shadow: var(--press);
 }
 
 .switchbox:has(input:checked) .led {
   background: var(--accent);
-  box-shadow: 0 0 6px var(--accent);
+  box-shadow: 0 0 6px var(--accent), 0 0 2px var(--accent);
 }
 
 .switchbox:has(input:focus-visible) {

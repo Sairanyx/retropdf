@@ -29,7 +29,19 @@ class Tool:
     """The h1 on the tool's own page."""
 
     blurb: str
-    """One sentence explaining the tool, used on the home page."""
+    """One sentence explaining the tool, used on the home page.
+
+    This is for someone choosing between the eight tools. On the tool's own
+    page they have already chosen, so `steps` is shown there instead.
+    """
+
+    steps: str
+    """What to do, in order, shown under the heading on the tool's page.
+
+    Every one follows the same shape: select, do the thing, download. The
+    repetition is deliberate, since learning the pattern once carries across
+    all eight tools.
+    """
 
     title: str
     """The browser tab and search result title."""
@@ -45,6 +57,7 @@ TOOLS: tuple[Tool, ...] = (
         name="Merge PDF",
         heading="Combine PDFs into one file",
         blurb="Put several PDFs together in the order you choose.",
+        steps="Select two or more PDFs, drag them into order, then download.",
         title="Merge PDF files in your browser",
         description=(
             "Combine PDF files into one document. Nothing is uploaded: the "
@@ -57,6 +70,7 @@ TOOLS: tuple[Tool, ...] = (
         name="Delete PDF pages",
         heading="Delete pages from a PDF",
         blurb="Pick the pages you do not want and keep the rest.",
+        steps="Select a PDF, click the pages you want gone, then download the rest.",
         title="Delete pages from a PDF in your browser",
         description=(
             "Delete pages from a PDF without uploading it. The file never "
@@ -69,6 +83,7 @@ TOOLS: tuple[Tool, ...] = (
         name="Extract PDF pages",
         heading="Save some pages as a new PDF",
         blurb="Pick the pages you want and save them as a new file.",
+        steps="Select a PDF, click the pages you want to keep, then download them.",
         title="Extract pages from a PDF in your browser",
         description=(
             "Save selected pages of a PDF as a new file. Everything happens "
@@ -81,6 +96,7 @@ TOOLS: tuple[Tool, ...] = (
         name="Reorder PDF pages",
         heading="Change the order of PDF pages",
         blurb="Drag pages into the order you want.",
+        steps="Select a PDF, drag the pages into the order you want, then download.",
         title="Reorder PDF pages in your browser",
         description=(
             "Rearrange the pages of a PDF. Nothing is uploaded, so the "
@@ -93,6 +109,7 @@ TOOLS: tuple[Tool, ...] = (
         name="Rotate PDF",
         heading="Turn sideways pages upright",
         blurb="Turn pages that are sideways or upside down.",
+        steps="Select a PDF, turn any page that is sideways, then download.",
         title="Rotate PDF pages in your browser",
         description=(
             "Turn PDF pages the right way up, one page or all of them. "
@@ -105,6 +122,7 @@ TOOLS: tuple[Tool, ...] = (
         name="Split PDF",
         heading="Cut one PDF into several files",
         blurb="Cut one PDF into several smaller files.",
+        steps="Select a PDF, pick where to cut, then download the parts as a zip.",
         title="Split a PDF in your browser",
         description=(
             "Cut a PDF into separate files and download them as a zip. "
@@ -117,6 +135,7 @@ TOOLS: tuple[Tool, ...] = (
         name="Images to PDF",
         heading="Turn photos into a PDF",
         blurb="Put your JPG or PNG images into one PDF.",
+        steps="Select your JPG or PNG images, drag them into order, then download one PDF.",
         title="Convert JPG images to PDF in your browser",
         description=(
             "Turn JPG and PNG images into one PDF. The pictures stay on your "
@@ -129,6 +148,7 @@ TOOLS: tuple[Tool, ...] = (
         name="PDF to images",
         heading="Save PDF pages as pictures",
         blurb="Save every page as a separate PNG or JPG.",
+        steps="Select a PDF, pick a size, then download every page as an image.",
         title="Convert PDF pages to images in your browser",
         description=(
             "Save each page of a PDF as a PNG image. Runs on your own "
