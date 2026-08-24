@@ -1750,14 +1750,19 @@ html {
   margin-top: 1.5rem;
 }
 
-/* No underline: the link sits in the accent colour, which marks it clearly
-   enough, and the underline cut through the descenders of a pixel face. */
-.workspace-note a {
+/* Links inside a paragraph. No underline at rest: the accent colour marks
+   them clearly enough, and an underline cuts through the descenders of a
+   pixel face. It appears on hover, where it confirms what is about to be
+   clicked. */
+.workspace-note a,
+.lede a {
   color: var(--accent);
   text-decoration: none;
+  transition: color var(--t);
 }
 
-.workspace-note a:hover {
+.workspace-note a:hover,
+.lede a:hover {
   text-decoration: underline;
 }
 

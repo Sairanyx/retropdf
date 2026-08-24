@@ -14,6 +14,7 @@ const picker = document.querySelector("#picker")
 const result = document.querySelector("#result")
 const pagesEl = document.querySelector("#pages")
 const downloadBtn = document.querySelector("#download")
+const startOver = document.querySelector("#start-over")
 /**
  * Light the download button once there is something to save.
  *
@@ -26,6 +27,10 @@ const downloadBtn = document.querySelector("#download")
  */
 function paintLamps() {
   downloadBtn?.classList.toggle("on", !downloadBtn.disabled)
+  // Nothing open, nothing to clear.
+  if (startOver) {
+    startOver.hidden = order.length === 0 && chosenImages.length === 0
+  }
 }
 
 /**
@@ -325,6 +330,15 @@ async function openFiles(chosen) {
   }
 }
 
+// Clearing everything and going back to an empty page. Picking the wrong
+// file otherwise leaves reloading as the only way out.
+startOver?.addEventListener("click", () => {
+  reset()
+  // The starting hint, not the mode's working hint: "Add more files" makes
+  // no sense on a page that has just been emptied.
+  result.textContent = "Select a file to begin."
+})
+
 // Dropping files anywhere on the page opens them, the same as choosing them.
 acceptDroppedFiles(
   document.body,
@@ -351,7 +365,10 @@ function reset() {
   for (const id of files.keys()) call("close", { id })
   files.clear()
   thumbnails.clear()
-  for (const pdf of rendered.values()) pdf.destroy()
+  // cleanup(), not destroy(): a pdf.js document exposes the first and not
+  // the second, and calling the wrong one threw inside reset, which left
+  // everything after it in this function unreached.
+  for (const pdf of rendered.values()) pdf.cleanup?.()
   rendered.clear()
   marked.clear()
   order = []
