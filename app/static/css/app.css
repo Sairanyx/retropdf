@@ -811,23 +811,47 @@ body.intro-brand .intro-mark svg {
     transform 0.75s cubic-bezier(0.55, 0.02, 0.25, 1);
 }
 
-/* 4. The headline appears, empty, ready to be typed into. */
-body.intro-typing main,
+/* 4. The heading alone, empty, ready to be written into.
+ *
+ * The section it lives in becomes visible, but everything inside it except
+ * the heading is still held back. Otherwise the paragraph and buttons would
+ * be sitting there while the heading was still being typed, which reads as
+ * the page having already arrived. */
 body.intro-typing .wrap > section.hero,
 body.intro-typing .wrap > section.tool-head {
   opacity: 1;
-  transition: opacity 0.4s ease-out;
+  transition: opacity 0.35s ease-out;
 }
 
-/* 5. Everything the earlier steps have not already brought in.
+body.intro-typing .wrap > section.hero > *:not(h1),
+body.intro-typing .wrap > section.tool-head > *:not(h1) {
+  opacity: 0;
+}
+
+/* 5. Everything the earlier steps have not already brought in: the rest of
+ * the heading's own section, the sections below it, and the footer.
  *
- * The header arrived at step 3 and the heading at step 4, so naming them
- * again here would fade them in a second time, which reads as the whole
- * page reloading. Only what is still hidden is listed. */
+ * The header arrived at step 3 and the heading at step 4, so neither is
+ * named here. Naming them again would fade them in a second time, which
+ * reads as the whole page reloading. */
+body.intro-reveal .wrap > section.hero > *,
+body.intro-reveal .wrap > section.tool-head > *,
 body.intro-reveal footer,
 body.intro-reveal .wrap > section:not(.hero):not(.tool-head) {
   opacity: 1;
-  transition: opacity 0.6s ease-out;
+  transition: opacity 0.55s ease-out;
+}
+
+/* The lines under the heading arrive one after another rather than as a
+   block, which carries the same rhythm as the typing that preceded them. */
+body.intro-reveal .wrap > section.hero > *:nth-child(2),
+body.intro-reveal .wrap > section.tool-head > *:nth-child(2) {
+  transition-delay: 0.05s;
+}
+
+body.intro-reveal .wrap > section.hero > *:nth-child(3),
+body.intro-reveal .wrap > section.tool-head > *:nth-child(3) {
+  transition-delay: 0.14s;
 }
 
 /* ============================================================
