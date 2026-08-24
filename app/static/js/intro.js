@@ -1,11 +1,14 @@
 // The opening sequence.
 //
-// A mark falls from above, settles, then flies into the brand plate in the
-// corner and becomes it. The chrome and content arrive behind it, and the
-// headline types itself in.
+// The order matters and is the whole point:
+//   1. a document mark fades in on the dark ground, alone
+//   2. it travels up to the corner and lands where the brand icon sits
+//   3. the brand plate appears around it, so the mark becomes the logo
+//   4. the headline types itself in
+//   5. the rest of the page arrives
 //
-// The mark's landing point is measured from the real brand plate rather than
-// guessed, so it actually lands on it at any window size.
+// The mark's landing point is measured from the real brand icon rather than
+// guessed, so it lands correctly at any window size.
 //
 // Skipped for anyone who has asked for less motion, and skipped on repeat
 // visits within the session so it never becomes an obstacle.
@@ -24,6 +27,15 @@ try {
 
 const stage = document.querySelector("[data-intro]")
 const mark = document.querySelector(".intro-mark svg")
+const headline = document.querySelector("[data-type]")
+
+// Empty the headline before anything paints, so the finished text is never
+// briefly visible before the typing starts. The text lives in data-type, so
+// nothing is lost for search engines or without scripting.
+if (headline && !wantsLessMotion) {
+  headline.style.minHeight = `${headline.offsetHeight}px`
+  headline.textContent = ""
+}
 
 if (!stage || !mark || wantsLessMotion || alreadySeen) {
   document.body.classList.add("intro-done")
@@ -40,47 +52,61 @@ if (!stage || !mark || wantsLessMotion || alreadySeen) {
 function run() {
   document.body.classList.add("intro-running")
 
-  // Timings read frame by frame from the reference. The ground takes 2.7s to
-  // brighten, so the mark falls into that rather than waiting for it.
-  setTimeout(() => document.body.classList.add("intro-drop"), 60)
+  // Work out where the mark has to travel to before it starts moving. The
+  // header is laid out already, it is only transparent, so measuring is safe.
+  aimAtBrand()
+  window.addEventListener("resize", aimAtBrand)
 
+  // 1. The mark arrives on the dark ground, alone.
+  setTimeout(() => document.body.classList.add("intro-drop"), 80)
+
+  // 2. It travels to the corner and lands on the brand icon's position.
+  setTimeout(() => document.body.classList.add("intro-dock"), 1300)
+
+  // 3. The brand plate fades up around the landed mark, so the mark becomes
+  //    the logo rather than disappearing and being replaced.
+  setTimeout(() => document.body.classList.add("intro-brand"), 2000)
+
+  // 4. The headline types in.
   setTimeout(() => {
-    aimAtBrand()
-    document.body.classList.add("intro-dock")
-  }, 1250)
+    document.body.classList.add("intro-typing")
+    typeHeadline()
+  }, 2450)
 
-  // The chrome and content arrive while the mark is still travelling.
-  setTimeout(() => document.body.classList.add("intro-reveal"), 1500)
+  // 5. Everything else arrives.
+  setTimeout(() => document.body.classList.add("intro-reveal"), 2700)
 
-  // Hand control back. The mark is gone and the brand plate is in its place.
   setTimeout(() => {
     document.body.classList.add("intro-done")
-    document.body.classList.remove("intro-drop", "intro-dock", "intro-reveal")
-    typeHeadline()
-  }, 2100)
-
-  // The ground animation is the last thing to finish, so the class that
-  // drives it is removed only once it has.
-  setTimeout(() => document.body.classList.remove("intro-running"), 2800)
+    document.body.classList.remove(
+      "intro-running", "intro-drop", "intro-dock", "intro-brand",
+      "intro-typing", "intro-reveal",
+    )
+    window.removeEventListener("resize", aimAtBrand)
+  }, 3600)
 }
 
 /**
- * Point the falling mark at the real brand plate.
+ * Point the falling mark at the real brand icon.
  *
  * The mark starts centred in the window, so the distance it must travel is
- * measured live rather than assumed, which keeps it landing correctly at any
- * window size.
+ * measured live rather than assumed. Measuring the icon rather than the
+ * plate means the mark lands exactly where the logo's icon will be.
  */
 function aimAtBrand() {
   const brandIcon = document.querySelector("#brand-plate svg")
   if (!brandIcon) return
 
+  // Measure the mark at its resting size, ignoring any transform in flight.
+  const previous = mark.style.transform
+  mark.style.transform = "none"
   const from = mark.getBoundingClientRect()
+  mark.style.transform = previous
+
   const to = brandIcon.getBoundingClientRect()
 
   const dx = to.left + to.width / 2 - (from.left + from.width / 2)
   const dy = to.top + to.height / 2 - (from.top + from.height / 2)
-  // The mark is drawn larger than the brand icon, so it shrinks as it lands.
   const scale = to.width / (from.width || 1)
 
   mark.style.setProperty("--dock-x", `${dx}px`)
@@ -91,18 +117,15 @@ function aimAtBrand() {
 /**
  * Type the headline in.
  *
- * The finished text is already in the markup for search engines and for
- * anyone with scripting off, so this only replays it as typing.
+ * The finished text lives in data-type, so it is in the markup for search
+ * engines and for anyone with scripting off.
  */
 function typeHeadline() {
-  const headline = document.querySelector("[data-type]")
   if (!headline || wantsLessMotion || headline.dataset.typed === "1") return
 
   headline.dataset.typed = "1"
   const text = headline.dataset.type
 
-  // Hold the finished height so the page does not jump as lines are added.
-  headline.style.minHeight = `${headline.offsetHeight}px`
   headline.textContent = ""
   headline.classList.add("typing")
 
@@ -111,7 +134,7 @@ function typeHeadline() {
     shown += 1
     headline.textContent = text.slice(0, shown)
     if (shown < text.length) {
-      setTimeout(step, 18)
+      setTimeout(step, 22)
     } else {
       setTimeout(() => {
         headline.classList.remove("typing")

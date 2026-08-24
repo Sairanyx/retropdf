@@ -13,7 +13,8 @@ const wantsLessMotion =
 
 // --- blocks appear as you reach them -----------------------------------
 
-if (!wantsLessMotion && "IntersectionObserver" in window) {
+function startReveals() {
+  if (wantsLessMotion || !("IntersectionObserver" in window)) return
   document.documentElement.classList.add("reveal-on")
 
   const seen = new IntersectionObserver(
@@ -33,6 +34,20 @@ if (!wantsLessMotion && "IntersectionObserver" in window) {
   for (const block of document.querySelectorAll("[data-reveal]")) {
     seen.observe(block)
   }
+}
+
+// Wait for the opening sequence, so the two do not fight over the same
+// elements. Pages without an intro start immediately.
+if (document.body.classList.contains("intro-done")) {
+  startReveals()
+} else {
+  const waiting = new MutationObserver(() => {
+    if (document.body.classList.contains("intro-done")) {
+      waiting.disconnect()
+      startReveals()
+    }
+  })
+  waiting.observe(document.body, { attributes: true, attributeFilter: ["class"] })
 }
 
 // --- nav lights follow the section you are in --------------------------

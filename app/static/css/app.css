@@ -701,8 +701,8 @@ footer a:hover {
    Opening sequence
    ============================================================ */
 
-/* Held back until the intro finishes. Only applied while the intro is
-   actually running, so a page without scripting shows everything. */
+/* Everything is held back until its moment. Only applied while the intro is
+   actually running, so a page without scripting shows the lot. */
 body.intro-running .topbar-wrap,
 body.intro-running main,
 body.intro-running footer,
@@ -724,52 +724,61 @@ body.intro-running .intro-mark {
 }
 
 .intro-mark svg {
-  width: 88px;
+  width: 84px;
   height: auto;
   color: var(--ink);
-  /* Starts above the fold, already falling. */
-  transform: translateY(-60vh);
   opacity: 0;
 }
 
-/* The drop. Slow at first, then it lands and settles, which is what makes it
-   read as weight rather than a slide. */
+/* 1. The mark arrives on the dark ground, alone. It grows very slightly as
+      it appears, which reads as arriving rather than simply fading up. */
 body.intro-drop .intro-mark svg {
-  transform: translateY(0);
   opacity: 1;
-  transition: transform 0.95s cubic-bezier(0.16, 0.9, 0.3, 1),
-    opacity 0.35s ease-out;
+  transform: scale(1);
+  transition: opacity 0.7s ease-out, transform 0.9s cubic-bezier(0.16, 0.9, 0.3, 1);
 }
 
-/* Then it flies into the brand plate and becomes it. The distance and scale
-   are measured from the real plate in intro.js, so it lands on it at any
-   window size. */
+.intro-mark svg {
+  transform: scale(0.82);
+}
+
+/* 2. It travels to the corner and lands exactly where the brand icon sits.
+      The distance and scale are measured from the real icon in intro.js. */
 body.intro-dock .intro-mark svg {
-  transform: translate(var(--dock-x, -38vw), var(--dock-y, -34vh))
-    scale(var(--dock-scale, 0.25));
-  opacity: 0;
-  transition: transform 0.6s cubic-bezier(0.5, 0.02, 0.3, 1),
-    opacity 0.5s ease-in 0.1s;
+  transform: translate(var(--dock-x, -38vw), var(--dock-y, -40vh))
+    scale(var(--dock-scale, 0.26));
+  opacity: 1;
+  transition: transform 0.75s cubic-bezier(0.55, 0.02, 0.25, 1);
 }
 
-/* The page assembles behind it, each part a moment after the last rather
-   than everything appearing at once. */
+/* 3. The brand plate fades up around the landed mark, and the mark fades out
+      underneath it. Same position, same size, so it reads as the mark
+      becoming the logo rather than being swapped for it. */
+body.intro-brand .topbar-wrap {
+  opacity: 1;
+  transition: opacity 0.5s ease-out;
+}
+
+body.intro-brand .intro-mark svg {
+  opacity: 0;
+  transition: opacity 0.45s ease-in 0.15s,
+    transform 0.75s cubic-bezier(0.55, 0.02, 0.25, 1);
+}
+
+/* 4. The headline appears, empty, ready to be typed into. */
+body.intro-typing main,
+body.intro-typing .wrap > section.hero {
+  opacity: 1;
+  transition: opacity 0.4s ease-out;
+}
+
+/* 5. Everything else. */
 body.intro-reveal .topbar-wrap,
 body.intro-reveal main,
 body.intro-reveal footer,
 body.intro-reveal .wrap > section {
   opacity: 1;
   transition: opacity 0.6s ease-out;
-}
-
-body.intro-reveal .topbar-wrap {
-  animation: settle 0.55s cubic-bezier(0.16, 0.9, 0.3, 1);
-}
-
-@keyframes settle {
-  from {
-    transform: translateY(-16px);
-  }
 }
 
 /* ============================================================
