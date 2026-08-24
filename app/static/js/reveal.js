@@ -61,6 +61,30 @@ for (const link of document.querySelectorAll("[data-watch]")) {
 if (watched.size > 0 && "IntersectionObserver" in window) {
   const visible = new Set()
 
+  // Arriving from another page with a #section in the address, the browser
+  // lands at the top first and jumps down a moment later. Without this the
+  // wrong light comes on for that moment and then swaps, which reads as a
+  // glitch. Holding off until the jump has happened avoids it.
+  let settling = window.location.hash.length > 1
+
+  if (settling) {
+    const target = document.querySelector(window.location.hash)
+    if (target) {
+      // Let the browser finish scrolling, then start reporting.
+      requestAnimationFrame(() => {
+        target.scrollIntoView({ behavior: "auto", block: "start" })
+        setTimeout(() => {
+          settling = false
+          update()
+        }, 60)
+      })
+    } else {
+      settling = false
+    }
+  }
+
+  let update = () => {}
+
   const where = new IntersectionObserver(
     (entries) => {
       for (const entry of entries) {
@@ -68,19 +92,24 @@ if (watched.size > 0 && "IntersectionObserver" in window) {
         else visible.delete(entry.target)
       }
 
-      // Light only the topmost visible section, so two lights never compete.
-      let top = null
-      for (const section of visible) {
-        if (!top || section.offsetTop < top.offsetTop) top = section
-      }
-
-      for (const [section, link] of watched) {
-        link.classList.toggle("on", section === top)
-      }
+      if (settling) return
+      update()
     },
+
     // A section counts as current once it covers the middle of the window.
     { rootMargin: "-45% 0px -45% 0px" },
   )
+
+  // Light only the topmost visible section, so two never compete.
+  update = () => {
+    let top = null
+    for (const section of visible) {
+      if (!top || section.offsetTop < top.offsetTop) top = section
+    }
+    for (const [section, link] of watched) {
+      link.classList.toggle("on", section === top)
+    }
+  }
 
   for (const section of watched.keys()) where.observe(section)
 }
