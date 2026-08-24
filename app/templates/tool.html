@@ -2,9 +2,9 @@
 
 {% block content %}
 <div class="wrap">
-  <section class="tool-head" data-reveal>
+  <section class="tool-head">
     <p class="label">{{ tool.name }}</p>
-    <h1>{{ tool.heading }}</h1>
+    <h1 data-type="{{ tool.heading }}">{{ tool.heading }}</h1>
     <p class="lede">{{ tool.blurb }}</p>
   </section>
 

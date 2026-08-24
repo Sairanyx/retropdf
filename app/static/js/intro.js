@@ -39,7 +39,9 @@ if (headline && !wantsLessMotion) {
 
 if (!stage || !mark || wantsLessMotion || alreadySeen) {
   document.body.classList.add("intro-done", "intro-skipped")
-  typeHeadline()
+  // Let the page fade start before the heading begins writing, so the two
+  // read as one arrival rather than a stutter.
+  setTimeout(typeHeadline, wantsLessMotion ? 0 : 180)
 } else {
   try {
     sessionStorage.setItem(SEEN, "1")
@@ -57,30 +59,47 @@ function run() {
   aimAtBrand()
   window.addEventListener("resize", aimAtBrand)
 
-  // 1. The mark arrives on the dark ground, alone.
-  setTimeout(() => document.body.classList.add("intro-drop"), 80)
+  // Each step waits for the last to actually finish, rather than starting
+  // partway through it. The numbers below are the CSS durations, so the two
+  // stay in step if either is changed.
+  //
+  //   drop      80 + 900   settles at   980
+  //   rest                 holds to    1400   a beat of stillness
+  //   dock    1400 + 700   lands at    2100
+  //   brand   2100 + 450   plate up at 2550
+  //   typing  2550         starts as the plate settles
+  //   reveal  2750         the rest arrives while the heading writes
+
+  const DROP_AT = 80
+  const DROP_MS = 900
+  const REST_MS = 420 // the mark sits still, which is what gives it weight
+  const DOCK_MS = 700
+  const BRAND_MS = 450
+
+  const dockAt = DROP_AT + DROP_MS + REST_MS
+  const brandAt = dockAt + DOCK_MS
+  const typeAt = brandAt + BRAND_MS
+  const revealAt = typeAt + 200
+
+  // 1. The mark arrives on the dark ground, alone, and rests there.
+  setTimeout(() => document.body.classList.add("intro-drop"), DROP_AT)
 
   // 2. It travels to the corner and lands on the brand icon's position.
-  setTimeout(() => document.body.classList.add("intro-dock"), 1300)
+  setTimeout(() => document.body.classList.add("intro-dock"), dockAt)
 
   // 3. The brand plate fades up around the landed mark, so the mark becomes
   //    the logo rather than disappearing and being replaced.
-  setTimeout(() => document.body.classList.add("intro-brand"), 2000)
+  setTimeout(() => document.body.classList.add("intro-brand"), brandAt)
 
-  // 4. The headline types in. Only the home page has one, so pages without
-  //    it move straight on rather than pausing for nothing.
-  const typingStart = headline ? 2450 : 2150
-  const revealStart = headline ? 2700 : 2300
+  // 4. The heading appears, empty, and types itself in.
+  setTimeout(() => {
+    document.body.classList.add("intro-typing")
+    typeHeadline()
+  }, typeAt)
 
-  if (headline) {
-    setTimeout(() => {
-      document.body.classList.add("intro-typing")
-      typeHeadline()
-    }, typingStart)
-  }
-
-  // 5. Everything else arrives.
-  setTimeout(() => document.body.classList.add("intro-reveal"), revealStart)
+  // 5. Everything else arrives, while the heading is still being written,
+  //    so the page is filling in rather than waiting on the typing.
+  setTimeout(() => document.body.classList.add("intro-reveal"), revealAt)
 
   setTimeout(() => {
     document.body.classList.add("intro-done")
@@ -89,7 +108,7 @@ function run() {
       "intro-typing", "intro-reveal",
     )
     window.removeEventListener("resize", aimAtBrand)
-  }, revealStart + 900)
+  }, revealAt + 900)
 }
 
 /**
