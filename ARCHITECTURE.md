@@ -364,3 +364,28 @@ The trail already reads `data-route` from the body, and every page sets it to
 keyed off that value: the merge page could run two lines that converge, split
 could fork, rotate could turn. Worth doing once the tools are tested, since
 it costs nothing structurally and makes each page feel like its own place.
+
+## Gauging interest in a desktop app
+
+The question is whether people want one, and the answer is worth knowing
+before building it. Collecting email addresses would answer it, and is the
+wrong way round: this site tells people it keeps nothing, so asking for an
+address on the way to that promise undercuts it.
+
+Instead the button is an ordinary link to a page describing what the app
+would be. The server counts that page being opened, which is a request it
+already handles, so nothing new is sent and `connect-src 'none'` stays
+exactly as it is.
+
+What that means in practice:
+
+  - a single number in the app, incremented on that route
+  - no address, no identifier, nothing per person, nothing per visit
+  - it survives a restart, so it is written to a file rather than held in
+    memory, and that file holds one integer and nothing else
+  - Caddy access logs stay off, so this counter is deliberate rather than a
+    side effect of logging every request
+
+The privacy page should say the number exists. A count of how many people
+opened one page is not personal data, but the site's argument is that we say
+plainly what we keep, and an unmentioned counter would sit badly against it.
