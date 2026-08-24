@@ -318,7 +318,7 @@ h1 {
   font-weight: 500;
   letter-spacing: 0.01em;
   color: var(--ink);
-  margin: 0 0 1rem;
+  margin: 0 0 1.75rem;
   text-wrap: balance;
 }
 
@@ -403,7 +403,7 @@ section {
    geometric one. Shifting the content up corrects for that. */
 .hero.panel {
   justify-content: flex-start;
-  padding-top: clamp(3.5rem, 16vh, 8rem);
+  padding-top: clamp(5rem, 24vh, 12rem);
 }
 
 /* A block cursor on any typed heading. It stays after the line finishes, so
@@ -1440,14 +1440,14 @@ html {
   }
 }
 
-/* The route: one dashed line running the length of the page.
+/* The route the mark travels.
  *
- * It sits behind everything, weaving past each section, and draws itself as
- * the page is scrolled. A long page otherwise gives no sense of its own
- * length, and people stop early assuming they have reached the end.
+ * A trail of squares rather than a drawn line, so the edges are stepped in
+ * the same way the display face is. Squares are placed once and then lit in
+ * order as the page is scrolled, which costs nothing per frame.
  *
- * Purely decorative: it never moves the content, never intercepts the
- * scroll, and is hidden from screen readers. */
+ * Purely decorative: behind the content, no pointer events, hidden from
+ * screen readers. */
 
 .route {
   position: absolute;
@@ -1459,29 +1459,40 @@ html {
   pointer-events: none;
 }
 
-.route-line {
-  fill: none;
-  stroke: var(--ink-4);
-  stroke-width: 2;
-  stroke-dasharray: 8 9;
-  stroke-linecap: square;
-  opacity: 0.35;
-}
-
-/* A page travelling at the head of the line, which is the document being
-   carried from one tool to the next. */
-.route-mark {
-  fill: var(--ground);
-  stroke: var(--accent);
-  stroke-width: 1.6;
-  stroke-linejoin: round;
+.route-dot {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: var(--accent);
   opacity: 0;
-  transition: opacity 0.3s ease-out;
+  transition: opacity 0.35s ease-out;
 }
 
-.route-mark-bar {
-  fill: var(--accent);
-  stroke: none;
+/* Lit once the reader has passed it. They stay lit, so the route behind is
+   a record of where you have been. */
+.route-dot.lit {
+  opacity: 0.5;
+}
+
+/* The mark itself, the same shape that falls during the opening. */
+.route-mark {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 22px;
+  height: 26px;
+  margin: -13px 0 0 -11px;
+  color: var(--ink-2);
+  opacity: 0;
+  /* Follows the scroll closely enough to feel attached to it, with just
+     enough lag to read as travelling rather than jumping. */
+  transition: transform 0.12s linear, opacity 0.4s ease-out;
+}
+
+.route-mark svg {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
 /* Content sits above the route, or the line would draw over the text. */
@@ -1510,11 +1521,11 @@ html {
 
 .proof {
   list-style: none;
-  margin: 2rem 0 0;
+  margin: 3.5rem 0 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 1.125rem;
 }
 
 .proof li {

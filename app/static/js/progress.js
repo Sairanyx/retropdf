@@ -1,119 +1,139 @@
-// A dashed route running the length of the page, behind everything.
+// The mark travels down the page, leaving a trail behind it.
 //
-// One continuous line rather than a bar or a set of separate marks: it
-// leaves the hero, bends past each section, and draws itself as you scroll.
-// The effect is that the page reads as a single route being followed rather
-// than a stack of unrelated blocks, and it answers the question a long page
-// always raises, which is whether there is anything below.
+// It is the same document mark that falls at the start and settles into the
+// logo. Once you begin scrolling it sets off again, following a route down
+// the page and drawing a pixel trail as it goes, so the page reads as one
+// route being followed rather than a stack of separate blocks.
 //
-// It sits behind the content, never intercepts the scroll, and is decoration
-// only. Nothing depends on it and screen readers do not see it.
+// The trail is drawn as discrete squares rather than a smooth line, so it
+// matches the stepped edges of the display face.
+//
+// Purely decorative: it sits behind the content, never intercepts the
+// scroll, and screen readers do not see it.
 
 const wantsLessMotion =
   window.matchMedia("(prefers-reduced-motion: reduce)").matches
 
-if (!wantsLessMotion) drawRoute()
+if (!wantsLessMotion) startRoute()
 
-function drawRoute() {
+function startRoute() {
   const sections = Array.from(document.querySelectorAll(".wrap > section"))
   if (sections.length < 2) return
 
-  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg")
-  svg.setAttribute("class", "route")
-  svg.setAttribute("aria-hidden", "true")
-  svg.setAttribute("preserveAspectRatio", "none")
+  const layer = document.createElement("div")
+  layer.className = "route"
+  layer.setAttribute("aria-hidden", "true")
 
-  const path = document.createElementNS("http://www.w3.org/2000/svg", "path")
-  path.setAttribute("class", "route-line")
-  svg.append(path)
+  // The trail, as a run of squares. They are placed once and then revealed
+  // in order, which is far cheaper than redrawing a path on every frame.
+  const trail = document.createElement("div")
+  trail.className = "route-trail"
+  layer.append(trail)
 
-  // A page travelling along the route, at the head of the drawn line. It is
-  // the thing being worked on, following the path down through the tools.
-  const marker = document.createElementNS("http://www.w3.org/2000/svg", "g")
-  marker.setAttribute("class", "route-mark")
-  marker.innerHTML =
-    '<path d="M-7 -9h9l5 5v13h-14z" />' +
-    '<path d="M2 -9v5h5" />' +
-    '<rect x="-4" y="1" width="8" height="3" class="route-mark-bar" />'
-  svg.append(marker)
+  // The mark itself, the same shape that falls during the opening.
+  const mark = document.createElement("div")
+  mark.className = "route-mark"
+  mark.innerHTML = `
+    <svg viewBox="0 0 22 26" fill="none">
+      <path d="M2 1h11l7 7v16a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1Z"
+            stroke="currentColor" stroke-width="1.6"/>
+      <path d="M13 1v7h7" stroke="currentColor" stroke-width="1.6"/>
+      <rect x="5" y="14" width="12" height="5" rx="1" fill="var(--accent)"/>
+    </svg>`
+  layer.append(mark)
 
-  document.body.append(svg)
+  document.body.append(layer)
+
+  // Every square in the trail, in the order they are passed.
+  let dots = []
+
+  const DOT = 6 // square size, matched to the stepped edges of the font
+  const GAP = 16 // distance between squares along the route
 
   /**
-   * Build a path that threads past each section in turn.
+   * Lay out the trail.
    *
-   * The line alternates sides so it weaves down the page rather than running
-   * straight, and each bend lands beside a section, which is what makes it
-   * feel like a route between places rather than a ruler.
+   * The route runs down the page, bending toward each section in turn so it
+   * weaves rather than running straight. Squares are placed along it at a
+   * fixed spacing, which is what gives the stepped look.
    */
-  function shape() {
+  function layout() {
+    trail.replaceChildren()
+    dots = []
+
     const width = document.documentElement.scrollWidth
     const height = document.documentElement.scrollHeight
-    svg.setAttribute("viewBox", `0 0 ${width} ${height}`)
-    svg.setAttribute("width", width)
-    svg.setAttribute("height", height)
 
-    // Keep the line clear of the text, which sits in the middle column.
-    const left = Math.max(24, width * 0.08)
-    const right = Math.min(width - 24, width * 0.92)
+    // Kept clear of the text, which sits in the middle of the page.
+    const near = Math.max(28, width * 0.06)
+    const far = Math.min(width - 28, width * 0.13)
 
-    const points = sections.map((section, index) => {
+    // One turning point per section, alternating side to side.
+    const turns = sections.map((section, index) => {
       const box = section.getBoundingClientRect()
-      const middle = box.top + window.scrollY + box.height / 2
-      return { x: index % 2 === 0 ? left : right, y: middle }
+      return {
+        x: index % 2 === 0 ? near : far,
+        y: box.top + window.scrollY + box.height / 2,
+      }
     })
 
-    // Start above the first section and finish below the last, so the line
-    // arrives from off screen rather than beginning in mid air.
-    let d = `M ${points[0].x} ${Math.max(0, points[0].y - 260)}`
-    for (let i = 0; i < points.length; i++) {
-      const point = points[i]
-      const previous = i === 0 ? { x: point.x, y: point.y - 260 } : points[i - 1]
-      // A curve whose control points sit vertically between the two, which
-      // gives a long sweeping bend rather than a sharp corner.
-      const midway = (previous.y + point.y) / 2
-      d += ` C ${previous.x} ${midway}, ${point.x} ${midway}, ${point.x} ${point.y}`
+    // Start above the first section so the route arrives from off screen.
+    const points = [{ x: turns[0].x, y: -80 }, ...turns, {
+      x: turns[turns.length - 1].x,
+      y: height,
+    }]
+
+    // Walk the route, placing a square every GAP pixels. Straight segments
+    // between the turning points are enough: the alternating sides already
+    // give the weave, and a curve would not survive being sampled this
+    // coarsely anyway.
+    for (let i = 1; i < points.length; i++) {
+      const from = points[i - 1]
+      const to = points[i]
+      const dx = to.x - from.x
+      const dy = to.y - from.y
+      const distance = Math.hypot(dx, dy)
+      const steps = Math.floor(distance / GAP)
+
+      for (let step = 0; step < steps; step++) {
+        const along = step / steps
+        const dot = document.createElement("span")
+        dot.className = "route-dot"
+        dot.style.left = `${from.x + dx * along - DOT / 2}px`
+        dot.style.top = `${from.y + dy * along - DOT / 2}px`
+        trail.append(dot)
+        dots.push({ el: dot, y: from.y + dy * along, x: from.x + dx * along })
+      }
     }
-    const last = points[points.length - 1]
-    d += ` L ${last.x} ${height}`
-
-    path.setAttribute("d", d)
-
-    // The dash offset is what lets the line draw itself: the whole path is
-    // one dash as long as the path, pushed out of view, then pulled back.
-    const length = path.getTotalLength()
-    path.style.strokeDasharray = `${length}`
-    path.style.strokeDashoffset = `${length}`
-    return length
   }
 
-  let length = shape()
-
-  /** Draw as much of the line as the reader has scrolled past. */
+  /**
+   * Reveal the trail as far as the reader has come, and put the mark at the
+   * front of it.
+   */
   let ticking = false
   function update() {
     ticking = false
-    const scrollable =
-      document.documentElement.scrollHeight - window.innerHeight
-    if (scrollable <= 0) return
+    if (dots.length === 0) return
 
-    // Slightly ahead of the scroll, so the line is arriving rather than
-    // trailing behind.
-    const through = Math.min(1, (window.scrollY + window.innerHeight * 0.6) /
-      document.documentElement.scrollHeight)
-    path.style.strokeDashoffset = `${length * (1 - through)}`
+    // The head of the trail sits a little below the middle of the window, so
+    // the mark travels alongside what is being read rather than trailing at
+    // the bottom edge.
+    const head = window.scrollY + window.innerHeight * 0.55
 
-    // The page sits at the head of the drawn line, and turns to face the
-    // direction the route is going, so it reads as travelling rather than
-    // being dragged.
-    const at = path.getPointAtLength(length * through)
-    const ahead = path.getPointAtLength(Math.min(length, length * through + 12))
-    const angle = (Math.atan2(ahead.y - at.y, ahead.x - at.x) * 180) / Math.PI
-    marker.setAttribute(
-      "transform",
-      `translate(${at.x} ${at.y}) rotate(${angle - 90})`,
-    )
-    marker.style.opacity = through > 0.02 && through < 0.995 ? "1" : "0"
+    let last = null
+    for (const dot of dots) {
+      const passed = dot.y <= head
+      dot.el.classList.toggle("lit", passed)
+      if (passed) last = dot
+    }
+
+    if (last) {
+      mark.style.transform = `translate(${last.x}px, ${last.y}px)`
+      mark.style.opacity = "1"
+    } else {
+      mark.style.opacity = "0"
+    }
   }
 
   function onScroll() {
@@ -124,13 +144,13 @@ function drawRoute() {
 
   window.addEventListener("scroll", onScroll, { passive: true })
   window.addEventListener("resize", () => {
-    length = shape()
+    layout()
     update()
   }, { passive: true })
 
   // Wait a frame so the layout has settled before measuring it.
   requestAnimationFrame(() => {
-    length = shape()
+    layout()
     update()
   })
 }
