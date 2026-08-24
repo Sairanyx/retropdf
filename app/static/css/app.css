@@ -829,8 +829,7 @@ body.intro-typing .wrap > section.tool-head {
  * The header arrived at step 3 and the heading at step 4, so neither is
  * named here. Naming them again would fade them in a second time, which
  * reads as the whole page reloading. */
-body.intro-reveal footer,
-body.intro-reveal .wrap > section:not(.hero):not(.tool-head) {
+body.intro-reveal footer {
   opacity: 1;
   transition: opacity 0.55s ease-out;
 }

@@ -29,11 +29,36 @@ const stage = document.querySelector("[data-intro]")
 const mark = document.querySelector(".intro-mark svg")
 const headline = document.querySelector("[data-type]")
 
-// Everything sharing the heading's section, held back so the line can be
-// written on an otherwise empty screen.
-const afterHeading = headline
-  ? Array.from(headline.parentElement.children).filter((el) => el !== headline)
-  : []
+/**
+ * Everything that should wait for the heading to be written.
+ *
+ * That is the rest of the heading's own section, and then the sections
+ * following it, so a page whose real content sits in a separate block still
+ * holds it back rather than showing it while the heading is mid sentence.
+ * Ordered top to bottom, which is the order they arrive in.
+ */
+const afterHeading = collectAfterHeading()
+
+function collectAfterHeading() {
+  if (!headline) return []
+
+  const section = headline.closest("section") || headline.parentElement
+  const siblings = Array.from(section.children).filter((el) => el !== headline)
+
+  // Sections below the heading's own, which on a tool page is where the
+  // workspace panel lives. Anything marked for the scroll reveal is left
+  // out: it appears when you reach it, not as part of the arrival.
+  const below = []
+  let next = section.nextElementSibling
+  while (next) {
+    if (next.tagName === "SECTION" && !next.hasAttribute("data-reveal")) {
+      below.push(next)
+    }
+    next = next.nextElementSibling
+  }
+
+  return [...siblings, ...below]
+}
 
 // Empty the heading before anything paints, so the finished text is never
 // briefly visible before the typing starts. The text lives in data-type, so
@@ -46,7 +71,8 @@ if (headline && !wantsLessMotion) {
   // simply appearing. Movement is what makes it read as settling.
   for (const el of afterHeading) {
     el.style.opacity = "0"
-    el.style.transform = "translateY(12px)"
+    el.style.transform =
+      el.tagName === "SECTION" ? "translateY(20px)" : "translateY(12px)"
   }
 }
 
@@ -61,10 +87,13 @@ if (headline && !wantsLessMotion) {
 function showAfterHeading() {
   afterHeading.forEach((el, index) => {
     const delay = 0.06 + index * 0.13
+    // A whole section carries more weight than a line of text, so it takes
+    // a little longer to settle.
+    const isSection = el.tagName === "SECTION"
 
     el.style.transition =
-      `opacity 0.75s ease-out ${delay}s, ` +
-      `transform 0.65s cubic-bezier(0.16, 0.84, 0.32, 1) ${delay}s`
+      `opacity ${isSection ? 0.9 : 0.75}s ease-out ${delay}s, ` +
+      `transform ${isSection ? 0.8 : 0.65}s cubic-bezier(0.16, 0.84, 0.32, 1) ${delay}s`
     el.style.opacity = "1"
     el.style.transform = "none"
   })
