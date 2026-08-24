@@ -39,9 +39,17 @@ function startReveals() {
         seen.unobserve(entry.target)
       }
     },
-    // Fire slightly before the block reaches the bottom edge, so it is
-    // already arriving as it comes into view rather than after.
-    { rootMargin: "0px 0px -12% 0px", threshold: 0.05 },
+    // A section has to be properly in view, not merely peeking above the
+    // fold. On a tool page the next section already shows a quarter of
+    // itself at rest, so a small threshold revealed it while the reader was
+    // still at the top and gave away what was below.
+    //
+    // The margin does that work rather than a large threshold. A section
+    // taller than the window can never reach a high fraction of itself, so
+    // asking for 45% left long sections hidden for good on a short screen.
+    // Pulling the bottom edge up by a third of the window means a block is
+    // revealed once it has genuinely arrived, whatever its height.
+    { rootMargin: "0px 0px -33% 0px", threshold: 0.01 },
   )
 
   for (const block of document.querySelectorAll("[data-reveal]")) {
