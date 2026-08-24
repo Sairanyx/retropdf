@@ -300,16 +300,27 @@ html {
   color: var(--ink);
 }
 
-/* The mark travels down the page, so while it is away the plate shows an
-   empty slot where it sits. Hidden rather than removed, so the word beside
-   it never shifts, and faded rather than snapped so the handover reads as
-   the same object leaving and coming back. */
-.brand svg {
-  transition: opacity 0.25s ease-out;
+/* The space in the logo where the travelling mark rests. It holds the mark's
+   exact size so the word beside it never shifts, whether the mark is parked
+   here or out on the page.
+
+   The slot draws the mark itself by default, so the logo is complete with no
+   scripting at all, on a narrow screen, and for anyone who has asked for
+   less motion. The route hides it only once it has a real mark to put there
+   instead, which keeps the two from ever both being visible. */
+.brand-slot {
+  display: block;
+  width: 22px;
+  height: 26px;
+  flex: none;
+  color: var(--ink);
 }
 
-.brand.mark-away svg {
-  opacity: 0;
+/* Hidden the moment the travelling mark clears the plate, so the two are
+   never both on screen. No fade: they sit in the same place, so a straight
+   swap reads as the one object moving off. */
+.brand-slot.handed-over > svg {
+  visibility: hidden;
 }
 
 .brand-word {
@@ -1457,10 +1468,11 @@ html {
   height: 26px;
   margin: -13px 0 0 -11px;
   color: var(--ink);
-  opacity: 0;
-  /* Follows the scroll closely enough to feel attached to it, with just
+  /* No fade: this element is the logo's mark whether it is parked in the
+     plate or out on the page, so it is visible the whole time and only ever
+     moves. Close enough to the scroll to feel attached to it, with just
      enough lag to read as travelling rather than jumping. */
-  transition: transform 0.12s linear, opacity 0.4s ease-out;
+  transition: transform 0.12s linear;
 }
 
 .route-mark svg {

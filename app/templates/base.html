@@ -36,12 +36,21 @@
     <div class="wrap">
       <div class="topbar">
         <a class="plate brand" href="/" id="brand-plate">
-          <svg width="22" height="26" viewBox="0 0 22 26" fill="none" aria-hidden="true">
-            <path d="M2 1h11l7 7v16a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1Z"
-                  stroke="currentColor" stroke-width="1.6"/>
-            <path d="M13 1v7h7" stroke="currentColor" stroke-width="1.6"/>
-            <rect x="5" y="14" width="12" height="5" rx="1" fill="var(--accent)"/>
-          </svg>
+          <!-- The logo's mark is not drawn here. It is a single element that
+               lives on the page and parks in this slot, so that scrolling
+               moves the very same object rather than swapping one copy for
+               another. This reserves its space so the word never shifts.
+
+               Without scripting the slot simply stays empty and the word
+               stands on its own, which still reads as the logo. -->
+          <span class="brand-slot" id="brand-slot" aria-hidden="true">
+            <svg width="22" height="26" viewBox="0 0 22 26" fill="none">
+              <path d="M2 1h11l7 7v16a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1Z"
+                    stroke="currentColor" stroke-width="1.6"/>
+              <path d="M13 1v7h7" stroke="currentColor" stroke-width="1.6"/>
+              <rect x="5" y="14" width="12" height="5" rx="1" fill="var(--accent)"/>
+            </svg>
+          </span>
           <span class="brand-word">RedPDF</span>
         </a>
 

@@ -238,14 +238,15 @@ function run() {
 }
 
 /**
- * Point the falling mark at the real brand icon.
+ * Point the falling mark at its slot in the logo.
  *
  * The mark starts centred in the window, so the distance it must travel is
- * measured live rather than assumed. Measuring the icon rather than the
- * plate means the mark lands exactly where the logo's icon will be.
+ * measured live rather than assumed. Aiming at the slot rather than at the
+ * plate means it lands exactly where the logo's mark rests, which is also
+ * where the scrolling mark sets off from.
  */
 function aimAtBrand() {
-  const brandIcon = document.querySelector("#brand-plate svg")
+  const brandIcon = document.querySelector("#brand-slot")
   if (!brandIcon) return
 
   // Measure the mark at its resting size, ignoring any transform in flight.
