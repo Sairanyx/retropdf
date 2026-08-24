@@ -163,20 +163,19 @@ html {
 }
 
 /* The header stays put while the page scrolls under it. */
+/* The header itself scrolls away with the page. Only the navigation stays.
+ *
+ * The logo has to scroll for the trail to work: the mark leaves the logo and
+ * the trail records where it went, and a sticky logo would slide down the
+ * page while the trail stayed put, so the two could only ever line up at the
+ * very top. Letting the logo scroll puts both in the same coordinates, and
+ * the trail genuinely comes out of the box. */
 .topbar-wrap {
-  position: sticky;
-  top: 0;
-  /* Under the route layer, so the trail is drawn over the brand plate and
-     reads as coming out of it. Still above the page content, which scrolls
-     underneath. */
+  /* Deliberately not positioned. An absolutely positioned descendant takes
+     its coordinates from the nearest positioned ancestor, and the travelling
+     mark is one: making this a containing block would pin the mark to the
+     header rather than letting it range over the page. */
   z-index: 40;
-  /* The ground shows through behind the plates, so content scrolling under
-     them is hidden without a hard edge. */
-  background: linear-gradient(
-    var(--ground) 62%,
-    color-mix(in srgb, var(--ground) 80%, transparent) 88%,
-    transparent
-  );
 }
 
 .wrap {
@@ -328,19 +327,35 @@ html {
   height: 100%;
 }
 
-/* Raised back above the route: the trail is meant to cross the brand plate
-   only, not the navigation on the other side of the header. */
+/* The navigation stays put while the page scrolls under it, so the links are
+   always reachable. It holds its place on its own rather than the whole
+   header doing so, which lets the logo scroll away with the page.
+
+   Fixed rather than sticky: a sticky element only stays within its own
+   parent, and this one's parent is the header, which is a few rows tall. It
+   would come unstuck the moment the header scrolled past.
+
+   Above the route, so the trail passes behind it rather than over the
+   links. */
 .navgroup {
-  position: relative;
+  position: fixed;
+  top: 1.25rem;
+  /* Held to the same column the rest of the page uses, so it lines up with
+     the content rather than the window edge. */
+  right: max(clamp(1.25rem, 5vw, 4rem), calc((100vw - 1520px) / 2 + clamp(1.25rem, 5vw, 4rem)));
   z-index: 60;
 }
 
 .brand-slot.travelling > svg {
-  position: fixed;
-  /* Pinned to the window's corner so the transform below is the whole
-     position. Without this a fixed element keeps its normal layout spot as
-     its starting point and the transform is added to it, which puts the mark
-     twice as far across as intended. */
+  /* Positioned against the page, not the window: the logo scrolls with the
+     page now, so the mark and its trail share one set of coordinates and the
+     trail genuinely runs back to the box.
+
+     Pinned to the page's corner so the transform below is the whole
+     position. Without this the element keeps its normal layout spot as its
+     starting point and the transform is added on top of it, which puts the
+     mark twice as far across as intended. */
+  position: absolute;
   left: 0;
   top: 0;
   width: 22px;
@@ -1500,16 +1515,13 @@ html {
   opacity: 0.5;
 }
 
-/* Scrolled up past the sticky plate. Hidden so the trail never appears above
-   the box it comes out of. */
-.route-dot.behind-plate {
-  opacity: 0;
-}
 
 /* Content sits above the route, or the trail would be drawn over the text.
-   The header is left out on purpose: it is already above the route through
-   its own z-index, and naming it here would override its sticky position. */
-.wrap {
+   The header's own wrap is left out: it is already above the route through
+   the header's z-index, and positioning it would make it the containing
+   block for the travelling mark, pinning the mark to the header instead of
+   letting it range over the page. */
+.wrap:not(.topbar-wrap > .wrap) {
   position: relative;
   z-index: 1;
 }

@@ -75,7 +75,6 @@ function startRoute() {
   // position is not, and the origin has to be a fixed point on the page.
   let cachedOrigin = null
 
-
   /**
    * Where the mark rests: its slot in the logo.
    *
@@ -248,16 +247,11 @@ function startRoute() {
 
     slot.classList.add("travelling")
 
-    // Fixed positioning is relative to the window, so the page coordinates
-    // the route works in are converted back. Fixed rather than absolute
-    // because the mark stays inside the header, which is where it has to be
-    // to stay visible while parked in the plate.
+    // Page coordinates, used directly: the mark is positioned against the
+    // page like its trail is. The offsets centre the shape on the point,
+    // since the transform places its top left corner.
     mark.style.transform =
-      "translate(" +
-      (here.x - window.scrollX - 11) +
-      "px, " +
-      (here.y - window.scrollY - 13) +
-      "px)"
+      "translate(" + (here.x - 11) + "px, " + (here.y - 13) + "px)"
 
     // Lay squares for every step between the logo and here that is not
     // already marked. They come from the same function that places the mark,
@@ -287,15 +281,6 @@ function startRoute() {
 
     if (batch.childNodes.length) trail.append(batch)
 
-    // The plate is sticky, so it stays near the top of the window while the
-    // trail scrolls up past it. Squares that have gone above the plate are
-    // hidden, so the trail always reads as coming out of the box rather than
-    // carrying on above it.
-    const cutoff = plate.getBoundingClientRect().bottom + window.scrollY - 8
-    for (const dot of trail.children) {
-      const above = parseFloat(dot.style.top) < cutoff
-      dot.classList.toggle("behind-plate", above)
-    }
 
   }
 
@@ -307,7 +292,6 @@ function startRoute() {
    * far enough down that the laid trail has caught up, there is nothing left
    * for it to bridge and it is left empty.
    */
-
 
 
   function onScroll() {
