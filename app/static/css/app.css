@@ -77,6 +77,22 @@
   --r-sm: 8px;
   --r-xs: 4px;
 
+  /* Four sizes, and only four.
+   *
+   * Every piece of text on the site is one of these. The page had grown to
+   * eight distinct sizes, most of them a step or two apart, which reads as
+   * carelessness rather than hierarchy: the eye cannot tell a deliberate
+   * difference from an accidental one when the gaps are that small.
+   *
+   * Display is the page title, heading is a section, body is everything you
+   * read, small is everything that labels or reports. Anything that does not
+   * fit one of those four is being asked to carry a distinction the design
+   * does not actually make. */
+  --text-display: clamp(2.5rem, 6vw, 4.5rem);
+  --text-heading: clamp(1.75rem, 3vw, 2.375rem);
+  --text-body: clamp(1.375rem, 1.5vw, 1.75rem);
+  --text-small: 1.25rem;
+
   /* Rechroma is snappy at .15s, tonik is calm at .4s. This sits between. */
   --t: 0.18s ease;
   --t-slow: 0.3s ease;
@@ -119,7 +135,7 @@ body {
   background: var(--ground);
   color: var(--ink-2);
   font-family: var(--display);
-  font-size: 22px;
+  font-size: var(--text-body);
   letter-spacing: 0.01em;
   line-height: 1.7;
   -webkit-font-smoothing: antialiased;
@@ -208,8 +224,8 @@ html {
   gap: 0.625rem;
   /* At least 48px tall, which is the usual minimum for a comfortable
      target on a touchscreen or with an unsteady hand. */
-  min-height: 48px;
-  padding: 0.75rem 1.25rem;
+  min-height: 54px;
+  padding: 0.9rem 1.5rem;
   border: 0;
   border-radius: var(--r-sm);
   background: var(--chip);
@@ -217,7 +233,7 @@ html {
   color: var(--ink-2);
   font: inherit;
   font-weight: 500;
-  font-size: 1.0625rem;
+  font-size: var(--text-small);
   letter-spacing: 0.02em;
   text-decoration: none;
   cursor: pointer;
@@ -254,17 +270,12 @@ html {
   box-shadow: var(--raise);
 }
 
-/* The one filled chip in the nav. It lifts on hover like every other chip
-   rather than going darker, which read as a disabled button. */
-.chip.solid {
-  background: var(--ink);
-  color: var(--ground);
-}
-
-.chip.solid:hover {
-  background: color-mix(in srgb, var(--ink) 88%, var(--ground));
-  color: #fff;
-}
+/* The workspace chip is the same plate as the rest of the nav. It used to be
+   filled to mark it out, which read as a different kind of control sitting
+   in a row of links.
+ *
+ * No permanent lamp on it either: every other lamp in the nav means "you are
+ * here", so one that is always lit says something untrue. */
 
 .chip.accent {
   background: var(--accent);
@@ -403,7 +414,7 @@ html {
 
 .brand-word {
   font-family: var(--display);
-  font-size: 2rem;
+  font-size: var(--text-heading);
   font-weight: 600;
   letter-spacing: 0.02em;
   color: var(--ink);
@@ -421,7 +432,7 @@ html {
 
 h1 {
   font-family: var(--display);
-  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  font-size: var(--text-display);
   line-height: 1.02;
   font-weight: 500;
   letter-spacing: 0.01em;
@@ -432,7 +443,7 @@ h1 {
 
 h2 {
   font-family: var(--display);
-  font-size: clamp(1.75rem, 3vw, 2.375rem);
+  font-size: var(--text-heading);
   line-height: 1.1;
   font-weight: 500;
   letter-spacing: 0.01em;
@@ -442,7 +453,7 @@ h2 {
 
 h3 {
   font-family: var(--display);
-  font-size: 1.625rem;
+  font-size: var(--text-body);
   font-weight: 500;
   color: var(--ink);
   margin: 0;
@@ -464,14 +475,17 @@ a {
    small print: it is the first line on a tool page and was reading as a
    caption for the heading rather than as part of it. */
 .label {
-  font-size: 1.375rem;
+  /* The same size as the line below it. It was fixed at 1.375rem while the
+     lede scaled up to 1.75rem, so on a wide screen the page name ended up
+     smaller than the sentence under it. */
+  font-size: var(--text-body);
   letter-spacing: 0.04em;
   color: var(--ink-2);
   margin: 0 0 1rem;
 }
 
 .lede {
-  font-size: clamp(1.375rem, 1.5vw, 1.75rem);
+  font-size: var(--text-body);
   color: var(--ink-2);
   max-width: 58ch;
 }
@@ -615,7 +629,7 @@ h1.typing::after {
    draws cleanly, and a step darker because the lightest grey in the scale
    vanishes in a thin stroked face. */
 .tool .k {
-  font-size: 1.125rem;
+  font-size: var(--text-small);
   letter-spacing: 0.04em;
   color: var(--ink-3);
 }
@@ -626,7 +640,7 @@ h1.typing::after {
 
 .tool p {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: var(--text-small);
   color: var(--ink-3);
 }
 
@@ -696,14 +710,14 @@ input[type="file"] {
 }
 
 .readout {
-  font-size: 1.25rem;
+  font-size: var(--text-small);
   color: var(--ink-2);
   margin: 0 0 0.375rem;
   min-height: 1.65em;
 }
 
 .note {
-  font-size: 1.0625rem;
+  font-size: var(--text-small);
   color: var(--ink-3);
   margin: 0 0 1rem;
 }
@@ -722,7 +736,7 @@ fieldset {
 }
 
 legend {
-  font-size: 1.0625rem;
+  font-size: var(--text-small);
   letter-spacing: 0.03em;
   color: var(--ink-3);
   padding: 0;
@@ -732,13 +746,13 @@ fieldset label {
   display: inline-flex;
   align-items: center;
   gap: 0.4375rem;
-  font-size: 0.8125rem;
+  font-size: var(--text-small);
 }
 
 input[type="number"],
 select {
   font: inherit;
-  font-size: 0.8125rem;
+  font-size: var(--text-small);
   padding: 0.3125rem 0.5rem;
   border: 0;
   border-radius: var(--r-xs);
@@ -775,7 +789,7 @@ select {
      13px in the lightest grey it read as a stray mark rather than a line
      telling you the panel is waiting for a file. */
   color: var(--ink-3);
-  font-size: 1.25rem;
+  font-size: var(--text-small);
 }
 
 /* ---------- page thumbnails ---------- */
@@ -800,7 +814,7 @@ select {
 }
 
 [data-position] .num {
-  font-size: 0.625rem;
+  font-size: var(--text-small);
   color: var(--ink-3);
   padding-top: 3px;
   font-variant-numeric: tabular-nums;
@@ -824,7 +838,7 @@ select {
 
 .mini {
   font: inherit;
-  font-size: 0.6875rem;
+  font-size: var(--text-small);
   line-height: 1;
   padding: 4px 7px;
   border: 0;
@@ -907,7 +921,7 @@ footer {
   /* A step darker and larger than the mono needed: Handjet draws thinner
      strokes, so the same grey at the same size disappears into the ground. */
   color: var(--ink-2);
-  font-size: 1.25rem;
+  font-size: var(--text-small);
 }
 
 footer nav {
@@ -919,7 +933,7 @@ footer nav {
 
 footer a {
   color: var(--ink-2);
-  font-size: 1.25rem;
+  font-size: var(--text-small);
   text-decoration: none;
 }
 
@@ -1118,7 +1132,7 @@ html.reveal-on [data-reveal].shown .tools > li {
   border-radius: var(--r-sm);
   background: var(--chip);
   box-shadow: var(--raise);
-  font-size: 1.0625rem;
+  font-size: var(--text-small);
   letter-spacing: 0.02em;
   color: var(--ink-3);
   min-height: 44px;
@@ -1168,7 +1182,7 @@ input[type="number"],
 select {
   appearance: none;
   font: inherit;
-  font-size: 0.9375rem;
+  font-size: var(--text-small);
   padding: 0.4375rem 0.625rem;
   border: 0;
   border-radius: var(--r-xs);
@@ -1309,7 +1323,7 @@ input[type="number"]::-webkit-inner-spin-button {
 .stepper button.mini,
 .stepper button {
   font: inherit;
-  font-size: 0.875rem;
+  font-size: var(--text-small);
   line-height: 1;
   width: 2rem;
   border: 0;
@@ -1365,7 +1379,7 @@ input[type="number"]::-webkit-inner-spin-button {
   box-shadow: var(--raise);
   color: var(--ink);
   font: inherit;
-  font-size: 0.9375rem;
+  font-size: var(--text-small);
   text-align: left;
   cursor: pointer;
   transition: background var(--t), box-shadow var(--t);
@@ -1429,7 +1443,7 @@ input[type="number"]::-webkit-inner-spin-button {
 .picker-option {
   padding: 0.5rem 0.75rem;
   border-radius: var(--r-xs);
-  font-size: 0.9375rem;
+  font-size: var(--text-small);
   color: var(--ink-2);
   cursor: pointer;
   white-space: nowrap;
@@ -1669,7 +1683,7 @@ html {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  font-size: 1.4375rem;
+  font-size: var(--text-body);
   color: var(--ink-2);
 }
 
