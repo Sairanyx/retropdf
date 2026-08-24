@@ -44,12 +44,13 @@ function waitThenStart() {
 function startRoute() {
   if (window.innerWidth < NARROWEST) return
 
-  // The slot in the brand plate is where the mark rests. The plate has no
-  // mark of its own once the route is running: the travelling element is it,
-  // parked, so scrolling moves the same object rather than swapping one copy
-  // for another.
+  // The mark is the logo's own, not a copy of it. Scrolling moves this very
+  // element out of the plate and down the page, so there is never a moment
+  // where one disappears and another appears somewhere else.
   const plate = document.querySelector("#brand-plate")
   const slot = document.querySelector("#brand-slot")
+  const mark = slot?.querySelector("svg")
+  if (!plate || !slot || !mark) return
 
   const layer = document.createElement("div")
   layer.className = "route"
@@ -59,20 +60,8 @@ function startRoute() {
   trail.className = "route-trail"
   layer.append(trail)
 
-  const mark = document.createElement("div")
-  mark.className = "route-mark"
-  mark.innerHTML =
-    '<svg viewBox="0 0 22 26" fill="none">' +
-    '<path d="M2 1h11l7 7v16a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.6"/>' +
-    '<path d="M13 1v7h7" stroke="currentColor" stroke-width="1.6"/>' +
-    '<rect x="5" y="14" width="12" height="5" rx="1" fill="var(--accent)"/>' +
-    "</svg>"
-  layer.append(mark)
-
   document.body.append(layer)
 
-  // The mark starts parked, which is the slot's own copy showing. The
-  // travelling one takes over as soon as it has cleared the plate.
 
   // Squares already dropped, keyed by how far down the page they were laid,
   // so the same spot is never marked twice.
@@ -233,30 +222,42 @@ function startRoute() {
 
     const from = origin()
 
-    // The mark moves with the scroll, one pixel for one pixel, starting from
-    // its slot in the logo.
+    // The whole scroll maps onto the whole route: at the top the mark is in
+    // its slot, at the bottom it is at the end of the page. Everything in
+    // between is proportional, so it arrives exactly when the reader does.
     //
-    // It used to be placed at a fixed depth in the window instead, which
-    // meant it had to cover that depth on top of the scroll: going down it
-    // lagged behind the page, and coming back up it raced ahead to catch
-    // its resting place. Tying it directly to distance scrolled makes it
-    // behave the same in both directions, because there is nothing to catch
-    // up on.
-    const y = from.y + window.scrollY
+    // Moving it one pixel per pixel scrolled instead leaves it pinned near
+    // the top of the window, since scrolling already moves the page under
+    // it, and it never reaches the end. Placing it at a fixed depth in the
+    // window has the opposite fault: it has to cover that depth on top of
+    // the scroll, so it drags going down and races coming back up.
+    const through = Math.min(1, Math.max(0, window.scrollY / scrollable))
+    const end = document.documentElement.scrollHeight - window.innerHeight * 0.4
+    const y = from.y + (end - from.y) * through
 
     const here = positionAt(y)
-    mark.style.transform = "translate(" + here.x + "px, " + here.y + "px)"
 
-    // Exactly one mark is ever visible. While parked it is the slot's own,
-    // because the route layer is painted behind the header and a mark
-    // sitting in the plate would be hidden by it. Once the travelling mark
-    // has cleared the plate it is in open page and takes over.
-    //
-    // The two occupy the same spot, so the changeover happens where they
-    // overlap and reads as the one object moving off.
-    const clear = here.y - from.y > 30
-    mark.style.visibility = clear ? "visible" : "hidden"
-    slot?.classList.toggle("handed-over", clear)
+    // At the very top the mark is left exactly as the layout placed it, so
+    // the logo is untouched and cannot drift by a pixel. Any scroll at all
+    // lifts it out and it is positioned by hand from there.
+    if (here.y <= from.y + 0.5) {
+      slot.classList.remove("travelling")
+      mark.style.transform = ""
+      return
+    }
+
+    slot.classList.add("travelling")
+
+    // Fixed positioning is relative to the window, so the page coordinates
+    // the route works in are converted back. Fixed rather than absolute
+    // because the mark stays inside the header, which is where it has to be
+    // to stay visible while parked in the plate.
+    mark.style.transform =
+      "translate(" +
+      (here.x - window.scrollX - 11) +
+      "px, " +
+      (here.y - window.scrollY - 13) +
+      "px)"
 
     // Lay squares for every step between the logo and here that is not
     // already marked. They come from the same function that places the mark,
@@ -285,7 +286,29 @@ function startRoute() {
     }
 
     if (batch.childNodes.length) trail.append(batch)
+
+    // The plate is sticky, so it stays near the top of the window while the
+    // trail scrolls up past it. Squares that have gone above the plate are
+    // hidden, so the trail always reads as coming out of the box rather than
+    // carrying on above it.
+    const cutoff = plate.getBoundingClientRect().bottom + window.scrollY - 8
+    for (const dot of trail.children) {
+      const above = parseFloat(dot.style.top) < cutoff
+      dot.classList.toggle("behind-plate", above)
+    }
+
   }
+
+  /**
+   * Redraw the piece of trail that hangs from the plate.
+   *
+   * It runs from the slot in the logo down to the mark, in window
+   * coordinates, so it stays attached to the sticky plate. Once the mark is
+   * far enough down that the laid trail has caught up, there is nothing left
+   * for it to bridge and it is left empty.
+   */
+
+
 
   function onScroll() {
     if (ticking) return
@@ -317,13 +340,14 @@ function startRoute() {
 
       // Narrowed past the cutoff there is no room beside the content, so the
       // mark stops travelling and the logo takes its own mark back.
+      // Narrowed past the cutoff there is no clear space beside the content,
+      // so the mark goes back to being just the logo's icon.
       if (window.innerWidth < NARROWEST) {
-        mark.style.display = "none"
-        slot?.classList.remove("handed-over")
+        slot.classList.remove("travelling")
+        mark.style.transform = ""
         return
       }
 
-      mark.style.display = ""
       update()
     },
     { passive: true },

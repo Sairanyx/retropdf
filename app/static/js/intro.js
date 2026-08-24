@@ -13,6 +13,20 @@
 // Skipped for anyone who has asked for less motion, and skipped on repeat
 // visits within the session so it never becomes an obstacle.
 
+// Reloading should put you back at the top of the page.
+//
+// Browsers restore the previous scroll position by default, which is right
+// for a long article and wrong here: the opening sequence lays the page out
+// in stages, so the position being restored was measured against a page that
+// had not finished arriving, and it lands a few dozen pixels down for no
+// reason the reader can see.
+//
+// A page carrying a #section is left alone, since there the position is
+// asked for rather than remembered.
+if ("scrollRestoration" in history && !location.hash) {
+  history.scrollRestoration = "manual"
+}
+
 // What has been seen this visit.
 //
 // The full sequence, with the mark falling, is a first impression. It plays

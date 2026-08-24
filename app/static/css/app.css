@@ -166,7 +166,10 @@ html {
 .topbar-wrap {
   position: sticky;
   top: 0;
-  z-index: 100;
+  /* Under the route layer, so the trail is drawn over the brand plate and
+     reads as coming out of it. Still above the page content, which scrolls
+     underneath. */
+  z-index: 40;
   /* The ground shows through behind the plates, so content scrolling under
      them is hidden without a hard edge. */
   background: linear-gradient(
@@ -300,14 +303,12 @@ html {
   color: var(--ink);
 }
 
-/* The space in the logo where the travelling mark rests. It holds the mark's
-   exact size so the word beside it never shifts, whether the mark is parked
-   here or out on the page.
+/* The mark in the logo, and the same element that travels down the page.
+   There is only ever this one: scrolling moves it out of the plate rather
+   than hiding it and showing another copy elsewhere.
 
-   The slot draws the mark itself by default, so the logo is complete with no
-   scripting at all, on a narrow screen, and for anyone who has asked for
-   less motion. The route hides it only once it has a real mark to put there
-   instead, which keeps the two from ever both being visible. */
+   The slot holds its space so the word never shifts once the mark has left,
+   and with no scripting the mark simply stays in it. */
 .brand-slot {
   display: block;
   width: 22px;
@@ -316,11 +317,44 @@ html {
   color: var(--ink);
 }
 
-/* Hidden the moment the travelling mark clears the plate, so the two are
-   never both on screen. No fade: they sit in the same place, so a straight
-   swap reads as the one object moving off. */
-.brand-slot.handed-over > svg {
-  visibility: hidden;
+/* Lifted out of the plate's clipping and layout so it can move freely, while
+   staying a child of the header. That matters: the route layer is painted
+   behind the content, so a mark parked there would be hidden by the header
+   sitting above it. Kept here, it is visible in the plate and out on the
+   page alike. */
+.brand-slot > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Raised back above the route: the trail is meant to cross the brand plate
+   only, not the navigation on the other side of the header. */
+.navgroup {
+  position: relative;
+  z-index: 60;
+}
+
+.brand-slot.travelling > svg {
+  position: fixed;
+  /* Pinned to the window's corner so the transform below is the whole
+     position. Without this a fixed element keeps its normal layout spot as
+     its starting point and the transform is added to it, which puts the mark
+     twice as far across as intended. */
+  left: 0;
+  top: 0;
+  width: 22px;
+  height: 26px;
+  /* Above the page content, so it reads as having come out of the plate and
+     travelled over the page rather than sliding behind it. The header it
+     lives in is already above the content, and this keeps it above the
+     header's own plates too. */
+  z-index: 120;
+  /* Set by the route each frame. No transition: the position is recomputed
+     every scroll frame, so an eased transform would chase a target that has
+     already moved, dragging going down and overshooting coming back up. */
+  will-change: transform;
+  pointer-events: none;
 }
 
 .brand-word {
@@ -1440,7 +1474,14 @@ html {
   left: 0;
   width: 100%;
   height: 100%;
-  z-index: 0;
+  /* Behind the page text, which it may pass under, but above the plate it
+     starts from so the trail is seen coming out of the box rather than
+     appearing below it.
+
+     The header is lowered to 40 for this, and the nav plate on the right is
+     raised back above the route on its own so only the brand plate is
+     crossed. */
+  z-index: 50;
   pointer-events: none;
 }
 
@@ -1459,26 +1500,10 @@ html {
   opacity: 0.5;
 }
 
-/* The mark itself, the same shape that falls during the opening. */
-.route-mark {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 22px;
-  height: 26px;
-  margin: -13px 0 0 -11px;
-  color: var(--ink);
-  /* No fade: this element is the logo's mark whether it is parked in the
-     plate or out on the page, so it is visible the whole time and only ever
-     moves. Close enough to the scroll to feel attached to it, with just
-     enough lag to read as travelling rather than jumping. */
-  transition: transform 0.12s linear;
-}
-
-.route-mark svg {
-  width: 100%;
-  height: 100%;
-  display: block;
+/* Scrolled up past the sticky plate. Hidden so the trail never appears above
+   the box it comes out of. */
+.route-dot.behind-plate {
+  opacity: 0;
 }
 
 /* Content sits above the route, or the trail would be drawn over the text.
