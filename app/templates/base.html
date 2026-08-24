@@ -12,12 +12,24 @@
   <meta property="og:description" content="{{ page_description }}">
   <meta property="og:type" content="website">
   <meta property="og:url" content="{{ canonical }}">
+  <!-- Fetched at once rather than waiting for the stylesheet to be parsed
+       and the font to be found in it. The display face sets the logo and
+       every heading, so arriving late means those are painted in the
+       fallback first and visibly reflow when the real one lands. -->
+  <link rel="preload" href="/static/fonts/handjet-latin-wght-normal.woff2"
+        as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/static/fonts/ibm-plex-mono-latin-400-normal.woff2"
+        as="font" type="font/woff2" crossorigin>
+
   <link rel="stylesheet" href="/static/css/app.css">
 
   <!-- Applied before the page paints, so a first visit never shows the
        finished page for a frame before the opening sequence starts.
-       intro.js removes it. Without scripting the noscript rule wins. -->
-  <script>document.documentElement.classList.add("intro-pending")</script>
+       intro.js removes it. Without scripting the noscript rule wins.
+
+       A file rather than an inline script: our own CSP sets
+       script-src 'self', which refuses inline scripts. -->
+  <script src="/static/js/pending.js"></script>
   <noscript><style>.intro-pending body { visibility: visible !important; }</style></noscript>
 </head>
 <body data-intro="1"{% if route %} data-route="{{ route }}"{% endif %}>

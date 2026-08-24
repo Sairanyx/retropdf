@@ -13,19 +13,19 @@
   font-family: "IBM Plex Mono";
   src: url("/static/fonts/ibm-plex-mono-latin-400-normal.woff2") format("woff2");
   font-weight: 400;
-  font-display: swap;
+  font-display: optional;
 }
 @font-face {
   font-family: "IBM Plex Mono";
   src: url("/static/fonts/ibm-plex-mono-latin-500-normal.woff2") format("woff2");
   font-weight: 500;
-  font-display: swap;
+  font-display: optional;
 }
 @font-face {
   font-family: "IBM Plex Mono";
   src: url("/static/fonts/ibm-plex-mono-latin-600-normal.woff2") format("woff2");
   font-weight: 600;
-  font-display: swap;
+  font-display: optional;
 }
 
 /* Handjet carries the retro character. One variable file covers every
@@ -35,7 +35,12 @@
   font-family: "Handjet";
   src: url("/static/fonts/handjet-latin-wght-normal.woff2") format("woff2-variations");
   font-weight: 100 900;
-  font-display: swap;
+  /* Not swap. swap paints the fallback at once and changes the text when the
+     real face arrives, which on a hard reload is a visible jump in the logo
+     and every heading. optional gives the font a brief window to arrive and
+     then never swaps, so the text is painted once and stays put. Paired with
+     a preload in the head, it wins that window on any normal connection. */
+  font-display: optional;
 }
 
 :root {
