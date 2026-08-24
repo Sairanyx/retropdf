@@ -633,6 +633,26 @@ input[type="file"] {
  * lines hold file names and figures, so they are set larger than the copy
  * around them rather than smaller, which is what a pixel face needs for
  * digits to stay apart and unambiguous. */
+/* A blinking square while the page is busy, sitting at the end of the status
+   line. The pointer says the same thing, but only where the pointer is: this
+   stays visible wherever the reader is looking, and it is the same square the
+   trail is drawn from, so it belongs to the page rather than being borrowed
+   from somewhere else. */
+.readout.busy::after {
+  content: "";
+  display: inline-block;
+  width: 0.55em;
+  height: 0.55em;
+  margin-left: 0.5em;
+  background: var(--accent);
+  animation: blink 0.9s steps(1, end) infinite;
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  50.01%, 100% { opacity: 0.15; }
+}
+
 .readout {
   font-size: 1.25rem;
   color: var(--ink-2);
@@ -708,8 +728,11 @@ select {
 
 #pages:empty::after {
   content: "Nothing loaded yet.";
-  color: var(--ink-4);
-  font-size: 0.8125rem;
+  /* Larger and a step darker: this sits alone in a big empty panel, so at
+     13px in the lightest grey it read as a stray mark rather than a line
+     telling you the panel is waiting for a file. */
+  color: var(--ink-3);
+  font-size: 1.25rem;
 }
 
 /* ---------- page thumbnails ---------- */
@@ -1606,4 +1629,58 @@ html {
 .proof .led {
   background: var(--accent);
   box-shadow: 0 0 6px var(--accent), 0 0 2px var(--accent);
+}
+
+/* ---------- cursors ---------- */
+
+/* Drawn to match the rest of the site rather than left to the operating
+ * system, which draws its own smooth arrow that belongs to a different era
+ * from everything else here.
+ *
+ * Two numbers follow each image: where in it the click actually lands. The
+ * arrow points from its top left, the hand from its fingertip, and the other
+ * two from their middle. Getting these wrong makes a page feel subtly
+ * unresponsive, since the pointer and the click disagree.
+ *
+ * Every rule ends in a standard cursor name. If the image cannot be loaded
+ * the browser falls back to it, rather than leaving no pointer at all. */
+
+body {
+  cursor: url("/static/cursors/arrow.svg") 2 1, default;
+}
+
+a,
+label[for],
+summary,
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+.tool,
+.chip:not(:disabled),
+[data-position] {
+  cursor: url("/static/cursors/hand.svg") 9 1, pointer;
+}
+
+/* Anything switched off, and anything the page will not accept. */
+button:disabled,
+.chip:disabled,
+[aria-disabled="true"] {
+  cursor: url("/static/cursors/stop.svg") 12 12, not-allowed;
+}
+
+/* While a file is being read or built. Set on the root so it covers the
+   whole window, including whatever the pointer happens to be over. */
+body.working,
+body.working a,
+body.working button,
+body.working label[for],
+body.working [data-position] {
+  cursor: url("/static/cursors/wait.svg") 12 12, progress;
+}
+
+/* Text still gets a text cursor, since a custom one there would stop the
+   pointer showing where the caret would land. */
+input,
+textarea,
+[contenteditable] {
+  cursor: text;
 }

@@ -27,6 +27,24 @@ const downloadBtn = document.querySelector("#download")
 function paintLamps() {
   downloadBtn?.classList.toggle("on", !downloadBtn.disabled)
 }
+
+/**
+ * Say whether the page is busy.
+ *
+ * Shows in two places at once: the pointer becomes an hourglass, which is
+ * where the eye already is, and the status line grows a blinking indicator,
+ * which stays visible when the pointer is somewhere else entirely.
+ *
+ * Counted rather than set to a flag, since reading several files starts and
+ * finishes several times over and the last one finishing must not clear an
+ * indicator another is still relying on.
+ */
+let busy = 0
+function working(yes) {
+  busy = Math.max(0, busy + (yes ? 1 : -1))
+  document.body.classList.toggle("working", busy > 0)
+  result.classList.toggle("busy", busy > 0)
+}
 // Present only on the pages that use them.
 const splitOptions = document.querySelector("#split-options")
 const imageOptions = document.querySelector("#image-options")
@@ -226,6 +244,7 @@ async function openFiles(chosen) {
 
   downloadBtn.disabled = true
   paintLamps()
+  working(true)
 
   try {
     for (const file of chosen) {
@@ -265,6 +284,10 @@ async function openFiles(chosen) {
     paintLamps()
   } catch (error) {
     result.textContent = error.message
+  } finally {
+    // In a finally, so a file that fails to open does not leave the whole
+    // page stuck showing an hourglass.
+    working(false)
   }
 }
 
@@ -486,10 +509,13 @@ downloadBtn.addEventListener("click", async () => {
   }[currentMode()]
 
   if (special) {
+    working(true)
     try {
       await special()
     } catch (error) {
       result.textContent = error.message
+    } finally {
+      working(false)
     }
     return
   }
@@ -502,6 +528,7 @@ downloadBtn.addEventListener("click", async () => {
     return
   }
 
+  working(true)
   try {
     result.textContent = "Building"
     const { bytes } = await call("build", {
@@ -514,6 +541,8 @@ downloadBtn.addEventListener("click", async () => {
     result.textContent = `Saved ${countOf(items.length, "page")}.`
   } catch (error) {
     result.textContent = error.message
+  } finally {
+    working(false)
   }
 })
 

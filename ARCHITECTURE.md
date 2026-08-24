@@ -356,3 +356,11 @@ in the first place.
 Worth stating explicitly, which is unusual and builds trust rather than
 costing it: what happens if the site were ever tampered with, and where the
 published hashes are so anyone can check.
+
+## A different route per tool
+
+The trail already reads `data-route` from the body, and every page sets it to
+"snake". Giving each tool its own curve is then a matter of adding functions
+keyed off that value: the merge page could run two lines that converge, split
+could fork, rotate could turn. Worth doing once the tools are tested, since
+it costs nothing structurally and makes each page feel like its own place.
