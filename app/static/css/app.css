@@ -905,3 +905,23 @@ select:focus-visible {
 .tool-head {
   padding-block: clamp(2rem, 5vw, 3.5rem) clamp(1.25rem, 3vw, 2rem);
 }
+
+/* The workspace tool switcher.
+ *
+ * Eight switches is too many for the single row the option fieldsets use, so
+ * this wraps into a grid that stays readable down to a phone.
+ */
+.toolbar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.375rem;
+  align-items: stretch;
+}
+
+.toolbar legend {
+  margin-bottom: 0.25rem;
+}
+
+.toolbar .switchbox {
+  justify-content: flex-start;
+}

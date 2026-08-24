@@ -116,11 +116,19 @@ const modes = {
   },
 }
 
-// Images to PDF takes pictures, every other tool takes PDFs.
+// Images to PDF takes pictures, every other tool takes PDFs. The picker is
+// hidden behind a styled label, so the label has to say what will open.
+const pickerLabel = document.querySelector('label[for="picker"]')
+
 function applyAccept() {
-  picker.accept = currentMode() === "frimages"
-    ? "image/jpeg,image/png"
-    : "application/pdf"
+  const wantsImages = currentMode() === "frimages"
+  picker.accept = wantsImages ? "image/jpeg,image/png" : "application/pdf"
+
+  if (pickerLabel) {
+    const led = pickerLabel.querySelector(".led")
+    pickerLabel.textContent = wantsImages ? "Choose images " : "Choose files "
+    if (led) pickerLabel.appendChild(led)
+  }
 }
 
 applyAccept()
