@@ -1,8 +1,12 @@
 // Softens the jump between pages.
 //
-// A link to another page is a full reload, which lands as a hard cut. Fading
-// the current page out first, then letting the new one fade in, removes the
-// flash without making navigation feel slow.
+// A link to another page is a full reload, which lands as a hard cut. The
+// current page settles away first, and the new one rises into place, so the
+// two read as one movement rather than a flicker.
+//
+// The timing is deliberately unhurried. A page change that is too quick
+// registers as a glitch, and one that is too slow gets in the way. Around
+// four hundred milliseconds each side sits between the two.
 //
 // Anything that would leave the site, open a new tab, or is a plain anchor on
 // this page is left alone.
@@ -10,7 +14,8 @@
 const wantsLessMotion =
   window.matchMedia("(prefers-reduced-motion: reduce)").matches
 
-const FADE_MS = 160
+// Must match --leave-ms in the stylesheet.
+const LEAVE_MS = 380
 
 if (!wantsLessMotion) {
   document.addEventListener("click", (event) => {
@@ -31,10 +36,15 @@ if (!wantsLessMotion) {
     if (samePage && url.hash) return
 
     event.preventDefault()
+
+    // Only the content settles away. The header stays, because it is the
+    // one thing common to both pages, which is what makes the change read
+    // as moving within a place rather than leaving it.
     document.body.classList.add("leaving")
+
     setTimeout(() => {
       window.location.href = link.href
-    }, FADE_MS)
+    }, LEAVE_MS)
   })
 
   // Coming back with the browser's back button can restore the faded state

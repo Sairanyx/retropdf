@@ -44,9 +44,9 @@ function reveal() {
 if (!stage || !mark || wantsLessMotion || alreadySeen) {
   reveal()
   document.body.classList.add("intro-done", "intro-skipped")
-  // Let the page fade start before the heading begins writing, so the two
-  // read as one arrival rather than a stutter.
-  setTimeout(typeHeadline, wantsLessMotion ? 0 : 180)
+  // Wait for the heading's own section to have risen into place before
+  // writing into it, so the two are sequential rather than overlapping.
+  setTimeout(typeHeadline, wantsLessMotion ? 0 : 320)
 } else {
   try {
     sessionStorage.setItem(SEEN, "1")

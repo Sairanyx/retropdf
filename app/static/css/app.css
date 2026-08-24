@@ -1222,32 +1222,71 @@ input[type="number"]::-webkit-inner-spin-button {
    Moving between pages
    ============================================================ */
 
-/* A page change is a full load, which lands as a hard cut. These two soften
-   the ends of it: the old page dims as it leaves, the new one fades up.
-   Both are short, since a slow page change is worse than an abrupt one. */
+/* A page change is a full reload, which lands as a hard cut.
+ *
+ * The content settles downward and away as you leave, then rises into place
+ * on arrival, so the two halves read as one continuous movement. The header
+ * is deliberately left out of both: it is the one thing common to every
+ * page, and holding it still is what makes the change feel like moving
+ * within a place rather than leaving one and entering another.
+ *
+ * The easing is asymmetric on purpose. Leaving accelerates away, arriving
+ * decelerates into place, which is how physical things actually move.
+ */
 
-@keyframes page-in {
+/* Must match LEAVE_MS in nav.js. */
+:root {
+  --leave-ms: 380ms;
+  --arrive-ms: 620ms;
+}
+
+@keyframes page-arrive {
   from {
     opacity: 0;
+    transform: translateY(14px);
   }
 }
 
-/* Only when the opening sequence was skipped, since the sequence does its
-   own arrival and would otherwise fade the page in twice. */
-body.intro-skipped {
-  animation: page-in 0.28s ease-out;
+/* Arriving. The header is excluded so it appears settled from the first
+   frame, as though it never went anywhere. */
+body.intro-skipped .wrap > section,
+body.intro-skipped footer {
+  animation: page-arrive var(--arrive-ms) cubic-bezier(0.16, 0.84, 0.32, 1)
+    backwards;
 }
 
-body.leaving {
+/* The heading leads, the rest follows a beat later. */
+body.intro-skipped .wrap > section:nth-of-type(1) { animation-delay: 0.02s; }
+body.intro-skipped .wrap > section:nth-of-type(2) { animation-delay: 0.09s; }
+body.intro-skipped .wrap > section:nth-of-type(3) { animation-delay: 0.15s; }
+body.intro-skipped footer { animation-delay: 0.2s; }
+
+/* Leaving. Everything but the header drifts down and dims together, which
+   keeps it reading as one page departing rather than parts of it. */
+body.leaving .wrap > section,
+body.leaving footer {
   opacity: 0;
-  transition: opacity 0.16s ease-in;
+  transform: translateY(-10px);
+  transition: opacity var(--leave-ms) cubic-bezier(0.5, 0, 0.9, 0.4),
+    transform var(--leave-ms) cubic-bezier(0.5, 0, 0.9, 0.4);
+}
+
+/* The header dims very slightly on the way out, just enough to acknowledge
+   the change without moving. */
+body.leaving .topbar-wrap {
+  opacity: 0.55;
+  transition: opacity var(--leave-ms) ease-out;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  body.intro-skipped,
-  body.leaving {
+  body.intro-skipped .wrap > section,
+  body.intro-skipped footer,
+  body.leaving .wrap > section,
+  body.leaving footer,
+  body.leaving .topbar-wrap {
     animation: none;
     opacity: 1;
+    transform: none;
     transition: none;
   }
 }
