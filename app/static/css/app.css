@@ -1025,6 +1025,14 @@ select:focus-visible {
   padding-block: clamp(2rem, 5vw, 3.5rem) clamp(1.25rem, 3vw, 2rem);
 }
 
+/* The heading and the tool below it share the first screen, so nothing that
+   belongs further down is visible while the heading is being written. The
+   height is generous rather than exact: the tool panel varies with how many
+   options it has, and forcing it would cut a tall one off. */
+.first-screen {
+  padding-top: clamp(3rem, 9vh, 6rem);
+}
+
 /* The workspace tool switcher.
  *
  * Eight switches is too many for the single row the option fieldsets use, so

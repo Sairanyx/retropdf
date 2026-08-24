@@ -13,55 +13,62 @@
 // Skipped for anyone who has asked for less motion, and skipped on repeat
 // visits within the session so it never becomes an obstacle.
 
-// Two separate memories.
+// What has been seen this visit.
 //
 // The full sequence, with the mark falling, is a first impression. It plays
-// once and then never again, because sitting through it on every visit would
-// get in the way of someone who came here to do a job.
+// once, because sitting through it repeatedly would get in the way of
+// someone who came here to do a job. The heading typing is shorter and
+// still reads well, so it plays once per page.
 //
-// The heading typing is different: it is short, it is the page introducing
-// itself, and it still reads well on a return visit. That plays whenever a
-// page is opened for the first time in this browser.
+// Two flags in sessionStorage, which is the narrowest thing that survives a
+// page load. Worth being precise about what that means, since this is the
+// only thing this site keeps anywhere:
 //
-// localStorage rather than sessionStorage, so closing the tab and coming
-// back tomorrow does not replay the whole thing. Nothing here identifies
-// anyone: it is a flag in their own browser that never leaves the device.
-const SEEN_INTRO = "redpdf-intro-seen"
-const SEEN_PAGES = "redpdf-pages-seen"
+//   - it never leaves the device, and cannot: connect-src 'none' forbids
+//     every outbound request, so there is nothing that could send it
+//   - the server never sees it, and has no way to ask for it
+//   - it holds no identifier, only which pages this tab has opened
+//   - closing the tab erases it
+//
+// A cookie would have been the obvious alternative and is the wrong choice:
+// cookies are sent to the server on every request, which is exactly the
+// thing this site does not do.
+const SEEN_INTRO = "redpdf-seen-intro"
+const SEEN_PAGES = "redpdf-seen-pages"
 
 const wantsLessMotion =
   window.matchMedia("(prefers-reduced-motion: reduce)").matches
 
 /** Read a flag, treating a refusal to store as simply not knowing. */
-function remembered(key) {
+function recall(key) {
   try {
-    return localStorage.getItem(key)
+    return sessionStorage.getItem(key)
   } catch (error) {
-    // Private browsing can refuse storage. Playing the sequence again is
-    // harmless, so there is nothing to handle.
+    // Some privacy settings refuse storage outright. Playing the sequence
+    // again is harmless, so there is nothing to handle.
     return null
   }
 }
 
-function remember(key, value) {
+function note(key, value) {
   try {
-    localStorage.setItem(key, value)
+    sessionStorage.setItem(key, value)
   } catch (error) {
     // As above: nothing to do.
   }
 }
 
-const alreadySeen = remembered(SEEN_INTRO) === "1"
+const alreadySeen = recall(SEEN_INTRO) === "1"
 
-// Pages already opened at least once, so the heading only writes itself on
-// a page you have not seen before.
-const seenPages = new Set((remembered(SEEN_PAGES) || "").split(",").filter(Boolean))
+// Which pages this tab has already opened, so a heading writes itself once
+// rather than every time you come back to it.
+const seenPages = new Set((recall(SEEN_PAGES) || "").split(",").filter(Boolean))
 const thisPage = window.location.pathname
 const firstTimeOnThisPage = !seenPages.has(thisPage)
 
 if (firstTimeOnThisPage) {
   seenPages.add(thisPage)
-  remember(SEEN_PAGES, Array.from(seenPages).join(","))
+  note(SEEN_PAGES, Array.from(seenPages).join(","))
 }
 
 const stage = document.querySelector("[data-intro]")
@@ -160,7 +167,7 @@ if (!stage || !mark || wantsLessMotion || alreadySeen) {
     showAfterHeading()
   }
 } else {
-  remember(SEEN_INTRO, "1")
+  note(SEEN_INTRO, "1")
   run()
 }
 
