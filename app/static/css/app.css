@@ -534,7 +534,16 @@ h1.typing::after {
   list-style: none;
 }
 
+/* The grid stretches each row to its tallest cell, but the card inside is
+   only as tall as its own text, so a one line description left a visibly
+   shorter box beside a two line one. Filling the cell makes every card in a
+   row the same height. */
+.tools > li {
+  display: flex;
+}
+
 .tool {
+  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 0.625rem;

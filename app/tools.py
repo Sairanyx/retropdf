@@ -128,7 +128,7 @@ TOOLS: tuple[Tool, ...] = (
         mode="toimages",
         name="PDF to images",
         heading="Save PDF pages as pictures",
-        blurb="Save every page as a separate picture.",
+        blurb="Save every page as a separate PNG or JPG.",
         title="Convert PDF pages to images in your browser",
         description=(
             "Save each page of a PDF as a PNG image. Runs on your own "
