@@ -416,7 +416,19 @@ html {
      every scroll frame, so an eased transform would chase a target that has
      already moved, dragging going down and overshooting coming back up. */
   will-change: transform;
-  pointer-events: none;
+
+  /* Clickable, unlike the trail behind it. The mark is inside the logo link,
+     so clicking it does what the logo does: takes you back to the top of the
+     page it set off from. Which is what the thing appears to offer, having
+     visibly come from up there. */
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+/* Warms on hover the way the logo plate does, so it is discoverable as
+   something you can click rather than only decoration. */
+.brand-slot.travelling > svg:hover {
+  color: var(--accent);
 }
 
 .brand-word {
