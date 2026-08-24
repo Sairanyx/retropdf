@@ -629,22 +629,19 @@ input[type="file"] {
 /* The two lines that report what is happening: what is loaded, and how large
    a file this device can take.
  *
- * Kept in the mono while the rest of the site is in the display face. They
- * carry file names and figures, and a fixed width face keeps digits apart
- * and the line from reflowing as the numbers change. This is also the line
- * that explains why a file was refused, so it has to be plainly readable
- * rather than characterful. */
+ * In the display face like everything else, and sized up to carry it. These
+ * lines hold file names and figures, so they are set larger than the copy
+ * around them rather than smaller, which is what a pixel face needs for
+ * digits to stay apart and unambiguous. */
 .readout {
-  font-family: var(--mono);
-  font-size: 1rem;
+  font-size: 1.25rem;
   color: var(--ink-2);
   margin: 0 0 0.375rem;
   min-height: 1.65em;
 }
 
 .note {
-  font-family: var(--mono);
-  font-size: 0.8125rem;
+  font-size: 1.0625rem;
   color: var(--ink-3);
   margin: 0 0 1rem;
 }

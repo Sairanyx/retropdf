@@ -14,10 +14,11 @@
     <div class="controls">
       <label class="chip accent" for="picker">
         {% if tool.mode == "frimages" %}Choose images{% else %}Choose a file{% endif %}
-        <span class="led"></span>
       </label>
       <input type="file" id="picker" multiple>
-      <button class="chip" id="download" disabled>Download</button>
+      <button class="chip" id="download" disabled>
+        Download <span class="led"></span>
+      </button>
     </div>
 
     <p class="readout" id="result">{{ start_hint }}</p>

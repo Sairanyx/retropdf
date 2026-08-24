@@ -14,6 +14,19 @@ const picker = document.querySelector("#picker")
 const result = document.querySelector("#result")
 const pagesEl = document.querySelector("#pages")
 const downloadBtn = document.querySelector("#download")
+/**
+ * Light the download button once there is something to save.
+ *
+ * The same lamp the navigation uses: dark when there is nothing to do, lit
+ * when there is. Only Download carries one. The Choose button is already the
+ * accent colour, so a lamp in that colour on top of it says nothing.
+ *
+ * Driven from the button's own disabled state rather than toggled at each
+ * call site, so the lamp cannot drift out of step with what the page holds.
+ */
+function paintLamps() {
+  downloadBtn?.classList.toggle("on", !downloadBtn.disabled)
+}
 // Present only on the pages that use them.
 const splitOptions = document.querySelector("#split-options")
 const imageOptions = document.querySelector("#image-options")
@@ -140,10 +153,13 @@ function showLimit() {
   const note = document.querySelector("#limit-note")
   if (!note) return
 
+  // The figures first, since that is what is being asked. The old wording
+  // opened with "On this device you can work with up to", which buries the
+  // one thing the reader wants in the middle of a sentence.
   note.textContent =
-    `On this device you can work with up to ${formatSize(LIMITS.maxTotal)} ` +
-    `at a time, or ${formatSize(LIMITS.maxFile)} in a single file.` +
-    (LIMITS.mobile ? " A computer will handle more than a phone." : "")
+    `Limit: ${formatSize(LIMITS.maxFile)} per file, ` +
+    `${formatSize(LIMITS.maxTotal)} at once.` +
+    (LIMITS.mobile ? " A computer takes more." : "")
 }
 
 /**
@@ -179,6 +195,16 @@ picker.addEventListener("change", async () => {
   picker.value = ""
 })
 
+/**
+ * A count with its noun, in the singular when there is one of something.
+ *
+ * Saves writing "1 page(s)", which is programmer shorthand that reads as an
+ * unfinished sentence to everyone else.
+ */
+function countOf(n, noun) {
+  return `${n} ${noun}${n === 1 ? "" : "s"}`
+}
+
 /** Open a list of files, however the user gave them to us. */
 async function openFiles(chosen) {
   if (chosen.length === 0) return
@@ -199,15 +225,16 @@ async function openFiles(chosen) {
   if (currentMode() !== "merge") reset()
 
   downloadBtn.disabled = true
+  paintLamps()
 
   try {
     for (const file of chosen) {
-      result.textContent = `Reading ${file.name}...`
+      result.textContent = `Opening ${file.name}`
       const bytes = await file.arrayBuffer()
 
       // The name can say anything, so check what the file actually is.
       if (!looksLikePdf(bytes)) {
-        result.textContent = `${file.name} is not a PDF file.`
+        result.textContent = `${file.name} is not a PDF.`
         continue
       }
 
@@ -234,7 +261,8 @@ async function openFiles(chosen) {
     }
 
     downloadBtn.disabled = false
-    result.textContent = `${order.length} pages from ${files.size} file(s). ${modes[currentMode()].hint}`
+    result.textContent = `${countOf(order.length, "page")} ready. ${modes[currentMode()].hint}`
+    paintLamps()
   } catch (error) {
     result.textContent = error.message
   }
@@ -246,7 +274,7 @@ acceptDroppedFiles(
   (dropped) => openFiles(dropped),
   (over) => {
     document.body.classList.toggle("drag-over", over)
-    if (over) result.textContent = "Drop the files to open them."
+    if (over) result.textContent = "Drop them here."
   },
 )
 
@@ -269,6 +297,8 @@ function reset() {
   marked.clear()
   order = []
   pagesEl.replaceChildren()
+  downloadBtn.disabled = true
+  paintLamps()
 }
 
 async function renderThumbnails(docId, bytes) {
@@ -289,7 +319,7 @@ async function renderThumbnails(docId, bytes) {
     }).promise
 
     thumbnails.set(`${docId}:${n}`, canvas)
-    result.textContent = `Rendering ${n} of ${pdf.numPages}...`
+    result.textContent = `Drawing page ${n} of ${pdf.numPages}`
     drawPages()
   }
 }
@@ -399,9 +429,9 @@ function turnButton(entry, amount) {
 function reportSelection() {
   const mode = currentMode()
   if (mode === "extract") {
-    result.textContent = `${marked.size} of ${order.length} pages selected to keep`
+    result.textContent = `Keeping ${marked.size} of ${order.length}`
   } else if (mode === "remove") {
-    result.textContent = `${marked.size} of ${order.length} pages marked for removal`
+    result.textContent = `Removing ${marked.size} of ${order.length}`
   } else {
     result.textContent = modes[mode].hint
   }
@@ -439,11 +469,11 @@ async function downloadSplit() {
     }),
   }))
 
-  result.textContent = `Building ${parts.length} files...`
+  result.textContent = `Building ${countOf(parts.length, "file")}`
   const zip = await call("splitToZip", { parts, zipName: `${stem}-split.zip` })
 
   save(zip.bytes, zip.name, "application/zip")
-  result.textContent = `Saved ${zip.fileCount} files as ${zip.name}`
+  result.textContent = `Saved ${countOf(zip.fileCount, "file")} as ${zip.name}`
 }
 
 downloadBtn.addEventListener("click", async () => {
@@ -473,7 +503,7 @@ downloadBtn.addEventListener("click", async () => {
   }
 
   try {
-    result.textContent = "Building..."
+    result.textContent = "Building"
     const { bytes } = await call("build", {
       items: items.map(({ doc, page, rotate }) => ({ doc, page, rotate })),
     })
@@ -481,7 +511,7 @@ downloadBtn.addEventListener("click", async () => {
     const first = files.values().next().value || "document.pdf"
     const name = first.replace(/\.pdf$/i, "") + mode.suffix + ".pdf"
     save(bytes, name, "application/pdf")
-    result.textContent = `Saved ${items.length} pages.`
+    result.textContent = `Saved ${countOf(items.length, "page")}.`
   } catch (error) {
     result.textContent = error.message
   }
@@ -504,7 +534,8 @@ async function addImages(chosen) {
 
   downloadBtn.disabled = false
   drawImages()
-  result.textContent = `${chosenImages.length} image(s) ready.`
+  paintLamps()
+  result.textContent = `${countOf(chosenImages.length, "image")} ready.`
 }
 
 function drawImages() {
