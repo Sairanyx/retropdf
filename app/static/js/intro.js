@@ -13,16 +13,55 @@
 // Skipped for anyone who has asked for less motion, and skipped on repeat
 // visits within the session so it never becomes an obstacle.
 
-const SEEN = "redpdf-intro-seen"
+// Two separate memories.
+//
+// The full sequence, with the mark falling, is a first impression. It plays
+// once and then never again, because sitting through it on every visit would
+// get in the way of someone who came here to do a job.
+//
+// The heading typing is different: it is short, it is the page introducing
+// itself, and it still reads well on a return visit. That plays whenever a
+// page is opened for the first time in this browser.
+//
+// localStorage rather than sessionStorage, so closing the tab and coming
+// back tomorrow does not replay the whole thing. Nothing here identifies
+// anyone: it is a flag in their own browser that never leaves the device.
+const SEEN_INTRO = "redpdf-intro-seen"
+const SEEN_PAGES = "redpdf-pages-seen"
 
 const wantsLessMotion =
   window.matchMedia("(prefers-reduced-motion: reduce)").matches
 
-let alreadySeen = false
-try {
-  alreadySeen = sessionStorage.getItem(SEEN) === "1"
-} catch (error) {
-  // Private browsing can refuse storage. Showing the intro again is harmless.
+/** Read a flag, treating a refusal to store as simply not knowing. */
+function remembered(key) {
+  try {
+    return localStorage.getItem(key)
+  } catch (error) {
+    // Private browsing can refuse storage. Playing the sequence again is
+    // harmless, so there is nothing to handle.
+    return null
+  }
+}
+
+function remember(key, value) {
+  try {
+    localStorage.setItem(key, value)
+  } catch (error) {
+    // As above: nothing to do.
+  }
+}
+
+const alreadySeen = remembered(SEEN_INTRO) === "1"
+
+// Pages already opened at least once, so the heading only writes itself on
+// a page you have not seen before.
+const seenPages = new Set((remembered(SEEN_PAGES) || "").split(",").filter(Boolean))
+const thisPage = window.location.pathname
+const firstTimeOnThisPage = !seenPages.has(thisPage)
+
+if (firstTimeOnThisPage) {
+  seenPages.add(thisPage)
+  remember(SEEN_PAGES, Array.from(seenPages).join(","))
 }
 
 const stage = document.querySelector("[data-intro]")
@@ -63,7 +102,9 @@ function collectAfterHeading() {
 // Empty the heading before anything paints, so the finished text is never
 // briefly visible before the typing starts. The text lives in data-type, so
 // nothing is lost for search engines or without scripting.
-if (headline && !wantsLessMotion) {
+const willType = headline && !wantsLessMotion && firstTimeOnThisPage
+
+if (willType) {
   headline.style.minHeight = `${headline.offsetHeight}px`
   headline.textContent = ""
 
@@ -85,6 +126,9 @@ if (headline && !wantsLessMotion) {
  * appearing to snap into position.
  */
 function showAfterHeading() {
+  // Nothing was hidden, so there is nothing to bring back.
+  if (!willType) return
+
   afterHeading.forEach((el, index) => {
     const delay = 0.06 + index * 0.13
     // A whole section carries more weight than a line of text, so it takes
@@ -106,15 +150,17 @@ function reveal() {
 if (!stage || !mark || wantsLessMotion || alreadySeen) {
   reveal()
   document.body.classList.add("intro-done", "intro-skipped")
-  // Wait for the heading's own section to have risen into place before
-  // writing into it, so the two are sequential rather than overlapping.
-  setTimeout(() => typeHeadline(showAfterHeading), wantsLessMotion ? 0 : 320)
-} else {
-  try {
-    sessionStorage.setItem(SEEN, "1")
-  } catch (error) {
-    // Nothing to do: the intro simply plays again next time.
+
+  if (willType) {
+    // Wait for the heading's own section to have risen into place before
+    // writing into it, so the two are sequential rather than overlapping.
+    setTimeout(() => typeHeadline(showAfterHeading), 320)
+  } else {
+    // Nothing to wait for: the page simply arrives.
+    showAfterHeading()
   }
+} else {
+  remember(SEEN_INTRO, "1")
   run()
 }
 
@@ -219,7 +265,7 @@ function aimAtBrand() {
  * engines and for anyone with scripting off.
  */
 function typeHeadline(onDone) {
-  if (!headline || wantsLessMotion || headline.dataset.typed === "1") {
+  if (!willType || headline.dataset.typed === "1") {
     onDone?.()
     return
   }

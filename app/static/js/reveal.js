@@ -13,9 +13,22 @@ const wantsLessMotion =
 
 // --- blocks appear as you reach them -----------------------------------
 
-function startReveals() {
+/**
+ * Hide the blocks that appear on scroll.
+ *
+ * This runs immediately rather than waiting for the opening sequence,
+ * because a block left visible during the intro is visible before the
+ * heading has been written, which is exactly what the sequence is for.
+ */
+function hideRevealBlocks() {
   if (wantsLessMotion || !("IntersectionObserver" in window)) return
   document.documentElement.classList.add("reveal-on")
+}
+
+hideRevealBlocks()
+
+function startReveals() {
+  if (wantsLessMotion || !("IntersectionObserver" in window)) return
 
   const seen = new IntersectionObserver(
     (entries) => {
