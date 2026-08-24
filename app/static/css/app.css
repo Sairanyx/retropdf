@@ -609,6 +609,15 @@ h1.typing::after {
  *
  * Kept low in opacity on purpose. The point is that something switched on,
  * not that the card is lit up. */
+.tool:hover h3 {
+  color: var(--ink);
+}
+
+.tool:hover p,
+.tool:hover .k {
+  color: var(--ink-2);
+}
+
 .tool:hover {
   transform: translateY(-2px);
   box-shadow:
@@ -643,13 +652,15 @@ h1.typing::after {
 }
 
 .tool h3 {
-  color: var(--ink);
+  color: var(--ink-2);
+  transition: color var(--t);
 }
 
 .tool p {
   margin: 0;
   font-size: var(--text-small);
   color: var(--ink-3);
+  transition: color var(--t);
 }
 
 .tool-art {
@@ -1176,7 +1187,7 @@ html.reveal-on [data-reveal].shown .tools > li {
   box-shadow: var(--raise);
   font-size: var(--text-small);
   letter-spacing: 0.02em;
-  color: var(--ink-3);
+  color: var(--ink-2);
   min-height: 44px;
   transition: background var(--t), color var(--t), box-shadow var(--t);
 }
@@ -1419,12 +1430,16 @@ input[type="number"]::-webkit-inner-spin-button {
   border-radius: var(--r-sm);
   background: var(--chip);
   box-shadow: var(--raise);
-  color: var(--ink);
+  color: var(--ink-2);
   font: inherit;
   font-size: var(--text-small);
   text-align: left;
   cursor: pointer;
-  transition: background var(--t), box-shadow var(--t);
+  transition: background var(--t), box-shadow var(--t), color var(--t);
+}
+
+.picker-button:hover {
+  color: var(--ink);
 }
 
 .picker-button::after {

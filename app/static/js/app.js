@@ -15,6 +15,11 @@ const result = document.querySelector("#result")
 const pagesEl = document.querySelector("#pages")
 const downloadBtn = document.querySelector("#download")
 const startOver = document.querySelector("#start-over")
+
+// Anyone who has asked their system for less movement gets none: pages
+// change place instantly rather than sliding.
+const wantsLessMotion =
+  window.matchMedia("(prefers-reduced-motion: reduce)").matches
 /**
  * Light the download button once there is something to save.
  *
@@ -431,6 +436,9 @@ function drawPages() {
 
     const box = document.createElement("div")
     box.dataset.position = String(position)
+    // Identifies this page across a rebuild, so a move can be animated from
+    // where the page was to where it now is.
+    box.dataset.key = entry.key
 
     // Dragging moves pages, so a drag must not be read as a text selection.
     if (kind === "move") box.style.touchAction = "none"
@@ -591,6 +599,44 @@ function shortName(name = "file") {
   return stem.length > 12 ? stem.slice(0, 11) + "…" : stem
 }
 
+/**
+ * Redraw the pages, sliding each one from where it was.
+ *
+ * The grid is rebuilt from scratch on every change, so a page that moves
+ * simply appears somewhere else and you cannot tell whether the click did
+ * anything. This records where every page sat, rebuilds, then animates each
+ * one from its old place to its new one.
+ *
+ * The technique is to apply the inverse of the movement as a transform and
+ * then remove it, so the browser animates the difference. Nothing is
+ * measured twice and no positions are calculated by hand.
+ */
+function drawPagesMoving() {
+  const before = new Map()
+  for (const box of pagesEl.children) {
+    before.set(box.dataset.key, box.getBoundingClientRect())
+  }
+
+  drawPages()
+
+  if (wantsLessMotion) return
+
+  for (const box of pagesEl.children) {
+    const was = before.get(box.dataset.key)
+    if (!was) continue
+
+    const now = box.getBoundingClientRect()
+    const dx = was.left - now.left
+    const dy = was.top - now.top
+    if (!dx && !dy) continue
+
+    box.animate(
+      [{ transform: `translate(${dx}px, ${dy}px)` }, { transform: "none" }],
+      { duration: 320, easing: "cubic-bezier(0.2, 0.8, 0.3, 1)" },
+    )
+  }
+}
+
 function moveButton(direction, from, to, disabled) {
   const button = document.createElement("button")
   button.className = "mini"
@@ -600,7 +646,7 @@ function moveButton(direction, from, to, disabled) {
   button.addEventListener("click", () => {
     const moved = order.splice(from, 1)[0]
     order.splice(to, 0, moved)
-    drawPages()
+    drawPagesMoving()
     result.textContent = "Order updated."
   })
   return button

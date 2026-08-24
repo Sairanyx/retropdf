@@ -37,6 +37,30 @@ if (!wantsLessMotion) {
       url.pathname === window.location.pathname && url.search === window.location.search
     if (samePage && url.hash) {
       glide()
+
+      // The last section on the page cannot be brought to the top of the
+      // window, because there is not a screenful of page left below it. The
+      // browser stops partway and the footer ends up half shown.
+      //
+      // Landing at the very bottom instead means the section fills the
+      // window with the footer whole underneath it, rather than sliced.
+      const target = document.querySelector(url.hash)
+      if (target && isLastSection(target)) {
+        event.preventDefault()
+        history.pushState(null, "", url.hash)
+        window.scrollTo({
+          top: document.documentElement.scrollHeight,
+          behavior: "smooth",
+        })
+      }
+      return
+    }
+
+    // The logo, clicked while already on the home page. Reloading to reach a
+    // place you can see is wasteful, so it scrolls back up instead.
+    if (samePage && !url.hash) {
+      event.preventDefault()
+      window.scrollTo({ top: 0, behavior: "smooth" })
       return
     }
 
@@ -57,6 +81,21 @@ if (!wantsLessMotion) {
   window.addEventListener("pageshow", () => {
     document.body.classList.remove("leaving")
   })
+}
+
+/**
+ * Is this the last section on the page?
+ *
+ * Only the footer may follow it. Anything else below means there is a
+ * screenful left to scroll and the browser can place the section normally.
+ */
+function isLastSection(section) {
+  let next = section.nextElementSibling
+  while (next) {
+    if (next.tagName !== "FOOTER" && next.offsetHeight > 0) return false
+    next = next.nextElementSibling
+  }
+  return true
 }
 
 /**
