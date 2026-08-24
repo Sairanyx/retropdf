@@ -1219,8 +1219,9 @@ input[type="number"]::-webkit-inner-spin-button {
   }
 }
 
-/* Only on pages without the opening sequence, which does its own arrival. */
-body:not([data-intro]) {
+/* Only when the opening sequence was skipped, since the sequence does its
+   own arrival and would otherwise fade the page in twice. */
+body.intro-skipped {
   animation: page-in 0.28s ease-out;
 }
 
@@ -1230,7 +1231,7 @@ body.leaving {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  body:not([data-intro]),
+  body.intro-skipped,
   body.leaving {
     animation: none;
     opacity: 1;

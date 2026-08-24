@@ -62,7 +62,6 @@ def home(request: Request) -> HTMLResponse:
             "stay on your device. No account, no limits, no uploads."
         ),
         canonical=f"{BASE_URL}/",
-        intro=True,
         on_home=True,
     )
 

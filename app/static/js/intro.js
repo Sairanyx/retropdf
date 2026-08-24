@@ -38,7 +38,7 @@ if (headline && !wantsLessMotion) {
 }
 
 if (!stage || !mark || wantsLessMotion || alreadySeen) {
-  document.body.classList.add("intro-done")
+  document.body.classList.add("intro-done", "intro-skipped")
   typeHeadline()
 } else {
   try {
@@ -67,14 +67,20 @@ function run() {
   //    the logo rather than disappearing and being replaced.
   setTimeout(() => document.body.classList.add("intro-brand"), 2000)
 
-  // 4. The headline types in.
-  setTimeout(() => {
-    document.body.classList.add("intro-typing")
-    typeHeadline()
-  }, 2450)
+  // 4. The headline types in. Only the home page has one, so pages without
+  //    it move straight on rather than pausing for nothing.
+  const typingStart = headline ? 2450 : 2150
+  const revealStart = headline ? 2700 : 2300
+
+  if (headline) {
+    setTimeout(() => {
+      document.body.classList.add("intro-typing")
+      typeHeadline()
+    }, typingStart)
+  }
 
   // 5. Everything else arrives.
-  setTimeout(() => document.body.classList.add("intro-reveal"), 2700)
+  setTimeout(() => document.body.classList.add("intro-reveal"), revealStart)
 
   setTimeout(() => {
     document.body.classList.add("intro-done")
@@ -83,7 +89,7 @@ function run() {
       "intro-typing", "intro-reveal",
     )
     window.removeEventListener("resize", aimAtBrand)
-  }, 3600)
+  }, revealStart + 900)
 }
 
 /**
