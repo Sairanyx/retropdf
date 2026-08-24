@@ -1387,76 +1387,92 @@ html {
 }
 
 /* ============================================================
-   The trail down to the tools
+   Scroll cue and progress
    ============================================================ */
 
-/* A short column of pages under the hero, standing in for a scroll cue and
-   a button at once. Clicking it goes to the tools, so it works as a link
-   for anyone who does not read it as a hint. */
+/* A short dotted line under the hero.
+ *
+ * The article's point about false bottoms is the one that matters: a hero
+ * that looks finished stops people scrolling. This is the smallest thing
+ * that says otherwise. No arrow and no wording, because the shape is
+ * already the instruction, and anything louder starts nagging. */
 
 .trail {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.75rem;
-  margin-top: 3rem;
-  padding: 0.5rem 0.25rem;
-  border-radius: var(--r-xs);
-  color: var(--ink-4);
-  text-decoration: none;
-  transition: color var(--t);
+  display: block;
+  width: 1px;
+  height: 56px;
+  margin: 3.5rem auto 0;
+  border-radius: 1px;
 }
 
-.trail:hover {
-  color: var(--accent);
+.trail-line {
+  display: block;
+  width: 1px;
+  height: 100%;
+  background-image: linear-gradient(
+    var(--ink-4) 0 3px,
+    transparent 3px 8px
+  );
+  background-size: 1px 8px;
+  background-repeat: repeat-y;
+  opacity: 0.55;
+  animation: trail-fall 2.4s ease-in-out infinite;
+}
+
+.trail:hover .trail-line {
+  opacity: 1;
+  background-image: linear-gradient(var(--accent) 0 3px, transparent 3px 8px);
 }
 
 .trail:focus-visible {
   outline: 2px solid var(--accent);
-  outline-offset: 4px;
+  outline-offset: 6px;
 }
 
-.trail-pages {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.trail-pages svg {
-  width: 15px;
-  height: auto;
-  /* Each page sits slightly further right than the one above, so the column
-     reads as a trail going down rather than a stack. */
-  animation: trail-drift 2.6s ease-in-out infinite;
-}
-
-.trail-pages svg:nth-child(1) { margin-left: 0; animation-delay: 0s; }
-.trail-pages svg:nth-child(2) { margin-left: 6px; animation-delay: 0.22s; }
-.trail-pages svg:nth-child(3) { margin-left: 12px; animation-delay: 0.44s; }
-
-/* They drift down and fade in turn, which carries the eye to the tools
-   without the insistence of an arrow. */
-@keyframes trail-drift {
-  0%, 100% {
-    opacity: 0.3;
-    transform: translateY(0);
+/* The dots drift downward, so the line reads as falling rather than sitting
+   still. Slow enough not to demand attention. */
+@keyframes trail-fall {
+  from {
+    background-position-y: 0;
   }
-  40% {
-    opacity: 1;
-    transform: translateY(3px);
+  to {
+    background-position-y: 8px;
   }
 }
 
-.trail-label {
-  font-size: 0.75rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+/* A hairline down the left edge, filling as the page is read.
+ *
+ * This is the "indicate progress" point: without it a long page gives no
+ * sense of its own length, and people stop early assuming they have
+ * reached the end. It never moves the content and never takes the scroll
+ * away from the reader. */
+
+.progress {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 2px;
+  height: 100%;
+  z-index: 90;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+}
+
+.progress-fill {
+  width: 100%;
+  height: 0;
+  background: var(--accent);
+  /* Set from the scroll position, so it follows the reader exactly rather
+     than animating towards where they are. */
+  transition: height 0.08s linear;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .trail-pages svg {
+  .trail-line {
     animation: none;
-    opacity: 0.75;
+  }
+  .progress-fill {
+    transition: none;
   }
 }
 
