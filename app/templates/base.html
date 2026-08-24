@@ -32,7 +32,7 @@
   <script src="/static/js/pending.js"></script>
   <noscript><style>.intro-pending body { visibility: visible !important; }</style></noscript>
 </head>
-<body data-intro="1"{% if route %} data-route="{{ route }}"{% endif %}>
+<body data-intro="1"{% if route %} data-route="{{ route }}"{% endif %}{% if on_home %} class="home"{% endif %}>
   <!-- Falls from above on first load, then settles into the brand plate. -->
   <div class="intro-mark" aria-hidden="true">
     <svg viewBox="0 0 22 26" fill="none">

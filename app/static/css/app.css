@@ -451,6 +451,43 @@ section {
   padding-block: clamp(3rem, 7vw, 5.5rem);
 }
 
+/* The landing page in a single face.
+ *
+ * Everything inherits the mono from body, so setting the display face here
+ * carries it to the whole page. Handjet is a pixel face drawn for headings:
+ * its stepped edges close up at body size, so anything set in it needs a
+ * size and a little tracking to stay readable.
+ *
+ * Only the landing page. The tool pages carry instructions and file names,
+ * which want the mono. */
+.home {
+  font-family: var(--display);
+  font-size: 1.375rem;
+  letter-spacing: 0.01em;
+}
+
+.home .lede {
+  font-size: clamp(1.375rem, 1.5vw, 1.75rem);
+}
+
+.home .proof li,
+.home .tool p {
+  font-size: 1.25rem;
+}
+
+/* The two pieces of small tracked-out type stay in the mono.
+ *
+ * A pixel face needs whole pixels to draw a letter, and these are set at
+ * 12 and 13 pixels with wide letter spacing, which is below the size where
+ * Handjet can form its shapes: the section labels turn faint and the card
+ * numbers become unreadable. Nudged up a little as well, since they were
+ * sized for a face with a smaller apparent height. */
+.home .label,
+.home .tool .k {
+  font-family: var(--mono);
+  font-size: 0.875rem;
+}
+
 /* A screenful each.
  *
  * Landing on a section should show that section and nothing else, so each
@@ -1558,22 +1595,8 @@ html {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  /* The display face, and a size up to carry it. Handjet is a pixel face
-     drawn for headings: at body size its stepped edges close up and it
-     turns muddy, so it needs the extra size to stay legible. */
-  font-family: var(--display);
-  font-size: 1.375rem;
-  letter-spacing: 0.01em;
+  font-size: 1rem;
   color: var(--ink-2);
-}
-
-/* The opening line under the headline, in the display face to match the
-   proof list below it. Scoped to the hero: the same class sets the body
-   copy in the privacy section, which stays in the mono where it belongs. */
-.hero .lede {
-  font-family: var(--display);
-  font-size: clamp(1.375rem, 1.5vw, 1.75rem);
-  letter-spacing: 0.01em;
 }
 
 .proof .led {
