@@ -41,15 +41,32 @@ const afterHeading = headline
 if (headline && !wantsLessMotion) {
   headline.style.minHeight = `${headline.offsetHeight}px`
   headline.textContent = ""
-  for (const el of afterHeading) el.style.opacity = "0"
+
+  // Held back, and set a little low, so they rise into place rather than
+  // simply appearing. Movement is what makes it read as settling.
+  for (const el of afterHeading) {
+    el.style.opacity = "0"
+    el.style.transform = "translateY(12px)"
+  }
 }
 
-/** Bring in the lines below the heading, one after another. */
+/**
+ * Bring in the lines below the heading, one after another.
+ *
+ * Each waits a little longer than the last, and the gaps widen slightly as
+ * they go, so the group eases to a stop instead of arriving at a fixed
+ * rhythm. The fade is slower than the movement, which keeps the text from
+ * appearing to snap into position.
+ */
 function showAfterHeading() {
   afterHeading.forEach((el, index) => {
-    el.style.transition = "opacity 0.5s ease-out"
-    el.style.transitionDelay = `${index * 0.09}s`
+    const delay = 0.06 + index * 0.13
+
+    el.style.transition =
+      `opacity 0.75s ease-out ${delay}s, ` +
+      `transform 0.65s cubic-bezier(0.16, 0.84, 0.32, 1) ${delay}s`
     el.style.opacity = "1"
+    el.style.transform = "none"
   })
 }
 
@@ -195,8 +212,9 @@ function typeHeadline(onDone) {
         headline.classList.remove("typing")
         headline.style.minHeight = ""
       }, 120)
-      // A short beat on the finished line before the page follows.
-      setTimeout(() => onDone?.(), 260)
+      // A beat on the finished line before anything follows, long enough
+      // to register as a pause rather than a stutter.
+      setTimeout(() => onDone?.(), 420)
     }
   }
   step()
