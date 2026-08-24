@@ -162,8 +162,12 @@ html {
   scroll-snap-type: y proximity;
 }
 
+/* Only the section starts are snap points, and `proximity` means the pull
+   happens only when the scroll has already stopped near one. The result is
+   a small settle rather than the page taking over. */
 .panel {
   scroll-snap-align: start;
+  scroll-snap-stop: normal;
 }
 
 /* Anyone who has asked for less motion gets no snapping either: it moves
@@ -430,8 +434,10 @@ section {
    because the eye treats the optical middle as slightly above the
    geometric one. Shifting the content up corrects for that. */
 .hero.panel {
-  justify-content: flex-start;
-  padding-top: clamp(5rem, 24vh, 12rem);
+  /* Centred like the other panels, but nudged up: the optical middle sits
+     slightly above the geometric one, so exactly centred text reads low. */
+  justify-content: center;
+  padding-bottom: clamp(3rem, 10vh, 7rem);
 }
 
 /* A block cursor on any typed heading. It stays after the line finishes, so

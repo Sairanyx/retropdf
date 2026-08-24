@@ -126,9 +126,13 @@ function startRoute() {
       const onFarSide = startsFar ? index % 2 === 0 : index % 2 === 1
       const side = onFarSide ? far : near
 
-      // Arrive at this edge, then run down it.
-      points.push({ x: side, y: top + box.height * 0.18 })
-      points.push({ x: side, y: bottom - box.height * 0.18 })
+      // Run down the edge for nearly the whole section, so the crossing
+      // between sections is a short step rather than a long diagonal. With
+      // only a short vertical run the crossings dominate and the route
+      // becomes one straight line across the middle of the page.
+      const inset = Math.min(70, box.height * 0.06)
+      points.push({ x: side, y: top + inset })
+      points.push({ x: side, y: bottom - inset })
     })
 
     // Off the bottom, on whichever side the route finished.
