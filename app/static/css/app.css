@@ -154,28 +154,6 @@ html.gliding {
 
 html {
   scroll-padding-top: 0;
-
-  /* Settles on a section rather than halfway between two, but only if the
-     scroll has already come to rest nearby. `proximity` rather than
-     `mandatory` is deliberate: mandatory takes the scroll away from the
-     reader, which is the thing that makes snapping sites frustrating. */
-  scroll-snap-type: y proximity;
-}
-
-/* Only the section starts are snap points, and `proximity` means the pull
-   happens only when the scroll has already stopped near one. The result is
-   a small settle rather than the page taking over. */
-.panel {
-  scroll-snap-align: start;
-  scroll-snap-stop: normal;
-}
-
-/* Anyone who has asked for less motion gets no snapping either: it moves
-   the page without them asking. */
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-snap-type: none;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
