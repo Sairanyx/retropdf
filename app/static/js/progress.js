@@ -151,24 +151,19 @@ function startRoute() {
       return { x: from.x + (lane.left - from.x) * (into * into), y }
     }
 
-    // Then the route stays in one lane for a stretch before switching to
-    // the other, drifting a little within the lane as it goes.
+    // Then the route runs down one lane, and stays there.
     //
-    // It never travels between the lanes. Anything that crosses the middle
-    // of a wide screen passes straight through the content, and no amount of
-    // shaping a wave avoids that: the middle is where the text is.
-    const stretch = window.innerHeight * 1.6
-    const leg = Math.floor((travelled - settle) / stretch)
-    const along = ((travelled - settle) % stretch) / stretch
+    // It does not switch sides. Getting from one lane to the other means
+    // crossing the middle of the page, which on a wide screen is exactly
+    // where the content sits: either the line goes through the text, or it
+    // jumps and the trail appears out of nowhere. Neither is worth the
+    // variety, so it holds one side and simply descends.
+    //
+    // A slight sway keeps it from being ruler straight, small enough that it
+    // never reaches the content.
+    const sway = Math.sin((travelled - settle) / 260) * 18
 
-    const side = leg % 2 === 0 ? lane.left : lane.right
-
-    // A gentle sway within the lane, so the line breathes rather than being
-    // ruler straight. Small enough that it never reaches the content.
-    const sway = Math.sin(along * Math.PI * 2) * 26
-    const inward = leg % 2 === 0 ? 1 : -1
-
-    return { x: side + sway * inward, y }
+    return { x: lane.left + sway, y }
   }
 
   /**
