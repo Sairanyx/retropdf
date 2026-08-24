@@ -2,7 +2,7 @@
 
 {% block content %}
 <div class="wrap">
-  <section class="tool-head">
+  <section class="tool-head" data-reveal>
     <p class="label">{{ tool.name }}</p>
     <h1>{{ tool.heading }}</h1>
     <p class="lede">{{ tool.blurb }}</p>
@@ -74,7 +74,7 @@
     </div>
   </section>
 
-  <section>
+  <section data-reveal>
     <p class="label">Other tools</p>
     <ul class="tools">
       {% for other in tools if other.slug != tool.slug %}

@@ -63,6 +63,7 @@ def home(request: Request) -> HTMLResponse:
         ),
         canonical=f"{BASE_URL}/",
         intro=True,
+        on_home=True,
     )
 
 
@@ -78,6 +79,7 @@ def workspace(request: Request) -> HTMLResponse:
             "without uploading anything."
         ),
         canonical=f"{BASE_URL}/workspace",
+        on_workspace=True,
     )
 
 

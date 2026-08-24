@@ -28,31 +28,13 @@
   font-display: swap;
 }
 
-/* Pixelify Sans carries the retro character. It is used only at display
-   sizes, where the stepped letterforms read as deliberate. Small text stays
-   in the mono, which is far easier on the eye. */
+/* Handjet carries the retro character. One variable file covers every
+   weight, and it stays readable at heading sizes where a blockier pixel face
+   becomes hard work. Small text stays in the mono. */
 @font-face {
-  font-family: "Pixelify Sans";
-  src: url("/static/fonts/pixelify-sans-latin-400-normal.woff2") format("woff2");
-  font-weight: 400;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Pixelify Sans";
-  src: url("/static/fonts/pixelify-sans-latin-500-normal.woff2") format("woff2");
-  font-weight: 500;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Pixelify Sans";
-  src: url("/static/fonts/pixelify-sans-latin-600-normal.woff2") format("woff2");
-  font-weight: 600;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Pixelify Sans";
-  src: url("/static/fonts/pixelify-sans-latin-700-normal.woff2") format("woff2");
-  font-weight: 700;
+  font-family: "Handjet";
+  src: url("/static/fonts/handjet-latin-wght-normal.woff2") format("woff2-variations");
+  font-weight: 100 900;
   font-display: swap;
 }
 
@@ -96,7 +78,7 @@
 
   --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas,
     monospace;
-  --display: "Pixelify Sans", "IBM Plex Mono", ui-monospace, monospace;
+  --display: "Handjet", "IBM Plex Mono", ui-monospace, monospace;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -158,6 +140,33 @@ body.intro-drop,
 body.intro-dock,
 body.intro-reveal {
   animation: ground-up 2.7s cubic-bezier(0.62, 0.02, 0.34, 1) forwards;
+}
+
+/* Anchor links glide rather than jumping, and stop clear of the fixed
+   header instead of underneath it. */
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 7rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* The header stays put while the page scrolls under it. */
+.topbar-wrap {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  /* The ground shows through behind the plates, so the content scrolling
+     under them is hidden without a hard edge. */
+  background: linear-gradient(
+    var(--ground) 62%,
+    color-mix(in srgb, var(--ground) 80%, transparent) 88%,
+    transparent
+  );
 }
 
 .wrap {
@@ -274,9 +283,9 @@ body.intro-reveal {
 
 .brand-word {
   font-family: var(--display);
-  font-size: 1.625rem;
-  font-weight: 700;
-  letter-spacing: 0.01em;
+  font-size: 2rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
   color: var(--ink);
 }
 
@@ -299,10 +308,10 @@ body.intro-reveal {
 
 h1 {
   font-family: var(--display);
-  font-size: clamp(2rem, 4.6vw, 3.5rem);
-  line-height: 1.05;
-  font-weight: 600;
-  letter-spacing: 0;
+  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  line-height: 1.02;
+  font-weight: 500;
+  letter-spacing: 0.01em;
   color: var(--ink);
   margin: 0 0 1rem;
   text-wrap: balance;
@@ -310,18 +319,18 @@ h1 {
 
 h2 {
   font-family: var(--display);
-  font-size: clamp(1.375rem, 2.4vw, 1.875rem);
-  line-height: 1.15;
-  font-weight: 600;
-  letter-spacing: 0;
+  font-size: clamp(1.75rem, 3vw, 2.375rem);
+  line-height: 1.1;
+  font-weight: 500;
+  letter-spacing: 0.01em;
   color: var(--ink);
   margin: 0 0 0.75rem;
 }
 
 h3 {
   font-family: var(--display);
-  font-size: 1.125rem;
-  font-weight: 600;
+  font-size: 1.375rem;
+  font-weight: 500;
   color: var(--ink);
   margin: 0;
 }
@@ -692,14 +701,17 @@ footer a:hover {
    Opening sequence
    ============================================================ */
 
-/* Everything except the falling mark is held back until the intro finishes.
-   Nothing is hidden from search engines: this only runs when scripting is on,
-   and the markup is complete either way. */
-body.intro-running .topbar,
+/* Held back until the intro finishes. Only applied while the intro is
+   actually running, so a page without scripting shows everything. */
+body.intro-running .topbar-wrap,
 body.intro-running main,
 body.intro-running footer,
 body.intro-running .wrap > section {
   opacity: 0;
+}
+
+.intro-mark {
+  display: none;
 }
 
 body.intro-running .intro-mark {
@@ -711,76 +723,108 @@ body.intro-running .intro-mark {
   pointer-events: none;
 }
 
-.intro-mark {
-  display: none;
-}
-
-body.intro-running .intro-mark {
-  display: grid;
-}
-
 .intro-mark svg {
   width: 88px;
   height: auto;
   color: var(--ink);
   /* Starts above the fold, already falling. */
-  transform: translateY(-60vh) scale(1.6);
+  transform: translateY(-60vh);
   opacity: 0;
 }
 
 /* The drop. Slow at first, then it lands and settles, which is what makes it
    read as weight rather than a slide. */
 body.intro-drop .intro-mark svg {
-  transform: translateY(0) scale(1.6);
+  transform: translateY(0);
   opacity: 1;
   transition: transform 0.95s cubic-bezier(0.16, 0.9, 0.3, 1),
-    opacity 0.4s ease-out;
+    opacity 0.35s ease-out;
 }
 
-/* Then it shrinks away towards the corner where the real brand mark sits. */
+/* Then it flies into the brand plate and becomes it. The distance and scale
+   are measured from the real plate in intro.js, so it lands on it at any
+   window size. */
 body.intro-dock .intro-mark svg {
-  transform: translate(-38vw, -34vh) scale(0.34);
+  transform: translate(var(--dock-x, -38vw), var(--dock-y, -34vh))
+    scale(var(--dock-scale, 0.25));
   opacity: 0;
-  transition: transform 0.5s cubic-bezier(0.5, 0, 0.2, 1), opacity 0.4s ease-in;
+  transition: transform 0.6s cubic-bezier(0.5, 0.02, 0.3, 1),
+    opacity 0.5s ease-in 0.1s;
 }
 
-/* The page assembles behind it. */
-body.intro-reveal .topbar,
+/* The page assembles behind it, each part a moment after the last rather
+   than everything appearing at once. */
+body.intro-reveal .topbar-wrap,
 body.intro-reveal main,
 body.intro-reveal footer,
 body.intro-reveal .wrap > section {
   opacity: 1;
-  transition: opacity 0.45s ease-out;
+  transition: opacity 0.6s ease-out;
 }
 
-body.intro-reveal .topbar {
-  animation: settle 0.5s cubic-bezier(0.16, 0.9, 0.3, 1);
+body.intro-reveal .topbar-wrap {
+  animation: settle 0.55s cubic-bezier(0.16, 0.9, 0.3, 1);
 }
 
 @keyframes settle {
   from {
-    transform: translateY(-14px);
+    transform: translateY(-16px);
   }
 }
 
-/* Tool cards arrive one after another rather than all at once. */
-body.intro-done .tools > li {
-  animation: arrive 0.4s cubic-bezier(0.16, 0.9, 0.3, 1) backwards;
+/* ============================================================
+   Appearing on scroll
+   ============================================================ */
+
+/* Only dimmed once the script is running, so the page is fully visible
+   without JavaScript and to search engines. */
+html.reveal-on [data-reveal] {
+  opacity: 0;
+  transform: translateY(18px);
 }
 
-.tools > li:nth-child(1) { animation-delay: 0.02s; }
-.tools > li:nth-child(2) { animation-delay: 0.06s; }
-.tools > li:nth-child(3) { animation-delay: 0.10s; }
-.tools > li:nth-child(4) { animation-delay: 0.14s; }
-.tools > li:nth-child(5) { animation-delay: 0.18s; }
-.tools > li:nth-child(6) { animation-delay: 0.22s; }
-.tools > li:nth-child(7) { animation-delay: 0.26s; }
-.tools > li:nth-child(8) { animation-delay: 0.30s; }
+html.reveal-on [data-reveal].shown {
+  opacity: 1;
+  transform: none;
+  transition: opacity 0.5s ease-out, transform 0.5s cubic-bezier(0.16, 0.9, 0.3, 1);
+}
+
+/* Children arrive one after another, top to bottom. */
+html.reveal-on [data-reveal] > * {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+html.reveal-on [data-reveal].shown > * {
+  opacity: 1;
+  transform: none;
+  transition: opacity 0.4s ease-out, transform 0.4s cubic-bezier(0.16, 0.9, 0.3, 1);
+}
+
+html.reveal-on [data-reveal].shown > *:nth-child(1) { transition-delay: 0.04s; }
+html.reveal-on [data-reveal].shown > *:nth-child(2) { transition-delay: 0.10s; }
+html.reveal-on [data-reveal].shown > *:nth-child(3) { transition-delay: 0.16s; }
+html.reveal-on [data-reveal].shown > *:nth-child(4) { transition-delay: 0.22s; }
+html.reveal-on [data-reveal].shown > *:nth-child(5) { transition-delay: 0.28s; }
+
+/* Tool cards arrive in sequence within their grid. */
+html.reveal-on [data-reveal].shown .tools > li {
+  animation: arrive 0.45s cubic-bezier(0.16, 0.9, 0.3, 1) backwards;
+}
+
+.tools > li:nth-child(1) { animation-delay: 0.06s; }
+.tools > li:nth-child(2) { animation-delay: 0.11s; }
+.tools > li:nth-child(3) { animation-delay: 0.16s; }
+.tools > li:nth-child(4) { animation-delay: 0.21s; }
+.tools > li:nth-child(5) { animation-delay: 0.26s; }
+.tools > li:nth-child(6) { animation-delay: 0.31s; }
+.tools > li:nth-child(7) { animation-delay: 0.36s; }
+.tools > li:nth-child(8) { animation-delay: 0.41s; }
 
 @keyframes arrive {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(14px);
   }
 }
 
@@ -875,6 +919,11 @@ select:focus-visible {
 @media (prefers-reduced-motion: reduce) {
   .intro-mark {
     display: none !important;
+  }
+  html.reveal-on [data-reveal],
+  html.reveal-on [data-reveal] > * {
+    opacity: 1 !important;
+    transform: none !important;
   }
   body.intro-running .topbar,
   body.intro-running main,
