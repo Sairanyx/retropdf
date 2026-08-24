@@ -885,9 +885,16 @@ select {
   transition: background var(--t), color var(--t), box-shadow var(--t);
 }
 
+/* The same lamp the chips and cards carry. Not on a disabled arrow: there is
+   nothing behind it to switch on. */
 .mini:hover:not([disabled]) {
   background: var(--chip-hover);
   color: var(--accent);
+  box-shadow:
+    var(--raise),
+    0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent),
+    0 0 16px color-mix(in srgb, var(--accent) 30%, transparent),
+    0 0 6px color-mix(in srgb, var(--accent) 24%, transparent);
 }
 
 .mini:active:not([disabled]) {
@@ -1770,9 +1777,9 @@ html {
 [data-tip]::after {
   content: attr(data-tip);
   position: absolute;
-  bottom: calc(100% + 8px);
+  top: calc(100% + 8px);
   left: 50%;
-  transform: translateX(-50%) translateY(4px);
+  transform: translateX(-50%) translateY(-4px);
   padding: 0.35rem 0.6rem;
   border-radius: var(--r-xs);
   background: var(--ink);
@@ -1790,6 +1797,21 @@ html {
   [data-tip]:hover::after,
   [data-tip]:focus-visible::after {
     opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+/* The zoom button sits in the top corner of a page, so its tooltip goes
+   above it. Below would land on the page it is offering to show. */
+.zoom[data-tip]::after {
+  top: auto;
+  bottom: calc(100% + 8px);
+  transform: translateX(-50%) translateY(4px);
+}
+
+@media (hover: hover) {
+  .zoom[data-tip]:hover::after,
+  .zoom[data-tip]:focus-visible::after {
     transform: translateX(-50%) translateY(0);
   }
 }
@@ -1826,10 +1848,12 @@ html {
   opacity: 1;
 }
 
-.mini:hover,
+/* Declared after the rule above, not with the arrows further up the file:
+   .zoom sets its own box-shadow, so a hover rule placed earlier is simply
+   overridden. */
 .zoom:hover {
   background: var(--chip-hover);
-  color: var(--ink);
+  color: var(--accent);
   box-shadow:
     var(--raise),
     0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent),

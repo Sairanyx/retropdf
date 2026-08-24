@@ -3,7 +3,7 @@ import { call } from "/static/js/pdf-worker.js"
 // splitRanges is plain arithmetic with no PDF work, so it runs here rather
 // than costing a round trip to the worker.
 import { splitRanges, imageKind } from "/static/js/pdf-operations.js"
-import { checkSelection, looksLikePdf, LIMITS, formatSize, deviceName } from "/static/js/limits.js"
+import { checkSelection, looksLikePdf, LIMITS, MAX_FILES, formatSize, deviceName } from "/static/js/limits.js"
 import { acceptDroppedFiles, makeReorderable } from "/static/js/dragdrop.js"
 
 // pdf.js parses on its own background thread and needs to know where that
@@ -231,6 +231,28 @@ function countOf(n, noun) {
   return `${n} ${noun}${n === 1 ? "" : "s"}`
 }
 
+/**
+ * Whether there is room for another file, in plain words.
+ *
+ * Merge is the one tool that adds to what is already open, so it is the one
+ * where somebody can run out of room mid job. Saying "add more files" when
+ * there is no room left for any is worse than saying nothing.
+ */
+function roomLeft() {
+  const spare = LIMITS.maxTotal - loadedBytes
+
+  if (files.size >= MAX_FILES) {
+    return `That is the most files at once (${MAX_FILES}). Download these first.`
+  }
+  if (spare <= 0) {
+    return "No room left on this device. Download these first."
+  }
+  if (spare < LIMITS.maxTotal * 0.15) {
+    return `You can add about ${formatSize(spare)} more, then download as one PDF.`
+  }
+  return "You can add more files, then download them as one PDF."
+}
+
 /** Open a list of files, however the user gave them to us. */
 async function openFiles(chosen) {
   if (chosen.length === 0) return
@@ -292,7 +314,7 @@ async function openFiles(chosen) {
     // and someone near it has no way to tell how close they are otherwise.
     result.textContent =
       `${countOf(order.length, "page")}, ${formatSize(loadedBytes)}. ` +
-      modes[currentMode()].hint
+      (currentMode() === "merge" ? roomLeft() : modes[currentMode()].hint)
     paintLamps()
   } catch (error) {
     result.textContent = error.message
