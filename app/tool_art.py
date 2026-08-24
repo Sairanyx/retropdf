@@ -28,7 +28,7 @@ ART = {
   <path d="M13 11h9l5 5v13H13z" transform="rotate(-12 20 20)"/><path d="M22 11v5h5" transform="rotate(-12 20 20)"/><path d="M38 16a10 10 0 1 1-3 -7" stroke-linecap="round"/><path d="M35 5v5h-5" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>""",
     "split": """<svg width="52" height="40" viewBox="0 0 52 40" fill="none" stroke="currentColor" stroke-width="1.4">
-  <path d="M4 11h9l5 5v13H4z"/><path d="M13 11v5h5"/><path d="M23 20h8M31 20l-3 -3M31 20l-3 3" stroke-linecap="round"/><path d="M34 2h9l5 5v13H34z"/><path d="M43 2v5h5"/><path d="M34 21h9l5 5v13H34z"/><path d="M43 21v5h5"/>
+  <path d="M4 11h9l5 5v13H4z"/><path d="M13 11v5h5"/><path d="M23 20h8M31 20l-3 -3M31 20l-3 3" stroke-linecap="round"/><path d="M36 2h9l5 5v13H36z"/><path d="M45 2v5h5"/><path d="M36 21h9l5 5v13H36z"/><path d="M45 21v5h5"/>
 </svg>""",
     "frimages": """<svg width="52" height="40" viewBox="0 0 52 40" fill="none" stroke="currentColor" stroke-width="1.4">
   <rect x="4" y="11" width="14" height="18" rx="1.5"/><path d="M4 24l4 -4 3 3 3 -3 4 4" stroke-linejoin="round"/><circle cx="9" cy="16" r="1.6"/><path d="M23 20h8M31 20l-3 -3M31 20l-3 3" stroke-linecap="round"/><path d="M36 11h9l5 5v13H36z"/><path d="M45 11v5h5"/>
