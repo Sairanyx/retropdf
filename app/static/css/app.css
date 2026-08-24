@@ -602,6 +602,15 @@ h1.typing::after {
   opacity: 0.9;
 }
 
+/* Drawn at 52 by 40 and shown larger, so the line weight thins slightly as
+   it scales rather than growing with the drawing. Set here rather than in
+   each drawing, so there is one number to change. */
+.tool-art svg {
+  width: 68px;
+  height: auto;
+  display: block;
+}
+
 /* ---------- workspace ---------- */
 
 .workspace {
