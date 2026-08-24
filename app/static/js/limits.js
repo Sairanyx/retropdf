@@ -43,6 +43,31 @@ function isMobile() {
   return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || "")
 }
 
+/**
+ * What to call the thing the reader is using.
+ *
+ * Only names a platform when the browser says so plainly, and falls back to
+ * "device" the moment it is unsure. Telling somebody on Android that their
+ * iPhone has a limit is worse than saying nothing specific, and modern
+ * browsers deliberately blur the user agent, so guessing is not worth it.
+ *
+ * The point is to make the figure feel measured rather than arbitrary: the
+ * limit comes from the machine in front of them, not from us.
+ */
+export function deviceName(agent) {
+  const ua =
+    agent ??
+    (typeof navigator === "undefined" ? "" : navigator.userAgent || "")
+
+  if (/iPhone/i.test(ua)) return "iPhone"
+  if (/iPad/i.test(ua)) return "iPad"
+  if (/Android/i.test(ua)) return "Android phone"
+  if (/Macintosh|Mac OS X/i.test(ua)) return "Mac"
+  if (/Windows/i.test(ua)) return "PC"
+
+  return "device"
+}
+
 // A merge holds the sources and the output at once, then copies the result
 // again to hand it to the browser, so peak use is roughly three times the
 // input. The usable share of the budget is therefore a third of it.

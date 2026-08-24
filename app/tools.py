@@ -56,7 +56,7 @@ TOOLS: tuple[Tool, ...] = (
         mode="remove",
         name="Delete PDF pages",
         heading="Delete pages from a PDF",
-        blurb="Click the pages you do not want and keep the rest.",
+        blurb="Pick the pages you do not want and keep the rest.",
         title="Delete pages from a PDF in your browser",
         description=(
             "Delete pages from a PDF without uploading it. The file never "

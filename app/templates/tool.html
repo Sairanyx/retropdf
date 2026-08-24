@@ -13,7 +13,7 @@
   <section class="plate workspace" id="workspace" data-mode="{{ tool.mode }}">
     <div class="controls">
       <label class="chip accent" for="picker">
-        {% if tool.mode == "frimages" %}Choose images{% else %}Choose a file{% endif %}
+        {% if tool.mode == "frimages" %}Select images{% else %}Select a file{% endif %}
       </label>
       <input type="file" id="picker" multiple>
       <button class="chip" id="download" disabled>
@@ -88,9 +88,9 @@
         </li>
       {% endfor %}
     </ul>
-    <p style="margin-top:1.5rem">
-      Doing several of these to one file?
-      <a href="/workspace">Open the workspace</a>.
+    <p class="workspace-note">
+      To do several things to one file:
+      <a href="/workspace">open the workspace</a>.
     </p>
   </section>
 </div>

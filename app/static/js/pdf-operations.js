@@ -96,7 +96,7 @@ const A4 = { width: 595.28, height: 841.89 }
  */
 export async function imagesToPdf({ images, fit = "a4" }) {
   if (!Array.isArray(images) || images.length === 0) {
-    throw new Error("Choose at least one image.")
+    throw new Error("Select at least one image.")
   }
 
   const doc = await PDFDocument.create()
@@ -212,7 +212,7 @@ export function splitRanges({ pageCount, mode, after = 1, size = 1 }) {
   if (mode === "at") {
     if (!Number.isInteger(after) || after < 1 || after >= pageCount) {
       throw new Error(
-        `Choose a page between 1 and ${pageCount - 1} to cut after.`,
+        `Pick a page between 1 and ${pageCount - 1} to cut after.`,
       )
     }
     return [

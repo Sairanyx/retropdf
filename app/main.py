@@ -99,7 +99,7 @@ def make_tool_route(slug: str):
             request,
             "tool.html",
             tool=tool,
-            start_hint="Choose a file to begin.",
+            start_hint="Select a file to begin.",
             page_title=tool.title,
             page_description=tool.description,
             canonical=f"{BASE_URL}/{tool.slug}",

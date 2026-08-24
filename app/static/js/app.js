@@ -3,7 +3,7 @@ import { call } from "/static/js/pdf-worker.js"
 // splitRanges is plain arithmetic with no PDF work, so it runs here rather
 // than costing a round trip to the worker.
 import { splitRanges, imageKind } from "/static/js/pdf-operations.js"
-import { checkSelection, looksLikePdf, LIMITS, formatSize } from "/static/js/limits.js"
+import { checkSelection, looksLikePdf, LIMITS, formatSize, deviceName } from "/static/js/limits.js"
 import { acceptDroppedFiles, makeReorderable } from "/static/js/dragdrop.js"
 
 // pdf.js parses on its own background thread and needs to know where that
@@ -18,7 +18,7 @@ const downloadBtn = document.querySelector("#download")
  * Light the download button once there is something to save.
  *
  * The same lamp the navigation uses: dark when there is nothing to do, lit
- * when there is. Only Download carries one. The Choose button is already the
+ * when there is. Only Download carries one. The Select button is already the
  * accent colour, so a lamp in that colour on top of it says nothing.
  *
  * Driven from the button's own disabled state rather than toggled at each
@@ -98,17 +98,17 @@ const modes = {
   },
   remove: {
     controls: "select",
-    hint: "Click the pages you want to remove.",
+    hint: "Pick the pages you want to remove.",
     items: () => order.filter((entry) => !marked.has(entry.key)),
     suffix: "-edited",
     empty: "That would remove every page.",
   },
   extract: {
     controls: "select",
-    hint: "Click the pages you want to keep.",
+    hint: "Pick the pages you want to keep.",
     items: () => order.filter((entry) => marked.has(entry.key)),
     suffix: "-extract",
-    empty: "Choose at least one page to keep.",
+    empty: "Pick at least one page to keep.",
   },
   reorder: {
     controls: "move",
@@ -126,21 +126,21 @@ const modes = {
   },
   toimages: {
     controls: "none",
-    hint: "Choose a size, then download a zip of PNG images.",
+    hint: "Pick a size, then download a zip of PNG images.",
     items: () => order.slice(),
     suffix: "-images",
     empty: "There are no pages to export.",
   },
   frimages: {
     controls: "none",
-    hint: "Choose JPG or PNG images to turn into one PDF.",
+    hint: "Select JPG or PNG images to turn into one PDF.",
     items: () => [],
     suffix: "",
-    empty: "Choose at least one image.",
+    empty: "Select at least one image.",
   },
   split: {
     controls: "none",
-    hint: "Choose where to cut, then download a zip of the parts.",
+    hint: "Pick where to cut, then download a zip of the parts.",
     items: () => order.slice(),
     suffix: "-split",
     empty: "There are no pages to split.",
@@ -157,7 +157,7 @@ function applyAccept() {
 
   if (pickerLabel) {
     const led = pickerLabel.querySelector(".led")
-    pickerLabel.textContent = wantsImages ? "Choose images " : "Choose files "
+    pickerLabel.textContent = wantsImages ? "Select images " : "Select files "
     if (led) pickerLabel.appendChild(led)
   }
 }
@@ -171,11 +171,15 @@ function showLimit() {
   const note = document.querySelector("#limit-note")
   if (!note) return
 
-  // The figures first, since that is what is being asked. The old wording
-  // opened with "On this device you can work with up to", which buries the
-  // one thing the reader wants in the middle of a sentence.
+  // Named after whatever the reader is actually using, so the figure reads
+  // as something measured about their machine rather than a rule we invented.
+  // It falls back to "device" whenever the browser will not say plainly.
+  //
+  // The figures come first: the old wording opened with "On this device you
+  // can work with up to", which buried the one thing being asked for in the
+  // middle of a sentence.
   note.textContent =
-    `Limit: ${formatSize(LIMITS.maxFile)} per file, ` +
+    `On this ${deviceName()}: ${formatSize(LIMITS.maxFile)} per file, ` +
     `${formatSize(LIMITS.maxTotal)} at once.` +
     (LIMITS.mobile ? " A computer takes more." : "")
 }
