@@ -1224,6 +1224,11 @@ html.reveal-on [data-reveal].shown .tools > li {
 .switchbox:hover {
   color: var(--ink);
   background: var(--chip-hover);
+  box-shadow:
+    var(--raise),
+    0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent),
+    0 0 16px color-mix(in srgb, var(--accent) 30%, transparent),
+    0 0 6px color-mix(in srgb, var(--accent) 24%, transparent);
 }
 
 .switchbox input {
@@ -1342,11 +1347,27 @@ select:focus-visible {
  * Eight switches is too many for the single row the option fieldsets use, so
  * this wraps into a grid that stays readable down to a phone.
  */
+/* The tools, laid out to fit their names rather than into equal columns.
+ *
+ * A grid of equal fractions forced every switch to the same width whatever
+ * its name, so the longer ones could not grow and the lamp was pushed
+ * outside the switch. Wrapping flex items take the width they need, and the
+ * row wraps to a second line rather than squeezing. */
 .toolbar {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 0.375rem;
+  /* Four across, so eight tools make two even rows rather than six on one
+     line and two orphaned below. Equal columns are fine here because they
+     are wide enough for the longest name, which is what pushed the lamp
+     outside its switch when they were narrower. */
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
   align-items: stretch;
+}
+
+@media (max-width: 900px) {
+  .toolbar {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 .toolbar legend {
@@ -1354,7 +1375,7 @@ select:focus-visible {
 }
 
 .toolbar .switchbox {
-  justify-content: flex-start;
+  justify-content: space-between;
 }
 
 /* ============================================================
@@ -1420,6 +1441,11 @@ input[type="number"]::-webkit-inner-spin-button {
 .stepper button:hover {
   background: var(--chip-hover);
   color: var(--accent);
+  box-shadow:
+    var(--raise),
+    0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent),
+    0 0 16px color-mix(in srgb, var(--accent) 30%, transparent),
+    0 0 6px color-mix(in srgb, var(--accent) 24%, transparent);
 }
 
 .stepper button:active {
@@ -1469,6 +1495,11 @@ input[type="number"]::-webkit-inner-spin-button {
 
 .picker-button:hover {
   color: var(--ink);
+  box-shadow:
+    var(--raise),
+    0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent),
+    0 0 16px color-mix(in srgb, var(--accent) 30%, transparent),
+    0 0 6px color-mix(in srgb, var(--accent) 24%, transparent);
 }
 
 .picker-button::after {
@@ -1863,6 +1894,19 @@ html {
   .zoom[data-tip]:focus-visible::after {
     transform: translateX(-50%) translateY(0);
   }
+}
+
+/* The workspace panel is the last thing on its page, with only the footer
+   after it, so it ends flush against it. Every other page has a further
+   section below the panel whose padding provides that gap, so this puts the
+   same room back. */
+/* The workspace panel is the last thing on its page, with only the footer
+   below it. Every other page ends with a full height section whose padding
+   and centring leaves room above the footer, so this puts the same room
+   back. Margin rather than padding: padding would grow the panel itself,
+   which is the plate the reader can see. */
+.workspace-page {
+  margin-bottom: clamp(9rem, 22vh, 16rem);
 }
 
 /* ---------- looking closer at a page ---------- */
