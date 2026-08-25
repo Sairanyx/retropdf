@@ -129,6 +129,9 @@ def make_page_route(path: str, template: str, title: str, description: str):
             page_title=title,
             page_description=description,
             canonical=f"{BASE_URL}/{path}",
+            # These pages say what the site does with your files, which is
+            # what the Info section covers, so its lamp is the lit one.
+            on_info=True,
         )
 
     page.__name__ = f"page_{path}"
@@ -158,6 +161,8 @@ def make_tool_route(slug: str):
             page_title=tool.title,
             page_description=tool.description,
             canonical=f"{BASE_URL}/{tool.slug}",
+            # A tool page is one of the tools, so the Tools lamp is lit.
+            on_tools=True,
         )
 
     return tool_page
