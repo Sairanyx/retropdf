@@ -1,0 +1,31 @@
+# TLS, and nothing else.
+#
+# Caddy fetches and renews the certificate on its own and passes everything
+# through to the app. It does no processing of its own, because there is none
+# to do.
+
+{$RETROPDF_DOMAIN} {
+	# Access logs off, deliberately.
+	#
+	# A web server records every request with an IP address and a timestamp
+	# by default, which is data about visitors sitting on the disk. Nothing
+	# else in this project keeps anything about anyone, and the privacy page
+	# says logging is off, so this line is what makes that true.
+	log {
+		output discard
+	}
+
+	reverse_proxy app:8000
+
+	# The app sets its own security headers, including the CSP that the whole
+	# privacy claim rests on. They are not repeated here: two places setting
+	# the same header is how they end up disagreeing.
+
+	encode zstd gzip
+
+	# The fonts, scripts and stylesheet are versioned by content and change
+	# only on deploy, so a long cache costs nothing and saves a round trip
+	# on every visit.
+	@static path /static/*
+	header @static Cache-Control "public, max-age=31536000, immutable"
+}

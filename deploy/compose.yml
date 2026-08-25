@@ -1,0 +1,43 @@
+# The whole site: the app, and Caddy in front of it for TLS.
+
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    restart: unless-stopped
+    environment:
+      # Used for canonical links, the sitemap and the share card, all of
+      # which have to be absolute for a search engine or a chat app to
+      # resolve them.
+      RETROPDF_BASE_URL: https://${RETROPDF_DOMAIN}
+      # Turns on HSTS, which is only meaningful once TLS is in front.
+      RETROPDF_HTTPS: "1"
+    volumes:
+      # The desktop app tally, kept outside the container so replacing the
+      # container does not reset it.
+      - count:/data
+    # Not published to the host: Caddy reaches it over the internal network,
+    # so the app is not exposed directly to the internet.
+    expose:
+      - "8000"
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      RETROPDF_DOMAIN: ${RETROPDF_DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+
+volumes:
+  count:
+  caddy_data:
+  caddy_config:
