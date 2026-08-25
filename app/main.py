@@ -17,6 +17,7 @@ from fastapi.responses import HTMLResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
+from app import interest
 from app.security import SecurityHeaders
 from app.tool_art import ART
 from app.tools import TOOLS, BY_SLUG
@@ -188,6 +189,31 @@ if os.environ.get("REDPDF_DEV", "").lower() in {"1", "true", "yes"}:
         )
 
 
+@app.get("/desktop", response_class=HTMLResponse)
+def desktop(request: Request) -> HTMLResponse:
+    """Ask whether a desktop app is wanted, by counting who opens this page.
+
+    Opening the page is the vote. There is no form, no address and no button
+    that sends anything, because the request for the page is already a
+    request the server handles and counting it needs nothing new. That keeps
+    `connect-src 'none'` exactly as it is.
+
+    The number says how many, never who.
+    """
+    return render(
+        request,
+        "desktop.html",
+        page_title="A desktop app · RetroPDF",
+        page_description=(
+            "Whether RetroPDF should become a desktop app, and how to say "
+            "you would use one without handing over your email address."
+        ),
+        canonical=f"{BASE_URL}/desktop",
+        asked=interest.record(),
+        on_info=True,
+    )
+
+
 @app.get("/robots.txt", response_class=PlainTextResponse)
 def robots() -> str:
     """Tell crawlers everything is open, and where the sitemap is."""
@@ -205,6 +231,7 @@ def sitemap() -> PlainTextResponse:
         + [f"{BASE_URL}/{tool.slug}" for tool in TOOLS]
         + [f"{BASE_URL}/workspace"]
         + [f"{BASE_URL}/{path}" for path, _, _, _ in LEGAL_PAGES]
+        + [f"{BASE_URL}/desktop"]
     )
     entries = "\n".join(f"  <url><loc>{url}</loc></url>" for url in urls)
     body = (

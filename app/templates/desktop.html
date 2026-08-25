@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="wrap">
+  <section class="tool-head first-screen">
+    <p class="label">Desktop app</p>
+    <h1 data-type="You just voted.">You just voted.</h1>
+    <p class="lede">
+      Opening this page is the whole of it. There is nothing to fill in.
+    </p>
+  </section>
+
+  <section class="prose">
+    <h2>What the number means.</h2>
+    <p>
+      <strong class="tally">{{ "{:,}".format(asked) }}</strong>
+      {% if asked == 1 %}
+      person has opened this page, and that person is you. You are the first.
+      {% else %}
+      people have opened this page, including you just now.
+      {% endif %}
+      That is the entire record: how many, never who. No address, no account,
+      nothing stored about you, and nothing that could be sold to anyone even
+      if we wanted to.
+    </p>
+    <p>
+      Most sites would put an email box here. We did not, because this site
+      tells you it keeps nothing, and asking for your address on the way to
+      that promise would undercut it. A count of how many people were curious
+      answers the question just as well.
+    </p>
+
+    <h2>What the app would be.</h2>
+    <p>
+      The same tools, without a browser around them. That would mean no size
+      limit worth mentioning, since a desktop application is not held to what
+      a browser tab can keep in memory, and files that open straight from
+      your computer rather than being chosen through a picker.
+    </p>
+    <p>
+      What would not change is the part that matters. It would still do the
+      work on your own machine and still send nothing anywhere, because that
+      is the point of the thing rather than a feature of it.
+    </p>
+
+    <h2>Whether it happens.</h2>
+    <p>
+      Honestly, it depends on this number. Building and maintaining a desktop
+      application for three operating systems is a great deal more work than a
+      website, and it is worth doing only if people actually want it. If the
+      count stays small, the website stays as it is, which is no bad outcome:
+      it already does the job.
+    </p>
+    <p>
+      In the meantime everything here works today, on this device, with no
+      account and no limit. The <a href="/">tools are on the home page</a>.
+    </p>
+  </section>
+</div>
+{% endblock %}

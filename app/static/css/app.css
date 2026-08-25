@@ -2347,6 +2347,17 @@ html {
   font-weight: 600;
 }
 
+/* The count on the desktop app page, set large enough to be the thing you
+   look at. It is the whole answer that page gives, so it reads as a figure
+   rather than as a word in a sentence. */
+.tally {
+  color: var(--accent);
+  font-size: var(--text-heading);
+  /* Sits with the line it belongs to rather than pushing it apart. */
+  line-height: 1;
+  margin-right: 0.15em;
+}
+
 /* A line of the actual policy, quoted. Set apart so it reads as something
    the browser is told rather than something we are saying. */
 .code {
