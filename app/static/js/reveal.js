@@ -171,7 +171,21 @@ function placeTheHint() {
   const SHOW = 52
 
   next.style.paddingTop = ""
-  const gap = screenHeight() - SHOW - panel.getBoundingClientRect().bottom
+
+  // Where the panel ends, measured against the page rather than the screen.
+  //
+  // A rectangle is measured against the viewport, so its bottom edge is a
+  // different number at every scroll position. Working the gap out from that
+  // made the answer depend on where you happened to be looking, and on a
+  // phone, where scrolling also collapses the address bar and fires a resize,
+  // it recomputed the padding as you moved and pushed the section lower and
+  // lower down the page.
+  //
+  // Offsets are measured against the page and hold still while you scroll.
+  let end = panel.offsetHeight
+  for (let el = panel; el; el = el.offsetParent) end += el.offsetTop
+
+  const gap = screenHeight() - SHOW - end
   if (gap > 0) next.style.paddingTop = `${Math.round(gap)}px`
 }
 
