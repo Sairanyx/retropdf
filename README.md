@@ -113,7 +113,7 @@ for it to do.
 | Frontend | Vanilla JS modules | No framework earns its weight here. |
 | Server | FastAPI | Serves HTML per route. Deliberately thin. |
 | Proxy and TLS | Caddy | Automatic HTTPS, simple config. |
-| Hosting | Oracle free tier | Sufficient, because the server does no work. |
+| Hosting | Any small VM | Sufficient, because the server does no work. |
 
 Both PDF libraries are **vendored into the repo**, not loaded from a CDN. A
 CDN request is a third party contact, which would undermine both the privacy

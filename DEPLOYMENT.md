@@ -9,7 +9,8 @@ no work beyond handing out pages, so the free tier of most hosts is enough.
 
 ## What you need
 
-- A VM with a public address. Oracle's always free tier is sufficient.
+- A VM with a public address. A free or cheap tier is enough, since the
+  server only hands out pages.
 - A domain pointed at it, with an A record for both `example.com` and `www`.
 - Docker and the compose plugin on the VM.
 
@@ -19,10 +20,15 @@ no work beyond handing out pages, so the free tier of most hosts is enough.
 git clone https://github.com/<you>/retropdf.git
 cd retropdf/deploy
 
-echo "RETROPDF_DOMAIN=retropdf.com" > .env
+cp .env.example .env
+# Then edit .env and put your real domain in it.
 
 docker compose up -d --build
 ```
+
+`.env` is the only file naming the actual deployment, and it is gitignored.
+Everything the server needs to know about itself lives there rather than in
+the repository.
 
 Caddy requests a certificate on first start, which needs port 80 reachable
 from the internet. Watch it happen:
@@ -71,6 +77,11 @@ anyone, and the privacy page states that logging is off, so that line is what
 makes the claim true. If you turn logging on, change the privacy page.
 
 ## Hardening
+
+Nothing in this repository names the server: no address, no hostname, no
+user, no key. That is deliberate and worth keeping. The notes below describe
+what is switched off rather than how to reach anything, which is safe to
+publish and useless to an attacker.
 
 Client side processing removes most of the usual attack surface. There is no
 database, no upload endpoint, no accounts and no user data on the server, so

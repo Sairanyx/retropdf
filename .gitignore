@@ -21,3 +21,15 @@ shots/
 # starting number.
 interest.count
 .count-*
+
+# Anything naming the actual server: the domain, and whatever else a real
+# deployment needs. The repository describes how to deploy, never where to.
+.env
+*.env
+!*.env.example
+
+# Keys, in case one is ever put here by accident.
+*.pem
+*.key
+id_rsa*
+
