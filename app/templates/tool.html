@@ -30,20 +30,29 @@
     {% if tool.mode == "split" %}
     <fieldset id="split-options">
       <legend>Where to cut</legend>
-      <label class="switchbox">
-        <input type="radio" name="split" value="at" checked>
-        After page <span class="led"></span>
-      </label>
-      <input type="number" id="split-after" value="1" min="1" aria-label="Cut after page">
-      <label class="switchbox">
-        <input type="radio" name="split" value="every">
-        Every <span class="led"></span>
-      </label>
-      <input type="number" id="split-size" value="1" min="1" aria-label="Pages per part">
-      <label class="switchbox">
-        <input type="radio" name="split" value="single">
-        One file per page <span class="led"></span>
-      </label>
+      <!-- Each choice is wrapped with the number it needs, so the two stay
+           together when the row wraps. Left as siblings they broke apart on a
+           narrow screen and a stepper ended up beside the wrong switch. -->
+      <div class="option">
+        <label class="switchbox">
+          <input type="radio" name="split" value="at" checked>
+          After page <span class="led"></span>
+        </label>
+        <input type="number" id="split-after" value="1" min="1" aria-label="Cut after page">
+      </div>
+      <div class="option">
+        <label class="switchbox">
+          <input type="radio" name="split" value="every">
+          Every <span class="led"></span>
+        </label>
+        <input type="number" id="split-size" value="1" min="1" aria-label="Pages per part">
+      </div>
+      <div class="option">
+        <label class="switchbox">
+          <input type="radio" name="split" value="single">
+          One file per page <span class="led"></span>
+        </label>
+      </div>
     </fieldset>
     {% endif %}
 
