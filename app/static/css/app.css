@@ -516,6 +516,21 @@ html {
   transition: transform 0.45s cubic-bezier(0.22, 0.75, 0.3, 1);
 }
 
+/* The footer's own mark, drawn in the markup rather than travelling there.
+   It gives the logo at the foot of the page an icon on every screen, since
+   the travelling mark only arrives where the trail runs and the trail needs
+   clear space beside the text. Hidden while the real mark is in the slot, so
+   the two are never both there. */
+.mark-landed .brand-end-mark {
+  display: none;
+}
+
+.brand-end-mark {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
 .brand-slot.arrived > svg {
   pointer-events: none;
 }

@@ -89,7 +89,19 @@
            down past the links to reach it. The header reads the same way:
            the logo, and then everything else underneath. -->
       <a class="plate brand footer-brand" href="/">
-        <span class="brand-slot" id="brand-end" aria-hidden="true"></span>
+        <!-- The footer draws its own mark, unlike the header slot above.
+             The travelling mark only arrives here when the trail is running,
+             which needs clear space beside the text, so on a phone and on a
+             zoomed page it never comes and the slot would stand empty. This
+             one is hidden the moment the real mark lands in it. -->
+        <span class="brand-slot" id="brand-end" aria-hidden="true">
+          <svg class="brand-end-mark" width="22" height="26" viewBox="0 0 22 26" fill="none">
+            <path d="M2 1h11l7 7v16a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1Z"
+                  stroke="currentColor" stroke-width="1.6"/>
+            <path d="M13 1v7h7" stroke="currentColor" stroke-width="1.6"/>
+            <rect x="5" y="14" width="12" height="5" rx="1" fill="var(--accent)"/>
+          </svg>
+        </span>
         <span class="brand-word">RetroPDF</span>
       </a>
 

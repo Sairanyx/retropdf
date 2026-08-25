@@ -318,6 +318,9 @@ function startRoute() {
       trail.replaceChildren()
       laid.clear()
       slot.classList.remove("travelling")
+      slot.classList.remove("arrived")
+      // Nothing is travelling, so the footer keeps its own mark.
+      document.body.classList.remove("mark-landed")
       mark.style.transform = ""
       return
     }
@@ -370,7 +373,14 @@ function startRoute() {
     // only says whether it is sitting in the logo at the foot of the page,
     // where it stops answering the pointer.
     slot.classList.add("travelling")
-    slot.classList.toggle("arrived", here.y >= destination() - 0.5)
+    const landed = here.y >= destination() - 0.5
+    slot.classList.toggle("arrived", landed)
+
+    // The footer draws a mark of its own, for the pages and screens where
+    // the trail never runs and nothing would otherwise arrive. It steps
+    // aside while the travelling mark is sitting in the slot, so the logo
+    // never shows two.
+    document.body.classList.toggle("mark-landed", landed)
 
     // Page coordinates, used directly: the mark is positioned against the
     // page like its trail is. The offsets centre the shape on the point,
