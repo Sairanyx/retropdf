@@ -32,7 +32,7 @@
   <script src="/static/js/pending.js"></script>
   <noscript><style>.intro-pending body { visibility: visible !important; }</style></noscript>
 </head>
-<body data-intro="1"{% if route %} data-route="{{ route }}"{% endif %}{% if on_home %} class="home"{% endif %}>
+<body data-intro="1"{% if route %} data-route="{{ route }}"{% endif %}{% if counted %} data-counted="1"{% endif %}{% if on_home %} class="home"{% endif %}>
   <!-- Falls from above on first load, then settles into the brand plate. -->
   <div class="intro-mark" aria-hidden="true">
     <svg viewBox="0 0 22 26" fill="none">
@@ -84,9 +84,9 @@
              pressing it does, which is the point: nobody should find out
              they were counted after the fact. -->
         {% if not on_desktop %}
-        <a class="plate wanted" href="/desktop">
+        <a class="plate wanted" href="/desktop?ask=1">
           <span class="wanted-ask">Want a desktop app?</span>
-          <span class="wanted-do">Count me in <span class="led"></span></span>
+          <span class="wanted-do">Count me in</span>
         </a>
         {% endif %}
       </div>
@@ -150,5 +150,6 @@
   <script type="module" src="/static/js/controls.js"></script>
   <script type="module" src="/static/js/nav.js"></script>
   <script type="module" src="/static/js/progress.js"></script>
+  <script type="module" src="/static/js/wanted.js"></script>
 </body>
 </html>

@@ -10,6 +10,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
+from app import interest
 from app.tools import TOOLS
 
 client = TestClient(app)
@@ -153,15 +154,45 @@ def test_the_privacy_page_says_what_is_stored():
         assert phrase in body
 
 
-def test_the_desktop_page_counts_and_shows_the_number():
-    """Opening the page is the vote, so the count has to go up and be shown."""
-    first = client.get("/desktop")
-    assert first.status_code == 200
+@pytest.fixture(autouse=True)
+def _counter_in_a_temporary_file(tmp_path, monkeypatch):
+    """Keep the tests off the real tally.
 
-    second = client.get("/desktop").text
-    # The number is on the page rather than only in a file somewhere, which
-    # is what lets a reader check the claim the privacy page makes.
-    assert 'class="tally"' in second
+    Counting is a file write, and a test run should not leave a number behind
+    or add to a real one.
+    """
+    monkeypatch.setattr(interest, "COUNT_FILE", tmp_path / "interest.count")
+
+
+def test_only_pressing_the_button_counts():
+    """Reading the page must not add to the number.
+
+    The button links to ?ask=1 and nothing else does, so a reload, a shared
+    link or a search engine looking at the page all leave the count alone.
+    Without this, the number would follow how long somebody held F5 rather
+    than how many people wanted the thing.
+    """
+    before = interest.read()
+
+    client.get("/desktop")
+    client.get("/desktop")
+    assert interest.read() == before, "reading the page counted somebody"
+
+    client.get("/desktop?ask=1")
+    assert interest.read() == before + 1, "pressing the button did not count"
+
+
+def test_the_desktop_page_shows_the_number():
+    """The number is on the page rather than only in a file somewhere, which
+    is what lets a reader check the claim the privacy page makes.
+
+    Asked twice, since one is written out as a word rather than a figure.
+    """
+    client.get("/desktop?ask=1")
+    client.get("/desktop?ask=1")
+    body = client.get("/desktop").text
+    assert 'class="tally"' in body
+    assert "2" in body
 
 
 def test_the_desktop_page_sends_nothing():

@@ -2396,9 +2396,21 @@ html {
   color: var(--accent);
 }
 
-.wanted:hover .led {
-  background: var(--accent);
-  box-shadow: 0 0 6px var(--accent), 0 0 2px var(--accent);
+/* Already asked, so it is a note rather than a button.
+ *
+ * The lamp is lit because the thing it stands for is done, and the hover
+ * glow is gone because there is nothing left to press. */
+.wanted.asked {
+  cursor: default;
+}
+
+.wanted.asked .wanted-do {
+  color: var(--ink-3);
+}
+
+.wanted.asked:hover {
+  color: var(--ink-3);
+  box-shadow: var(--raise-lg);
 }
 
 /* On a phone it joins the flow under the nav rather than being fixed over it.

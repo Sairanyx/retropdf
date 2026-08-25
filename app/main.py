@@ -190,7 +190,7 @@ if os.environ.get("REDPDF_DEV", "").lower() in {"1", "true", "yes"}:
 
 
 @app.get("/desktop", response_class=HTMLResponse)
-def desktop(request: Request) -> HTMLResponse:
+def desktop(request: Request, ask: str = "") -> HTMLResponse:
     """Count somebody asking for a desktop app.
 
     You arrive here by pressing a button that says it will count you, so the
@@ -200,8 +200,15 @@ def desktop(request: Request) -> HTMLResponse:
     sent a tally would need `connect-src 'none'` relaxed, and being counted
     without noticing is exactly what this is trying to avoid.
 
+    Only a request carrying ?ask=1 counts, which is the link the button
+    points at. Reloading drops back to the plain address, so holding F5 shows
+    the number again without adding to it, and so does sharing the link or
+    coming back to it later. The button itself will not offer that address a
+    second time, since the browser remembers you asked.
+
     The number says how many, never who.
     """
+    counted = ask == "1"
     return render(
         request,
         "desktop.html",
@@ -211,7 +218,8 @@ def desktop(request: Request) -> HTMLResponse:
             "you would use one without handing over your email address."
         ),
         canonical=f"{BASE_URL}/desktop",
-        asked=interest.record(),
+        asked=interest.record() if counted else interest.read(),
+        counted=counted,
         on_info=True,
         # The button that leads here steps aside on this page, since you have
         # already pressed it.
