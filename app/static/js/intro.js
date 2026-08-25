@@ -161,6 +161,12 @@ const LEFT_AT = "retropdf-left"
 // later opens properly.
 const REJOIN_WINDOW = 20 * 1000
 
+// After this long with nothing leaving, the count of open tabs is treated as
+// wrong rather than as a very long visit. Generous enough that a real day of
+// work is never interrupted, short enough that a crash does not silence the
+// opening for good.
+const STALE_AFTER = 12 * 60 * 60 * 1000
+
 const wantsLessMotion =
   window.matchMedia("(prefers-reduced-motion: reduce)").matches
 
@@ -211,8 +217,18 @@ function cameFromHere() {
 }
 
 function joinSession() {
-  const open = Number(recall(TAB_COUNT)) || 0
+  let open = Number(recall(TAB_COUNT)) || 0
   const leftAt = Number(recall(LEFT_AT)) || 0
+
+  // A count that only ever goes up is a count that has gone wrong.
+  //
+  // Tabs are removed from it on the way out, but a crash, a killed browser
+  // or a machine losing power never gets the chance, so the number is left
+  // permanently above zero and the site believes a visit that ended weeks
+  // ago is still going. The opening then never plays again.
+  //
+  // If nothing has left recently, whatever the count claims is stale.
+  if (open > 0 && leftAt && Date.now() - leftAt > STALE_AFTER) open = 0
 
   // Reloading and following a link both close the old page before opening
   // the new one, so the count dips to zero for a moment and the end of a

@@ -424,6 +424,15 @@ html {
   pointer-events: auto;
 }
 
+/* Landed in the logo at the foot of the page, so it is the logo's icon again
+   rather than something in flight. It stops answering the pointer, the way
+   it does while parked in the plate at the top: the plate around it is the
+   link, and an icon that lights up inside a logo reads as a second control
+   sitting on top of one. */
+.brand-slot.arrived > svg {
+  pointer-events: none;
+}
+
 /* Warms on hover the way the logo plate does, so it is discoverable as
    something you can click rather than only decoration. */
 .brand-slot.travelling > svg:hover {

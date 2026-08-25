@@ -245,22 +245,29 @@ function startRoute() {
     // is no text to cross: the footer is the last thing on the page and the
     // space beside it is empty, so the mark can come home.
     const finish = destination()
-    const homeRun = 260
-    if (y > finish - homeRun) {
-      const slot = document.querySelector("#brand-end")
-      if (!slot) return { x: inLane, y }
+    const slot = document.querySelector("#brand-end")
 
+    if (slot) {
       let slotX = slot.offsetWidth / 2
       for (let el = slot; el; el = el.offsetParent) slotX += el.offsetLeft
 
-      // The crossing finishes before the descent does, so the last stretch
-      // comes straight down into the slot rather than arriving diagonally
-      // and clipping the corner of the plate. The mark enters the logo the
-      // way it left the one at the top: from directly above.
-      const into = Math.min(1, (y - (finish - homeRun)) / homeRun)
-      const crossing = Math.min(1, into / 0.72)
-      const eased = (1 - Math.cos(crossing * Math.PI)) / 2
-      return { x: inLane + (slotX - inLane) * eased, y }
+      // The run in is as long as the distance it has to cover sideways,
+      // rather than a fixed 260 pixels. A short fixed stretch turns a wide
+      // crossing into a diagonal with a corner at each end, which is what
+      // made the arrival look sharp on a wide screen. Two units down per
+      // unit across keeps it gentle, the same ratio the mark uses leaving
+      // the logo at the top.
+      const homeRun = Math.max(320, Math.abs(slotX - inLane) * 2.2)
+
+      if (y > finish - homeRun) {
+        // The crossing finishes a little before the descent does, so the
+        // last stretch comes straight down into the slot rather than
+        // arriving diagonally and clipping the corner of the plate.
+        const into = Math.min(1, (y - (finish - homeRun)) / homeRun)
+        const crossing = Math.min(1, into / 0.82)
+        const eased = (1 - Math.cos(crossing * Math.PI)) / 2
+        return { x: inLane + (slotX - inLane) * eased, y }
+      }
     }
 
     return { x: inLane, y }
@@ -303,7 +310,18 @@ function startRoute() {
       return
     }
 
+    // Once it has arrived it is a logo again rather than something in
+    // flight, so it stops answering the pointer. The mark is only clickable
+    // while it is out on the page between the two logos, which is where it
+    // reads as a thing you could send back to the top. Sitting inside either
+    // plate it is simply the icon in the logo, and the plate around it is
+    // the link.
+    // "travelling" keeps the mark positioned by hand rather than by the
+    // layout, so it stays on the whole way down. "arrived" is separate and
+    // only says whether it is sitting in the logo at the foot of the page,
+    // where it stops answering the pointer.
     slot.classList.add("travelling")
+    slot.classList.toggle("arrived", here.y >= destination() - 0.5)
 
     // Page coordinates, used directly: the mark is positioned against the
     // page like its trail is. The offsets centre the shape on the point,
@@ -376,6 +394,33 @@ function startRoute() {
   }
 
   window.addEventListener("scroll", onScroll, { passive: true })
+
+  // The page grows and shrinks while you work: opening files fills the
+  // panel, switching tools shows and hides its options, and the footer moves
+  // down with all of it. The measurements are taken once and kept, so
+  // without this the mark still travels to wherever the footer was when the
+  // page first loaded and stops short of it now.
+  //
+  // Watching the height rather than any particular control means it holds
+  // for anything that changes the layout, including whatever gets added
+  // later.
+  let lastHeight = document.documentElement.scrollHeight
+  const watchHeight = new ResizeObserver(() => {
+    const now = document.documentElement.scrollHeight
+    if (now === lastHeight) return
+    lastHeight = now
+
+    // The route is measured from the page, so a page of a different length
+    // is a different route. The trail laid against the old one no longer
+    // matches and is drawn again as you scroll.
+    cachedOrigin = null
+    cachedLanes = null
+    cachedEnd = null
+    trail.replaceChildren()
+    laid.clear()
+    requestAnimationFrame(update)
+  })
+  watchHeight.observe(document.body)
 
   // Returning with the back button restores the scroll position without a
   // scroll event, so the trail would be missing until something moved.
