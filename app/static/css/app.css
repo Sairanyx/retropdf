@@ -886,6 +886,26 @@ h1.typing {
   transition: color var(--t);
 }
 
+/* Two tools to a row on a phone, without their descriptions.
+ *
+ * Eight cards each carrying a line of explanation is a long scroll on a small
+ * screen, and the names already say what the tools do: "Merge PDF" needs no
+ * gloss. Dropping the sentence makes each card short enough that two fit side
+ * by side, which turns eight rows into four.
+ *
+ * The text stays in the markup rather than being removed from it, so search
+ * engines and screen readers still have it. */
+@media (max-width: 640px) {
+  .tools {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+
+  .tools .tool p {
+    display: none;
+  }
+}
+
 .tool-art {
   color: var(--accent);
   opacity: 0.9;
@@ -996,6 +1016,18 @@ fieldset label {
   align-items: center;
   gap: 0.4375rem;
   font-size: var(--text-small);
+}
+
+/* A choice and the number it needs, kept together.
+ *
+ * The fieldset wraps its children when they run out of room, and a switch and
+ * its stepper were separate children, so a narrow screen broke them apart and
+ * left a number sitting beside the wrong switch. Wrapped as one, a pair either
+ * fits on the row or moves to the next together. */
+.option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 input[type="number"],
