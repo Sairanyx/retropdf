@@ -587,6 +587,13 @@ function typeHeadline(onDone) {
       setTimeout(() => {
         headline.classList.remove("typing")
         headline.style.minHeight = ""
+
+        // The typed breaks were worked out for the width at the time, and
+        // the finished heading should not keep them: turning a phone counts
+        // as a new width, and the line would then break where the old screen
+        // wanted rather than where this one does. Plain text again, wrapped
+        // by the browser from here on.
+        headline.textContent = text
       }, 120)
       // A beat on the finished line before anything follows, long enough
       // to register as a pause rather than a stutter.
