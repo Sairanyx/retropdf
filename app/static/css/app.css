@@ -563,15 +563,17 @@ section {
    * page. Centring alone made it depend on how tall each section's content
    * happened to be: the hero has three short lines and the tools have two
    * rows of cards, so one gap came out twice the other. */
-  min-height: calc(100svh - 5rem);
+  /* A whole screen each, so landing on one shows that one and nothing else.
+     Anything shorter lets the next section show below it, and the reader
+     arrives at two things at once. */
+  min-height: 100svh;
   display: flex;
   flex-direction: column;
-  /* Content sits at the top of its section rather than floating in the
-     middle. Centring made the gap between two sections depend on how tall
-     each one's content happened to be, so the hero with its three short
-     lines left twice the space the tools did with their two rows of cards. */
-  justify-content: flex-start;
-  padding-block: clamp(4rem, 11vh, 8rem) 0;
+  /* Content sits in the middle of its screen. Landing on a section should
+     put what you came to read in front of you rather than at the top edge
+     with a screen of nothing below it. */
+  justify-content: center;
+  padding-block: clamp(4rem, 11vh, 8rem);
   scroll-margin-top: 0;
 }
 
@@ -583,18 +585,29 @@ section {
  * short piece of text centred in a tall box then sits with its heading above
  * the top of the window. Sizing to the content keeps the whole of it on
  * screen at once. */
+/* The last section shares its screen with the footer.
+ *
+ * Every other section gets a whole screen to itself, but this one is
+ * followed by the footer rather than by another section, and the two have to
+ * fit together: landing here should show the heading, the text and the
+ * footer at once, with nothing of the section above.
+ *
+ * So it takes what is left of the screen after the footer instead of a
+ * screen of its own. */
+/* The last section on the page shares its screen with the footer.
+ *
+ * Every other section gets a screen to itself and centres its content in it.
+ * This one is followed by the footer rather than by another section, so the
+ * two are centred together: landing here shows the heading, the text and the
+ * footer at once, with nothing of the section above.
+ *
+ * The space above is set by a script on tool pages, where it depends on
+ * where the tool panel ends. What is here is the floor that script never
+ * goes below, and what a page without scripting gets. */
 .panel:last-of-type {
   min-height: 0;
   justify-content: flex-start;
-  /* Little at the top, generous at the bottom. On a tool page this section
-     follows the tool itself, and the point of the small gap above is that
-     "Other tools" and the top of a card show at the foot of the screen: just
-     enough to say there is more below without competing with the tool you
-     came for. */
-  /* Little at the top so the cards peek at the foot of the screen, generous
-     at the bottom so the footer is well clear of them rather than crowding
-     the last thing on the page. */
-  padding-block: clamp(0.75rem, 2vh, 2rem) clamp(12rem, 34vh, 24rem);
+  padding-block: clamp(1rem, 4vh, 9rem) clamp(4rem, 12vh, 9rem);
 }
 
 /* Short screens would otherwise force a scroll inside the section itself. */
@@ -1048,8 +1061,15 @@ body.dragging-page {
 
 /* ---------- footer ---------- */
 
+/* The space below the footer is what lets the last section reach the top of
+   the window.
+ *
+ * Scrolling can only go as far as the page allows, so a page that ends
+ * shortly after its last section cannot bring that section to the top: the
+ * browser stops early and the tail of the section above stays on screen.
+ * This makes the page long enough for the scroll to finish. */
 footer {
-  padding-block: 2rem 3rem;
+  padding-block: 2rem 4rem;
   /* A step darker and larger than the mono needed: Handjet draws thinner
      strokes, so the same grey at the same size disappears into the ground. */
   color: var(--ink-2);

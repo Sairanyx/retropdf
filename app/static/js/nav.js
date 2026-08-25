@@ -56,8 +56,21 @@ if (!wantsLessMotion) {
         const top = box.top + window.scrollY
         const bottom = document.documentElement.scrollHeight - window.innerHeight
 
-        // A little room above it rather than butting it against the top edge.
-        const room = Math.min(80, Math.max(0, (window.innerHeight - box.height) / 2))
+        // Centred with its footer, the way every other section is centred in
+        // its own screen. Landing at the top of it left the text against the
+        // top edge with a screen of nothing below.
+        //
+        // The room above is whatever is left once the section and its footer
+        // are accounted for, halved. It is never taken past the top of the
+        // section itself, since that is where the section above begins and
+        // the reader would arrive looking at two things at once.
+        const foot = document.querySelector("footer")
+        const tail = foot
+          ? foot.getBoundingClientRect().bottom + window.scrollY
+          : top + box.height
+
+        const spare = window.innerHeight - (tail - top)
+        const room = Math.max(0, Math.min(spare / 2, box.top + window.scrollY - top))
 
         window.scrollTo({
           top: Math.min(bottom, Math.max(0, top - room)),

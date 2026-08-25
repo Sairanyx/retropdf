@@ -142,3 +142,51 @@ if (watched.size > 0 && "IntersectionObserver" in window) {
 
   for (const section of watched.keys()) where.observe(section)
 }
+
+// --- the hint at the foot of a tool page --------------------------------
+
+/**
+ * Sit the other tools just below the fold, showing only their heading.
+ *
+ * The idea is that arriving at a tool page you see the tool, and a line at
+ * the bottom of the screen telling you there are more below. Enough to
+ * suggest scrolling, not enough to compete with what you came for.
+ *
+ * This cannot be written in CSS. The space needed depends on where the tool
+ * panel above happens to end, and the panel is much the same height whatever
+ * the window, so the room left below it is several times larger on a tall
+ * screen than a short one. A fraction of the window either hides the heading
+ * on a short screen or shows two rows of cards on a tall one.
+ *
+ * So it is measured: the section is pushed down until its heading sits a
+ * little above the bottom edge, whatever that takes.
+ */
+function placeTheHint() {
+  const panel = document.querySelector(".workspace")
+  const next = panel?.parentElement?.querySelector(".panel")
+  if (!panel || !next) return
+
+  // How much of the heading to leave showing. Enough to read the words and
+  // see that something follows them.
+  const SHOW = 52
+
+  next.style.paddingTop = ""
+  const gap = window.innerHeight - SHOW - panel.getBoundingClientRect().bottom
+  if (gap > 0) next.style.paddingTop = `${Math.round(gap)}px`
+}
+
+// Only where a tool panel is followed by another section, which is the tool
+// pages. The home page and the workspace are laid out differently.
+if (document.querySelector(".workspace") && document.querySelector(".panel")) {
+  placeTheHint()
+
+  // The panel changes height as files are opened and tools switched, and the
+  // window changes with the browser, so the measurement is taken again.
+  const watch = new ResizeObserver(() => placeTheHint())
+  watch.observe(document.querySelector(".workspace"))
+  window.addEventListener("resize", placeTheHint, { passive: true })
+
+  // The display face is a different width from its fallback, so the panel is
+  // a different height once it has arrived.
+  document.fonts?.ready.then(placeTheHint)
+}
