@@ -1,13 +1,8 @@
 // The mark travels down the page, leaving a trail where it has been.
 //
 // It is the same document mark that falls during the opening sequence and
-// settles into the logo. From there it sets off, drifting gently left and
-// right as it descends.
-//
-// The mark's position is the single source of truth: the trail is simply a
-// record of where it has already been. Drawing a path and then placing the
-// mark on it separately is what made the two disagree, with the mark cutting
-// corners and falling behind on long runs.
+// settles into the logo. The mark's position is the single source of truth
+// and the trail is a record of where it has been, so the two cannot disagree.
 //
 // Purely decorative: behind the content, never intercepts the scroll, and
 // hidden from screen readers.
@@ -15,12 +10,9 @@
 const wantsLessMotion =
   window.matchMedia("(prefers-reduced-motion: reduce)").matches
 
-// Below this the content fills the screen and there is no clear space beside
-// it. A line through the words is worse than no line.
-//
-// A first check only. The window being wide enough does not prove there is
-// room beside the text, since zooming in grows the content without changing
-// the window, so the real test is roomBeside() below.
+// A first check only. A wide window does not prove there is room beside the
+// text, since zooming grows the content without changing the window, so
+// roomBeside() is the real test.
 const NARROWEST = 700
 
 if (!wantsLessMotion) waitThenStart()
@@ -48,9 +40,8 @@ function waitThenStart() {
 function startRoute() {
   if (window.innerWidth < NARROWEST) return
 
-  // The mark is the logo's own, not a copy of it. Scrolling moves this very
-  // element out of the plate and down the page, so there is never a moment
-  // where one disappears and another appears somewhere else.
+  // The logo's own mark, not a copy: scrolling moves this very element, so
+  // one never disappears as another appears elsewhere.
   const plate = document.querySelector("#brand-plate")
   const slot = document.querySelector("#brand-slot")
   const mark = slot?.querySelector("svg")
@@ -74,9 +65,6 @@ function startRoute() {
   const DOT = 6 // square size, matched to the stepped edges of the font
   const STEP = 14 // how far the mark moves between squares
 
-  // Also measured once, for the same reason: the brand plate is sticky, so
-  // its viewport position is the same at every scroll offset but its page
-  // position is not, and the origin has to be a fixed point on the page.
   let cachedOrigin = null
 
   /**
@@ -89,22 +77,9 @@ function startRoute() {
     if (cachedOrigin) return cachedOrigin
     if (!slot) return { x: 60, y: 0 }
 
-    // Measured against the plate's own offset position rather than the
-    // scroll. The plate is sticky, so its viewport position is wherever the
-    // scroll has parked it: adding scrollY to that would put the origin
-    // thousands of pixels down when measured after scrolling.
-    //
-    // The icon is an SVG element, which has no offsetTop of its own, so its
-    // place inside the plate is taken from the difference between the two
-    // rectangles. That difference is unaffected by scrolling, since both
-    // move together.
-    // The plate is sticky, so its viewport position is wherever the scroll
-    // has parked it. Adding scrollY to that would put the origin thousands
-    // of pixels down when measured after scrolling, so the plate's place on
-    // the page comes from its offsets instead.
-    //
-    // offsetLeft and offsetTop are each relative to the nearest positioned
-    // ancestor, so they are summed up the chain to reach the page.
+    // The plate is sticky, so adding scrollY to its viewport position would
+    // put the origin thousands of pixels down once the page has scrolled.
+    // Offsets are relative to the page and do not move.
     let plateX = 0
     let plateY = 0
     for (let el = plate; el; el = el.offsetParent) {
@@ -112,9 +87,8 @@ function startRoute() {
       plateY += el.offsetTop
     }
 
-    // Where the slot sits inside the plate, taken as the difference between
-    // the two rectangles. Both move together with the scroll, so their
-    // difference does not change.
+    // The icon is an SVG, which has no offsetTop, so its place inside the
+    // plate comes from the difference between the two rectangles.
     const slotBox = slot.getBoundingClientRect()
     const plateBox = plate.getBoundingClientRect()
 
@@ -125,17 +99,13 @@ function startRoute() {
     return cachedOrigin
   }
 
-  // Measured once and reused. getBoundingClientRect reports positions
-  // relative to the viewport, so measuring on every call returns different
-  // answers as the page scrolls. The route would then be laid in a slightly
-  // different place each time, leaving the gaps and wobble that made the
-  // trail look broken.
+  // Measured once. getBoundingClientRect is relative to the viewport, so
+  // measuring per call gives a different answer at every scroll position and
+  // the route wobbles.
   let cachedLanes = null
 
-  // Far enough from the text that the line is beside it rather than grazing
-  // it. The clearance has to cover the sway, which carries the trail 18
-  // pixels either side of the lane, and the square's own width, or the widest
-  // part of the swing ends up a few pixels from the words.
+  // Sway either side of the lane, plus the square's own width, so the widest
+  // part of the swing still clears the text.
   const CLEAR = 18 + 18 + DOT
 
   /** The clear space either side of the content, measured rather than assumed. */
@@ -152,15 +122,10 @@ function startRoute() {
       contentRight = Math.max(contentRight, box.right)
     }
 
-    // The content stops widening past a point, so a wide screen has hundreds
-    // of pixels of clear space and a narrow one has almost none. Measuring
-    // beats taking a percentage of the window, which lands the route in open
-    // space on one screen and through the text on another.
     cachedLanes = {
-      // How much clear space there actually is to the left of the text. The
-      // lane below is clamped to a minimum so the line stays on screen, and
-      // that clamp is what would push it over the words, so the true gap is
-      // kept separately for roomBeside() to judge.
+      // The true gap, kept separately: `left` below is clamped to a minimum
+      // to stay on screen, and that clamp is what would push it over the
+      // words, so roomBeside() judges this instead.
       gap: contentLeft,
       left: Math.max(18, Math.min(contentLeft - CLEAR, contentLeft / 2)),
       right: Math.min(
@@ -174,28 +139,16 @@ function startRoute() {
   /**
    * Whether there is genuinely room for the line beside the text.
    *
-   * The window being wide is not the same question. Zooming in grows the
-   * text without changing the window, so a zoomed page can be 1200 pixels
-   * wide with the words running to both edges, and a trail drawn there goes
-   * straight through them. Asking the measured gap covers both, since a
-   * narrow window and a zoomed one leave the same lack of space.
+   * Measured rather than inferred from the window width, since zooming grows
+   * the text without changing the window.
    */
   function roomBeside() {
     return lanes().gap >= CLEAR + DOT
   }
 
-  // Measured once, like the origin, and for the same reason: the answer must
-  // not change as the page scrolls.
   let cachedEnd = null
 
-  /**
-   * Where the mark is going: the slot in the logo at the foot of the page.
-   *
-   * The journey has two ends rather than one. It sets off from the logo in
-   * the header and arrives at the logo in the footer, so the trail lands
-   * somewhere rather than stopping at whatever fraction of the page the
-   * scroll happened to reach.
-   */
+  /** Where the mark is going: the slot in the logo at the foot of the page. */
   function destination() {
     if (cachedEnd !== null) return cachedEnd
 
@@ -252,27 +205,15 @@ function startRoute() {
       return { x: from.x + (lane.left - from.x) * eased, y }
     }
 
-    // Then the route runs down one lane, and stays there.
-    //
-    // It does not switch sides. Getting from one lane to the other means
-    // crossing the middle of the page, which on a wide screen is exactly
-    // where the content sits: either the line goes through the text, or it
-    // jumps and the trail appears out of nowhere. Neither is worth the
-    // variety, so it holds one side and simply descends.
-    //
-    // A slight sway keeps it from being ruler straight, small enough that it
-    // never reaches the content.
+    // One lane the whole way down. Switching sides means crossing the middle
+    // of the page, where the content is. The sway keeps it from being ruler
+    // straight, small enough never to reach the text.
     const sway = Math.sin((travelled - settle) / 260) * 18
 
     const inLane = lane.left + sway
 
-    // Except at the very end, where it curves across to the logo waiting in
-    // the footer.
-    //
-    // Crossing the page anywhere else puts the trail through the text, which
-    // is why the route holds one side for its whole descent. Down here there
-    // is no text to cross: the footer is the last thing on the page and the
-    // space beside it is empty, so the mark can come home.
+    // Except at the end, where it curves across to the footer logo. Down
+    // here there is no text to cross.
     const finish = destination()
     const slot = document.querySelector("#brand-end")
 
@@ -280,12 +221,9 @@ function startRoute() {
       let slotX = slot.offsetWidth / 2
       for (let el = slot; el; el = el.offsetParent) slotX += el.offsetLeft
 
-      // The run in is as long as the distance it has to cover sideways,
-      // rather than a fixed number of pixels. A short fixed stretch turns a
-      // wide crossing into a diagonal with a corner at each end, which is
-      // what made the arrival look sharp on a wide screen. Two units down
-      // per unit across keeps it gentle, the same ratio the mark uses
-      // leaving the logo at the top.
+      // The run in scales with the distance to cover sideways. A fixed
+      // stretch turns a wide crossing into a diagonal with a corner at each
+      // end. Roughly two down per one across keeps it gentle.
       const homeRun = Math.max(320, Math.abs(slotX - inLane) * 2.2)
 
       if (y > finish - homeRun) {
@@ -339,39 +277,24 @@ function startRoute() {
     )
     if (scrollable <= 0) return
 
-    // The whole scroll maps onto the whole route: at the top the mark is in
-    // its slot, at the bottom it is at the end of the page. Everything in
-    // between is proportional, so it arrives exactly when the reader does.
-    //
-    // Moving it one pixel per pixel scrolled instead leaves it pinned near
-    // the top of the window, since scrolling already moves the page under
-    // it, and it never reaches the end. Placing it at a fixed depth in the
-    // window has the opposite fault: it has to cover that depth on top of
-    // the scroll, so it drags going down and races coming back up.
+    // The whole scroll maps onto the whole route, so the mark arrives exactly
+    // when the reader does. Moving it per pixel scrolled instead leaves it
+    // pinned near the top, since scrolling already moves the page under it.
     const through = Math.min(1, Math.max(0, window.scrollY / scrollable))
     const y = from.y + (destination() - from.y) * through
 
     const here = positionAt(y)
 
-    // At the very top the mark is left exactly as the layout placed it, so
-    // the logo is untouched and cannot drift by a pixel. Any scroll at all
-    // lifts it out and it is positioned by hand from there.
+    // At the very top the layout places it, so the logo cannot drift.
     if (here.y <= from.y + 0.5) {
       slot.classList.remove("travelling")
       mark.style.transform = ""
       return
     }
 
-    // Once it has arrived it is a logo again rather than something in
-    // flight, so it stops answering the pointer. The mark is only clickable
-    // while it is out on the page between the two logos, which is where it
-    // reads as a thing you could send back to the top. Sitting inside either
-    // plate it is simply the icon in the logo, and the plate around it is
-    // the link.
     // "travelling" keeps the mark positioned by hand rather than by the
-    // layout, so it stays on the whole way down. "arrived" is separate and
-    // only says whether it is sitting in the logo at the foot of the page,
-    // where it stops answering the pointer.
+    // layout. "arrived" says it is sitting in the footer logo, where it is
+    // an icon again and stops answering the pointer.
     slot.classList.add("travelling")
     const landed = here.y >= destination() - 0.5
     slot.classList.toggle("arrived", landed)
@@ -392,25 +315,14 @@ function startRoute() {
     // already marked. They come from the same function that places the mark,
     // so the trail is exactly the path it took.
     //
-    // The loop always starts at the logo, so arriving partway down the page,
-    // which happens when a link carries a #section, fills in everything
-    // above rather than leaving the trail starting in mid air.
-    // Collected into a fragment and appended once. A jump from a nav link
-    // can ask for several hundred squares in a single frame, and appending
-    // them one at a time makes the browser recalculate layout for each,
-    // which is what made those jumps stutter.
+    // Appended once rather than one at a time: a jump from a nav link can
+    // ask for several hundred squares in a frame, and each append would cost
+    // a layout recalculation.
     const batch = document.createDocumentFragment()
 
-    // The route can change under a trail that has already been laid: opening
-    // files makes the page longer, clearing them makes it shorter, and the
-    // curve into the footer moves with it. A square placed once and left
-    // there ends up on a path that no longer exists, which is what split the
-    // line into two disconnected halves.
-    //
-    // So every square is moved to where the current route puts it, rather
-    // than only the new ones being placed. Setting a style that has not
-    // changed costs nothing, and it means the trail is always the route
-    // rather than a record of every route there has ever been.
+    // Every square is moved to where the current route puts it, not just the
+    // new ones. The route changes under a trail already laid when the page
+    // grows or shrinks, and squares left behind split the line in two.
     for (let at = from.y; at <= y; at += STEP) {
       const key = Math.round(at / STEP)
       const point = positionAt(at)
@@ -457,13 +369,9 @@ function startRoute() {
       }
     }
 
-    // Squares below the end of the page belong to a route that no longer
-    // exists, so they are taken away rather than left hanging past the logo.
-    //
-    // Measured against the end of the page rather than against the mark:
-    // scrolling back up moves the mark without changing the route, and
-    // clearing everything below it there would wipe the trail you have just
-    // made, which is the record of where you have been.
+    // Measured against the end of the page, not the mark: scrolling up moves
+    // the mark without changing the route, and clearing below it there would
+    // wipe the trail already made.
     const end = destination()
     for (const [key, dot] of laid) {
       if (key * STEP > end + STEP) {

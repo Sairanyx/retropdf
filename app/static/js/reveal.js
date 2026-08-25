@@ -39,16 +39,9 @@ function startReveals() {
         seen.unobserve(entry.target)
       }
     },
-    // A section has to be properly in view, not merely peeking above the
-    // fold. On a tool page the next section already shows a quarter of
-    // itself at rest, so a small threshold revealed it while the reader was
-    // still at the top and gave away what was below.
-    //
-    // The margin does that work rather than a large threshold. A section
-    // taller than the window can never reach a high fraction of itself, so
-    // asking for 45% left long sections hidden for good on a short screen.
-    // Pulling the bottom edge up by a third of the window means a block is
-    // revealed once it has genuinely arrived, whatever its height.
+    // A margin rather than a large threshold: a section taller than the
+    // window can never reach a high fraction of itself, so asking for 45%
+    // left long sections hidden for good on a short screen.
     { rootMargin: "0px 0px -33% 0px", threshold: 0.01 },
   )
 
@@ -148,18 +141,10 @@ if (watched.size > 0 && "IntersectionObserver" in window) {
 /**
  * Sit the other tools just below the fold, showing only their heading.
  *
- * The idea is that arriving at a tool page you see the tool, and a line at
- * the bottom of the screen telling you there are more below. Enough to
- * suggest scrolling, not enough to compete with what you came for.
- *
- * This cannot be written in CSS. The space needed depends on where the tool
- * panel above happens to end, and the panel is much the same height whatever
- * the window, so the room left below it is several times larger on a tall
- * screen than a short one. A fraction of the window either hides the heading
- * on a short screen or shows two rows of cards on a tall one.
- *
- * So it is measured: the section is pushed down until its heading sits a
- * little above the bottom edge, whatever that takes.
+ * Not expressible in CSS: the space needed depends on where the tool panel
+ * above ends, and the panel is much the same height whatever the window, so
+ * a fraction of the window hides the heading on a short screen and shows two
+ * rows of cards on a tall one.
  */
 function placeTheHint() {
   const panel = document.querySelector(".workspace")
@@ -172,16 +157,9 @@ function placeTheHint() {
 
   next.style.paddingTop = ""
 
-  // Where the panel ends, measured against the page rather than the screen.
-  //
-  // A rectangle is measured against the viewport, so its bottom edge is a
-  // different number at every scroll position. Working the gap out from that
-  // made the answer depend on where you happened to be looking, and on a
-  // phone, where scrolling also collapses the address bar and fires a resize,
-  // it recomputed the padding as you moved and pushed the section lower and
-  // lower down the page.
-  //
-  // Offsets are measured against the page and hold still while you scroll.
+  // Measured against the page, not the screen. A rectangle's bottom edge is
+  // a different number at every scroll position, which made the padding grow
+  // as you scrolled and pushed the section lower and lower.
   let end = panel.offsetHeight
   for (let el = panel; el; el = el.offsetParent) end += el.offsetTop
 
@@ -192,15 +170,9 @@ function placeTheHint() {
 /**
  * The height of the screen, ignoring the browser's own furniture.
  *
- * On a phone innerHeight is not a fixed number: scrolling down collapses the
- * address bar and scrolling up brings it back, which changes it by around a
- * hundred pixels and fires a resize each time. Measuring against it meant the
- * gap below the panel was recomputed to a different answer as you scrolled,
- * so the space above the next section visibly grew and shrank.
- *
- * 100svh is the small viewport height, which is the size with the address bar
- * showing and does not move. Falls back to innerHeight where svh is not
- * understood.
+ * On a phone innerHeight changes by about a hundred pixels as the address bar
+ * collapses and returns, firing a resize each time. 100svh is the size with
+ * the bar showing and does not move.
  */
 function screenHeight() {
   if (!CSS.supports?.("height", "100svh")) return window.innerHeight

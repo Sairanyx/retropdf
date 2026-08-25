@@ -1,15 +1,9 @@
 // Softens the jump between pages.
 //
 // A link to another page is a full reload, which lands as a hard cut. The
-// current page settles away first, and the new one rises into place, so the
-// two read as one movement rather than a flicker.
-//
-// The timing is deliberately unhurried. A page change that is too quick
-// registers as a glitch, and one that is too slow gets in the way. Around
-// four hundred milliseconds each side sits between the two.
-//
-// Anything that would leave the site, open a new tab, or is a plain anchor on
-// this page is left alone.
+// current page settles away first and the new one rises into place, so the
+// two read as one movement. Anything leaving the site, opening a new tab, or
+// anchoring within this page is left alone.
 
 const wantsLessMotion =
   window.matchMedia("(prefers-reduced-motion: reduce)").matches
@@ -38,15 +32,9 @@ if (!wantsLessMotion) {
     if (samePage && url.hash) {
       glide()
 
-      // The last section on the page cannot be brought to the top of the
-      // window, because there is not a screenful of page left below it. The
-      // browser stops partway and the footer ends up half shown.
-      //
-      // Going to the very bottom instead fixes the footer but pushes a short
-      // section off the top, so the heading you came to read sits above the
-      // window. This lands wherever shows the most of it: as far down as the
-      // page allows, but never past the point where the section itself
-      // starts to leave the screen.
+      // The last section cannot be brought to the top of the window: there
+      // is not a screenful below it, so the browser stops partway and the
+      // footer ends up half shown. This lands wherever shows the most of it.
       const target = document.querySelector(url.hash)
       if (target && isLastSection(target)) {
         event.preventDefault()
@@ -57,13 +45,8 @@ if (!wantsLessMotion) {
         const bottom = document.documentElement.scrollHeight - window.innerHeight
 
         // Centred with its footer, the way every other section is centred in
-        // its own screen. Landing at the top of it left the text against the
-        // top edge with a screen of nothing below.
-        //
-        // The room above is whatever is left once the section and its footer
-        // are accounted for, halved. It is never taken past the top of the
-        // section itself, since that is where the section above begins and
-        // the reader would arrive looking at two things at once.
+        // its own screen. Never taken past the top of the section itself,
+        // since that is where the section above begins.
         const foot = document.querySelector("footer")
         const tail = foot
           ? foot.getBoundingClientRect().bottom + window.scrollY
@@ -72,16 +55,10 @@ if (!wantsLessMotion) {
         const spare = window.innerHeight - (tail - top)
         const room = Math.max(0, Math.min(spare / 2, box.top + window.scrollY - top))
 
-        // Where the page can stop without the taskbar covering the section.
-        // On a phone the nav is stuck to the top of the screen, so a section
-        // brought to the very top arrives underneath it. This is the same
-        // clearance scroll-margin-top gives every other section, which this
-        // path cannot use because it scrolls by hand rather than by anchor.
-        //
-        // A ceiling on how far down the page may stop, not an alternative to
-        // the room above: centring the section wants to scroll further than
-        // clearing the bar allows, and taking the larger of the two put the
-        // section back underneath it.
+        // The same clearance scroll-margin-top gives every other section,
+        // which this path cannot use because it scrolls by hand. A ceiling
+        // rather than an alternative to the room above, or centring wins and
+        // puts the section back under the bar.
         const clear = stuckNavHeight()
         const highest = top - clear
 
@@ -97,10 +74,8 @@ if (!wantsLessMotion) {
     // place you can see is wasteful, so it scrolls back up instead.
     if (samePage && !url.hash) {
       event.preventDefault()
-      // The address still names whichever section you jumped to last, so it
-      // is cleared: you are at the top of the page now, not in a section.
-      // replaceState rather than pushState, since going back to "the same
-      // page with a stale hash" is not a step worth keeping.
+      // Clear the stale #section: you are at the top now. replaceState, since
+      // going back to the same page with a stale hash is not worth a step.
       history.replaceState(null, "", url.pathname + url.search)
       window.scrollTo({ top: 0, behavior: "smooth" })
       return
@@ -108,9 +83,8 @@ if (!wantsLessMotion) {
 
     event.preventDefault()
 
-    // Only the content settles away. The header stays, because it is the
-    // one thing common to both pages, which is what makes the change read
-    // as moving within a place rather than leaving it.
+    // Only the content settles away. The header stays, which makes the
+    // change read as moving within a place rather than leaving it.
     document.body.classList.add("leaving")
 
     setTimeout(() => {
@@ -128,13 +102,9 @@ if (!wantsLessMotion) {
 /**
  * How much of the screen the taskbar holds, when it is holding any.
  *
- * On a phone the nav is stuck to the top and covers whatever scrolls under
- * it, so a section brought to the very top of the window arrives hidden
- * behind it. On a wider screen it is out of the flow and off to one side,
- * covering nothing, and this returns zero.
- *
- * Measured from the element rather than repeated as a number here, so the
- * two cannot fall out of step when the bar changes size.
+ * Zero on a wide screen, where the nav is out of the flow and covers
+ * nothing. Measured from the element rather than repeated as a number, so
+ * the two cannot fall out of step.
  */
 function stuckNavHeight() {
   const nav = document.querySelector(".navgroup")
