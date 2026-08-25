@@ -1944,6 +1944,101 @@ html {
   margin-bottom: clamp(9rem, 22vh, 16rem);
 }
 
+/* The logo at the foot of the page, where the travelling mark lands. Set
+   like the one in the header so the two read as the same object arriving
+   rather than two separate marks. */
+.footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0 0 1rem;
+  color: var(--ink-2);
+}
+
+/* The second footer row. A step back from the tools above it, since these
+   are pages you look for rather than pages you use. */
+.footer-legal {
+  margin-bottom: 1rem;
+}
+
+.footer-legal a {
+  color: var(--ink-3);
+  /* Wide enough for a finger even when the word is short. "Terms" came out
+     at 42px on its own, which is under the 44px a touch target wants. */
+  min-width: 44px;
+  justify-content: center;
+}
+
+/* ---------- the pages that are mostly words ---------- */
+
+/* Privacy, terms and security: long enough to need reading rather than
+   scanning, so the measure is narrower than the rest of the site and the
+   spacing is looser. Everything else comes from the same variables the tools
+   use, so these pages belong to the site rather than looking like a document
+   that wandered in. */
+.prose {
+  max-width: 62ch;
+  padding-block: clamp(2rem, 6vh, 4rem) clamp(6rem, 16vh, 11rem);
+}
+
+.prose h2 {
+  margin-top: 3rem;
+}
+
+.prose h2:first-child {
+  margin-top: 0;
+}
+
+.prose p {
+  color: var(--ink-2);
+  margin: 0 0 1.25rem;
+}
+
+/* A list of statements rather than a list of items: no bullets, since each
+   line is a sentence and a marker in front of it only adds noise. */
+.plain {
+  list-style: none;
+  margin: 0 0 1.25rem;
+  padding: 0;
+  color: var(--ink-2);
+}
+
+.plain li {
+  margin-bottom: 0.875rem;
+  padding-left: 1.25rem;
+  position: relative;
+}
+
+/* A small square instead, matching the trail and the indicator lamps. */
+.plain li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.62em;
+  width: 6px;
+  height: 6px;
+  background: var(--accent);
+  opacity: 0.55;
+}
+
+.plain strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* A line of the actual policy, quoted. Set apart so it reads as something
+   the browser is told rather than something we are saying. */
+.code {
+  display: inline-block;
+  padding: 0.6rem 1rem;
+  border-radius: var(--r-sm);
+  background: var(--inset);
+  box-shadow: var(--press);
+  color: var(--accent);
+  font-family: var(--mono);
+  font-size: var(--text-small);
+}
+
 /* ---------- looking closer at a page ---------- */
 
 /* Sits in the corner of a thumbnail. Faint until the page is hovered, so a

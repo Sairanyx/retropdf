@@ -156,6 +156,38 @@ function startRoute() {
     return cachedLanes
   }
 
+  // Measured once, like the origin, and for the same reason: the answer must
+  // not change as the page scrolls.
+  let cachedEnd = null
+
+  /**
+   * Where the mark is going: the slot in the logo at the foot of the page.
+   *
+   * The journey has two ends rather than one. It sets off from the logo in
+   * the header and arrives at the logo in the footer, so the trail lands
+   * somewhere rather than stopping at whatever fraction of the page the
+   * scroll happened to reach.
+   */
+  function destination() {
+    if (cachedEnd !== null) return cachedEnd
+
+    const slot = document.querySelector("#brand-end")
+    if (!slot) {
+      // No footer logo on this page. Ending a little short of the bottom
+      // keeps the mark on screen rather than parked under the fold.
+      cachedEnd =
+        document.documentElement.scrollHeight - window.innerHeight * 0.4
+      return cachedEnd
+    }
+
+    // Offsets rather than a rectangle, so the answer is the slot's place on
+    // the page and not wherever the current scroll has put it on screen.
+    let y = slot.offsetHeight / 2
+    for (let el = slot; el; el = el.offsetParent) y += el.offsetTop
+    cachedEnd = y
+    return cachedEnd
+  }
+
   /**
    * Where the mark is when it has descended this far down the page.
    *
@@ -203,8 +235,32 @@ function startRoute() {
     // A slight sway keeps it from being ruler straight, small enough that it
     // never reaches the content.
     const sway = Math.sin((travelled - settle) / 260) * 18
+    const inLane = lane.left + sway
 
-    return { x: lane.left + sway, y }
+    // Except at the very end, where it curves across to the logo waiting in
+    // the footer.
+    //
+    // Crossing the page anywhere else puts the trail through the text, which
+    // is why the route holds one side for its whole descent. Down here there
+    // is no text to cross: the footer is the last thing on the page and the
+    // space beside it is empty, so the mark can come home.
+    const finish = destination()
+    const homeRun = 260
+    if (y > finish - homeRun) {
+      const slot = document.querySelector("#brand-end")
+      if (!slot) return { x: inLane, y }
+
+      let slotX = slot.offsetWidth / 2
+      for (let el = slot; el; el = el.offsetParent) slotX += el.offsetLeft
+
+      // The same eased curve the mark uses leaving the logo, so the journey
+      // ends the way it began rather than turning a corner.
+      const into = Math.min(1, (y - (finish - homeRun)) / homeRun)
+      const eased = (1 - Math.cos(into * Math.PI)) / 2
+      return { x: inLane + (slotX - inLane) * eased, y }
+    }
+
+    return { x: inLane, y }
   }
 
   /**
@@ -231,8 +287,7 @@ function startRoute() {
     // window has the opposite fault: it has to cover that depth on top of
     // the scroll, so it drags going down and races coming back up.
     const through = Math.min(1, Math.max(0, window.scrollY / scrollable))
-    const end = document.documentElement.scrollHeight - window.innerHeight * 0.4
-    const y = from.y + (end - from.y) * through
+    const y = from.y + (destination() - from.y) * through
 
     const here = positionAt(y)
 
@@ -307,6 +362,7 @@ function startRoute() {
   window.addEventListener("pageshow", () => {
     cachedOrigin = null
     cachedLanes = null
+    cachedEnd = null
     trail.replaceChildren()
     laid.clear()
     requestAnimationFrame(update)
@@ -321,6 +377,7 @@ function startRoute() {
       laid.clear()
       cachedLanes = null
       cachedOrigin = null
+      cachedEnd = null
 
       // Narrowed past the cutoff there is no room beside the content, so the
       // mark stops travelling and the logo takes its own mark back.

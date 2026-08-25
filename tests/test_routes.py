@@ -124,3 +124,58 @@ def test_every_tool_page_carries_the_headers():
     for tool in TOOLS:
         headers = client.get(f"/{tool.slug}").headers
         assert "connect-src 'none'" in headers["content-security-policy"]
+
+
+# --- the pages that say what the site does with your files ---------------
+#
+# These matter as much as the tools. A site handling documents with no
+# privacy policy reads as one that has not thought about privacy, whatever
+# the code does, so a broken route here is not a cosmetic problem.
+
+
+def test_the_legal_pages_are_reachable():
+    for path in ("privacy", "terms", "security"):
+        assert client.get(f"/{path}").status_code == 200
+
+
+def test_the_legal_pages_carry_the_headers():
+    """They are ordinary pages of the site, not an exception to it."""
+    for path in ("privacy", "terms", "security"):
+        headers = client.get(f"/{path}").headers
+        assert "connect-src 'none'" in headers["content-security-policy"]
+
+
+def test_the_privacy_page_says_what_is_stored():
+    """If the wording drifts away from the facts, this should fail."""
+    body = client.get("/privacy").text
+    assert "connect-src" not in body or "security" in body
+    for phrase in ("never sent to us", "No cookies", "hello@retropdf.com"):
+        assert phrase in body
+
+
+def test_the_security_page_quotes_the_real_policy():
+    """The page tells people to check a header, so it has to name the one
+    the server actually sends."""
+    quoted = "connect-src 'none'"
+    assert quoted in client.get("/security").text
+    assert quoted in client.get("/security").headers["content-security-policy"]
+
+
+def test_the_sitemap_lists_every_page():
+    body = client.get("/sitemap.xml").text
+    for path in ("workspace", "privacy", "terms", "security"):
+        assert f"/{path}<" in body
+    for tool in TOOLS:
+        assert f"/{tool.slug}<" in body
+
+
+def test_the_bench_page_stays_out_of_the_sitemap():
+    """A development tool has no business in search results."""
+    assert "/bench<" not in client.get("/sitemap.xml").text
+
+
+def test_the_footer_links_to_the_legal_pages():
+    """Reachable in the browser, not merely present on the server."""
+    body = client.get("/").text
+    for path in ("privacy", "terms", "security"):
+        assert f'href="/{path}"' in body

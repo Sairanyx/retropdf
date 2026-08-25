@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="wrap">
+  <section class="tool-head first-screen">
+    <p class="label">Privacy</p>
+    <h1 data-type="What we know about you.">What we know about you.</h1>
+    <p class="lede">
+      Almost nothing, and your files least of all. Here is the whole of it.
+    </p>
+  </section>
+
+  <section class="prose">
+    <h2>Your files.</h2>
+    <p>
+      Your files are never sent to us. Not a copy, not a summary, not the
+      name. Every tool on this site runs inside your own browser, so the file
+      you choose is opened by the page you are looking at and never leaves the
+      device it is already on.
+    </p>
+    <p>
+      This is not a promise about what we choose to do with your documents.
+      There is no upload address to send them to. The page is not permitted to
+      make network requests at all, which is a rule your browser enforces
+      rather than something we ask you to believe. The
+      <a href="/security">security page</a> explains how to check that
+      yourself.
+    </p>
+
+    <h2>What your browser keeps.</h2>
+    <p>
+      Two things, both stored by your own browser and neither ever sent
+      anywhere:
+    </p>
+    <ul class="plain">
+      <li>
+        Whether you have already seen the opening animation, so it does not
+        replay every time you open a page. This is a date and nothing else.
+      </li>
+      <li>
+        Where you had scrolled to, so reloading puts you back. This is a
+        number and nothing else.
+      </li>
+    </ul>
+    <p>
+      Neither identifies you. Neither is a cookie, so neither is sent to the
+      server with your requests. You can clear both at any time through your
+      browser's settings for this site, and nothing here will break.
+    </p>
+
+    <h2>What our server sees.</h2>
+    <p>
+      The same thing every web server sees when you open a page: a request for
+      an address, along with your IP address and which browser you are using,
+      because that is how the internet delivers a page to you. We do not log
+      these, and we do not build a record of visits.
+    </p>
+    <p>
+      We do keep one number: how many people have opened the page about a
+      desktop app. It is a single tally with nothing attached, kept so we know
+      whether building one is worth the effort. It says how many, never who.
+    </p>
+
+    <h2>What we do not do.</h2>
+    <ul class="plain">
+      <li>No accounts, so there is nothing to sign up for and no password to lose.</li>
+      <li>No advertising, and no advertising networks.</li>
+      <li>No analytics, no tracking pixels, no fingerprinting.</li>
+      <li>No cookies of any kind.</li>
+      <li>No third party scripts. Everything the page loads comes from here.</li>
+      <li>Nothing is sold or shared, because there is nothing to sell or share.</li>
+    </ul>
+
+    <h2>Who runs this.</h2>
+    <p>
+      RetroPDF is run by an individual rather than a company, and is not paid
+      for by anyone. Under the GDPR that makes them the data controller for
+      whatever little is described above. You can write to
+      <a href="mailto:hello@retropdf.com">hello@retropdf.com</a> about
+      anything on this page.
+    </p>
+    <!-- TODO before launch: name and country of residence. The GDPR asks for
+         the controller's identity, and "an individual" is not that. -->
+
+    <h2>Why we are allowed to.</h2>
+    <p>
+      The GDPR asks anyone handling personal data to say what entitles them to
+      do it. Serving you a page requires your IP address to reach you, and
+      that is a legitimate interest in the plainest sense: without it there is
+      no way to deliver anything you asked for. The count of desktop app
+      interest holds no personal data at all, so nothing in the GDPR applies
+      to it.
+    </p>
+    <p>
+      We ask for no consent because we do nothing that needs it. There are no
+      cookies, no analytics and no advertising, which is the usual reason a
+      site puts a banner in front of you.
+    </p>
+
+    <h2>How long anything is kept.</h2>
+    <ul class="plain">
+      <li>Your files: never held, so there is no period to state.</li>
+      <li>
+        What your browser stores: until you clear it, and it is yours to clear
+        whenever you like.
+      </li>
+      <li>
+        Server request records: not kept. Access logging is switched off
+        deliberately.
+      </li>
+      <li>The desktop app tally: kept indefinitely, being a single number.</li>
+    </ul>
+
+    <h2>Your rights.</h2>
+    <p>
+      Under the GDPR you can ask what personal data an organisation holds
+      about you, ask for it to be corrected, or ask for it to be deleted. We
+      mention this because you are entitled to know it, not because there is
+      much to ask for: we hold no accounts, no addresses and no record of
+      visits, so in almost every case the honest answer is that we hold
+      nothing about you at all.
+    </p>
+    <p>
+      If you want to ask anyway, write to
+      <a href="mailto:hello@retropdf.com">hello@retropdf.com</a>.
+    </p>
+    <p>
+      You also have the right to complain to a data protection authority if
+      you think something here is wrong. In the EU that is the authority in
+      the country you live in, and the European Data Protection Board keeps a
+      list of them. We would rather you told us first, but the right is yours
+      either way.
+    </p>
+
+    <h2>Changes.</h2>
+    <p>
+      If this changes, the date below changes with it. If it ever changes in a
+      way that means your files are sent somewhere, that will be said plainly
+      at the top of this page rather than buried in it.
+    </p>
+    <p class="note">Last updated 25 August 2026.</p>
+  </section>
+</div>
+{% endblock %}

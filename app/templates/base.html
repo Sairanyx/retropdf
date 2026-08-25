@@ -91,6 +91,29 @@
         {% endfor %}
         <a href="/workspace">Workspace</a>
       </nav>
+
+      <!-- Kept in a second row so the tools stay the prominent thing. A site
+           that handles documents needs these reachable, though: no privacy
+           policy reads as no thought given to privacy, whatever the code
+           actually does. -->
+      <nav class="footer-legal" aria-label="About this site">
+        <a href="/privacy">Privacy</a>
+        <a href="/terms">Terms</a>
+        <a href="/security">Security</a>
+      </nav>
+
+      <!-- The logo again, where the trail ends. The mark leaves the plate at
+           the top of the page and arrives here, so the line it draws has a
+           destination rather than simply stopping.
+
+           The slot is empty and stays empty: the mark that lands in it is
+           the one that travelled, not a second copy. Without scripting the
+           word stands on its own, which still reads as the logo. -->
+      <p class="footer-brand">
+        <span class="brand-slot" id="brand-end" aria-hidden="true"></span>
+        <span class="brand-word">RetroPDF</span>
+      </p>
+
       <p>Your files stay on your device. They are never sent to us.</p>
     </footer>
   </div>

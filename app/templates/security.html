@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="wrap">
+  <section class="tool-head first-screen">
+    <p class="label">Security</p>
+    <h1 data-type="Do not take our word for it.">Do not take our word for it.</h1>
+    <p class="lede">
+      Every site says your files are safe. Here is how to check ours.
+    </p>
+  </section>
+
+  <section class="prose">
+    <h2>Check it yourself, in a minute.</h2>
+    <p>
+      Open any tool on this site, press F12 to open your browser's developer
+      tools, and choose the Network tab. Then pick a PDF and use it. Watch the
+      list: the page loads its own code and fonts when you arrive, and after
+      that nothing goes out. No upload, no request carrying your file, nothing
+      to a third party.
+    </p>
+    <p>
+      Try the same thing on any other free PDF site and watch your document
+      leave.
+    </p>
+
+    <h2>Why it cannot happen by accident.</h2>
+    <p>
+      Not sending your file is a promise. Being unable to send it is a fact,
+      and that is what this site is built on. Every page arrives with a
+      Content Security Policy, a set of rules your browser applies to the page
+      whatever the page tries to do. Ours contains this:
+    </p>
+    <p class="code">connect-src 'none'</p>
+    <p>
+      That single line tells your browser to refuse every outgoing request
+      this page might make: uploads, background requests, connections of any
+      kind. Not to warn about them, not to ask, but to refuse. If a bug or a
+      bad change ever tried to send your document somewhere, the browser would
+      stop it before it left your machine.
+    </p>
+    <p>
+      You can see the rule for yourself in the same developer tools: the
+      Network tab, the document request, and the response headers.
+    </p>
+
+    <h2>What that costs us.</h2>
+    <p>
+      This is worth saying plainly, because it is the trade behind everything
+      here. That rule means this site can never carry analytics, advertising,
+      error reporting or any third party script, since all of those work by
+      sending data somewhere. We gave those up deliberately. It is why we
+      cannot tell you how many people use each tool, and why there is nothing
+      to sell to anyone.
+    </p>
+
+    <h2>The rest of the rules.</h2>
+    <ul class="plain">
+      <li>
+        <strong>Scripts from here only.</strong> No code is loaded from
+        anywhere else, so there is no other company whose bad day becomes
+        yours.
+      </li>
+      <li>
+        <strong>No inline scripts, no eval.</strong> This closes off the class
+        of bug behind a known vulnerability in PDF rendering, where a crafted
+        document could run code in your browser.
+      </li>
+      <li>
+        <strong>No framing.</strong> Nobody can put this site inside their own
+        page and collect what you do on it.
+      </li>
+      <li>
+        <strong>No forms that post anywhere.</strong> There is no address on
+        the server that accepts a file, so there is nothing to send one to
+        even by mistake.
+      </li>
+    </ul>
+
+    <h2>What the server actually does.</h2>
+    <p>
+      Very little. It sends you the page and the code that runs in it, and
+      that is the end of its involvement. It has no route that accepts a file,
+      no database, and no record of who visited. Turning it off would stop new
+      people arriving, but would not touch the work of anyone already here.
+    </p>
+
+    <h2>Why the size limit is what it is.</h2>
+    <p>
+      Most free PDF sites cap you at fifteen or a hundred megabytes, and that
+      cap is a business decision: a larger file is what the paid plan is for.
+      Ours is not. The work happens on your device, so the limit is however
+      much your browser can hold at once, and the figure shown on each tool
+      page is worked out from your own machine rather than chosen by us.
+    </p>
+    <p>
+      A desktop or laptop usually manages several hundred megabytes. A phone
+      manages less, because it has less memory and is stricter about it. That
+      is also why there is no daily limit and no queue: your computer does the
+      work, so there is nothing of ours to run out.
+    </p>
+
+    <h2>Where this is weakest.</h2>
+    <p>
+      Being honest about the limits is more useful than claiming there are
+      none.
+    </p>
+    <ul class="plain">
+      <li>
+        You are trusting that the code you receive is the code we meant to
+        send. That is true of every website, and the usual defence is to
+        publish the source so anyone can compare it.
+      </li>
+      <li>
+        A browser extension you have installed can read any page you open,
+        including this one. Nothing a website does can prevent that.
+      </li>
+      <li>
+        If your own device is compromised, no promise made by a web page
+        helps you.
+      </li>
+    </ul>
+    <p>
+      None of these are unique to us. They are worth knowing because a site
+      that claims perfect safety is telling you something false.
+    </p>
+
+    <h2>Found a problem?</h2>
+    <p>
+      Write to <a href="mailto:hello@retropdf.com">hello@retropdf.com</a>. A
+      security report will get a reply, and credit if you want it.
+    </p>
+  </section>
+</div>
+{% endblock %}

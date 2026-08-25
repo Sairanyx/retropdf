@@ -59,7 +59,7 @@ def home(request: Request) -> HTMLResponse:
     return render(
         request,
         "home.html",
-        page_title="RetroPDF: PDF tools that never upload your files",
+        page_title="RetroPDF · PDF tools that never upload your files",
         page_description=(
             "Merge, split, rotate and edit PDFs in your browser. Your files "
             "stay on your device. No account, no limits, no uploads."
@@ -76,13 +76,68 @@ def workspace(request: Request) -> HTMLResponse:
     return render(
         request,
         "workspace.html",
-        page_title="RetroPDF workspace: every PDF tool on one page",
+        page_title="Workspace · RetroPDF",
         page_description=(
             "Load a PDF once and merge, remove, reorder, rotate or split it "
             "without uploading anything."
         ),
         canonical=f"{BASE_URL}/workspace",
         on_workspace=True,
+    )
+
+
+# The pages that say who runs this and what it does with your files.
+#
+# Kept as a list because they are all the same shape: a template, a title and
+# a description. Writing three near identical handlers would only invite them
+# to drift apart.
+LEGAL_PAGES = (
+    (
+        "privacy",
+        "privacy.html",
+        "Privacy · RetroPDF",
+        "What RetroPDF collects, which is almost nothing, and why your files "
+        "cannot reach us even if we wanted them.",
+    ),
+    (
+        "terms",
+        "terms.html",
+        "Terms · RetroPDF",
+        "The terms for using RetroPDF: free, as is, and yours to check.",
+    ),
+    (
+        "security",
+        "security.html",
+        "Security · RetroPDF",
+        "How RetroPDF works in your browser, and how to verify that for "
+        "yourself rather than taking our word for it.",
+    ),
+)
+
+
+def make_page_route(path: str, template: str, title: str, description: str):
+    """Build the handler for one static page.
+
+    A factory for the same reason as the tool routes below: each handler has
+    to close over its own values rather than share the last of a loop.
+    """
+
+    def page(request: Request) -> HTMLResponse:
+        return render(
+            request,
+            template,
+            page_title=title,
+            page_description=description,
+            canonical=f"{BASE_URL}/{path}",
+        )
+
+    page.__name__ = f"page_{path}"
+    return page
+
+
+for _path, _template, _title, _description in LEGAL_PAGES:
+    app.get(f"/{_path}", response_class=HTMLResponse)(
+        make_page_route(_path, _template, _title, _description)
     )
 
 
@@ -137,7 +192,15 @@ def robots() -> str:
 @app.get("/sitemap.xml")
 def sitemap() -> PlainTextResponse:
     """List every page, so search engines find the tools without crawling."""
-    urls = [f"{BASE_URL}/"] + [f"{BASE_URL}/{tool.slug}" for tool in TOOLS]
+    # Every page worth finding: the home page, each tool, the workspace and
+    # the pages describing what the site does with your files. The bench page
+    # is deliberately absent, being a development tool.
+    urls = (
+        [f"{BASE_URL}/"]
+        + [f"{BASE_URL}/{tool.slug}" for tool in TOOLS]
+        + [f"{BASE_URL}/workspace"]
+        + [f"{BASE_URL}/{path}" for path, _, _, _ in LEGAL_PAGES]
+    )
     entries = "\n".join(f"  <url><loc>{url}</loc></url>" for url in urls)
     body = (
         '<?xml version="1.0" encoding="UTF-8"?>\n'

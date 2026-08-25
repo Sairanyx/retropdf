@@ -58,7 +58,7 @@ TOOLS: tuple[Tool, ...] = (
         heading="Combine PDFs into one file.",
         blurb="Put several PDFs together in the order you choose.",
         steps="Select two or more PDFs, drag them into order, then download.",
-        title="Merge PDF files in your browser",
+        title="Merge PDF · RetroPDF",
         description=(
             "Combine PDF files into one document. Nothing is uploaded: the "
             "merge happens on your own device, so your files stay private."
@@ -71,7 +71,7 @@ TOOLS: tuple[Tool, ...] = (
         heading="Delete pages from a PDF.",
         blurb="Pick the pages you do not want and keep the rest.",
         steps="Select a PDF, click the pages you want gone, then download the rest.",
-        title="Delete pages from a PDF in your browser",
+        title="Delete PDF pages · RetroPDF",
         description=(
             "Delete pages from a PDF without uploading it. The file never "
             "leaves your device, so private documents stay private."
@@ -84,7 +84,7 @@ TOOLS: tuple[Tool, ...] = (
         heading="Save some pages as a new PDF.",
         blurb="Pick the pages you want and save them as a new file.",
         steps="Select a PDF, click the pages you want to keep, then download them.",
-        title="Extract pages from a PDF in your browser",
+        title="Extract PDF pages · RetroPDF",
         description=(
             "Save selected pages of a PDF as a new file. Everything happens "
             "in your browser, with no upload and no account."
@@ -97,7 +97,7 @@ TOOLS: tuple[Tool, ...] = (
         heading="Change the order of PDF pages.",
         blurb="Drag pages into the order you want.",
         steps="Select a PDF, drag the pages into the order you want, then download.",
-        title="Reorder PDF pages in your browser",
+        title="Reorder PDF pages · RetroPDF",
         description=(
             "Rearrange the pages of a PDF. Nothing is uploaded, so the "
             "document stays on your own device."
@@ -110,7 +110,7 @@ TOOLS: tuple[Tool, ...] = (
         heading="Turn sideways pages upright.",
         blurb="Turn pages that are sideways or upside down.",
         steps="Select a PDF, turn any page that is sideways, then download.",
-        title="Rotate PDF pages in your browser",
+        title="Rotate PDF · RetroPDF",
         description=(
             "Turn PDF pages the right way up, one page or all of them. "
             "Runs entirely in your browser with no upload."
@@ -123,7 +123,7 @@ TOOLS: tuple[Tool, ...] = (
         heading="Cut one PDF into several files.",
         blurb="Cut one PDF into several smaller files.",
         steps="Select a PDF, pick where to cut, then download the parts as a zip.",
-        title="Split a PDF in your browser",
+        title="Split PDF · RetroPDF",
         description=(
             "Cut a PDF into separate files and download them as a zip. "
             "The file is never uploaded anywhere."
@@ -136,7 +136,7 @@ TOOLS: tuple[Tool, ...] = (
         heading="Turn photos into a PDF.",
         blurb="Put your JPG or PNG images into one PDF.",
         steps="Select your JPG or PNG images, drag them into order, then download one PDF.",
-        title="Convert JPG images to PDF in your browser",
+        title="JPG to PDF · RetroPDF",
         description=(
             "Turn JPG and PNG images into one PDF. The pictures stay on your "
             "device, which matters for photos of documents and ID."
@@ -149,7 +149,7 @@ TOOLS: tuple[Tool, ...] = (
         heading="Save PDF pages as pictures.",
         blurb="Save every page as a separate PNG or JPG.",
         steps="Select a PDF, pick a size, then download every page as an image.",
-        title="Convert PDF pages to images in your browser",
+        title="PDF to JPG · RetroPDF",
         description=(
             "Save each page of a PDF as a PNG image. Runs on your own "
             "device, so nothing is uploaded."
