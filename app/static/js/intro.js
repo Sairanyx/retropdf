@@ -150,26 +150,13 @@ const SEEN_PAGES = "retropdf-seen-pages"
 //
 // Each tab adds itself on arrival and removes itself on leaving. When the
 // count reaches zero the flags are cleared, so the next visit opens properly.
-const TAB_COUNT = "retropdf-tabs"
+const BEATS = "retropdf-tabs"
 
-// When the last page left. Paired with the count above, this is what makes a
-// reload look like a reload rather than the end of a visit.
-const LEFT_AT = "retropdf-left"
-
-// How long a gap still counts as the same visit. Long enough to cover a slow
-// page load or a moment spent on another site, short enough that coming back
-// later opens properly.
-const REJOIN_WINDOW = 20 * 1000
-
-// After this long with nothing leaving, the count of open tabs is treated as
-// wrong rather than as a very long visit. Generous enough that a real day of
-// work is never interrupted, short enough that a crash does not silence the
-// opening for good.
-const STALE_AFTER = 12 * 60 * 60 * 1000
-
-// Beyond this the count is not a number of tabs, it is a number that has
-// gone wrong. Generous: nobody has this many of one site open at once.
-const MAX_PLAUSIBLE_TABS = 12
+// How often each tab says it is still here, and how long a mark survives
+// without being refreshed. The gap between them is generous, so a tab busy
+// with a large PDF is never mistaken for one that has gone.
+const BEAT_EVERY = 4 * 1000
+const BEAT_STALE = 20 * 1000
 
 const wantsLessMotion =
   window.matchMedia("(prefers-reduced-motion: reduce)").matches
@@ -207,77 +194,81 @@ function forget(key) {
  * Returns true when this is the first tab, which is what makes the opening
  * play on a genuinely new visit rather than on every tab.
  */
-/**
- * Did this page come from the site itself?
- *
- * A reload, the back button, or a link from another page here all count. A
- * tab opened fresh does not, whatever was in the address bar, which is what
- * separates the end of a visit from a page changing under you.
- */
-function cameFromHere() {
-  const [entry] = performance.getEntriesByType?.("navigation") ?? []
-  if (entry?.type === "reload" || entry?.type === "back_forward") return true
-  return document.referrer.startsWith(window.location.origin)
-}
-
 function joinSession() {
-  let open = Number(recall(TAB_COUNT)) || 0
-  const leftAt = Number(recall(LEFT_AT)) || 0
+  // Every open tab keeps a heartbeat: a timestamp it refreshes while it is
+  // there. A visit is still going if any heartbeat is recent.
+  //
+  // Counting tabs up and down was the obvious approach and it does not
+  // survive contact with reality: a tab that dies without warning, a crashed
+  // browser, a killed process, all leave the count too high with no way to
+  // tell a phantom from a real tab. The number only ever grows, and after
+  // enough of them the opening is silenced for good.
+  //
+  // A heartbeat has the opposite failure: a tab that dies simply stops
+  // writing, and its mark ages out on its own. Nothing has to be cleaned up.
+  const beats = readBeats()
+  const now = Date.now()
+  const alive = Object.values(beats).filter((t) => now - t < BEAT_STALE)
 
-  // A count that only ever goes up is a count that has gone wrong.
-  //
-  // Tabs are removed from it on the way out, but a crash, a killed browser
-  // or a machine losing power never gets the chance, so the number is left
-  // permanently above zero and the site believes a visit that ended weeks
-  // ago is still going. The opening then never plays again.
-  //
-  // A count that only ever goes up is a count that has gone wrong.
-  //
-  // Tabs remove themselves on the way out, but a crash, a killed browser or
-  // a machine losing power never gets the chance, so the number is left
-  // permanently above zero and the site believes a visit that ended weeks
-  // ago is still going. The opening then never plays again.
-  //
-  // Two ways to spot it. Either something left long enough ago that nothing
-  // can still be open, or the count has climbed past any number of tabs a
-  // person would actually have. A missing leave record is not a symptom: a
-  // first visit has none either, and treating that as stale would restart
-  // the session on every tab.
-  const longSinceAnythingLeft = leftAt && Date.now() - leftAt > STALE_AFTER
-  if (open > 0 && (longSinceAnythingLeft || open > MAX_PLAUSIBLE_TABS)) {
-    open = 0
-  }
-
-  // Reloading and following a link both close the old page before opening
-  // the new one, so the count dips to zero for a moment and the end of a
-  // visit looks identical to a reload.
-  //
-  // The browser knows which it was. A reload or a link followed from this
-  // site is a navigation with a type, and a tab opened fresh is not, so the
-  // count only means "the visit ended" when this page was not reached from
-  // the site itself.
-  const continuing = open > 0 || (cameFromHere() && Date.now() - leftAt < REJOIN_WINDOW)
-  const first = !continuing
+  const first = alive.length === 0
 
   if (first) {
-    // Nothing was open and nothing just left, so this is a new visit and
-    // last time's flags are stale.
+    // Nothing else is here, so this is a new visit and last time's flags
+    // belong to a visit that has ended.
     forget(SEEN_MAIN)
     forget(SEEN_PAGES)
   }
 
-  note(TAB_COUNT, String(Math.max(0, open) + 1))
+  // This tab's own mark, kept for as long as the tab is open. A fresh id
+  // each time, so a reload replaces its own entry rather than adding one.
+  const me = String(Math.random()).slice(2)
+  const beat = () => {
+    const current = readBeats()
+    current[me] = Date.now()
 
-  // pagehide rather than unload, which is not reliably reached on mobile.
+    // Anything that has not been heard from in a while is gone.
+    for (const [id, at] of Object.entries(current)) {
+      if (Date.now() - at > BEAT_STALE) delete current[id]
+    }
+
+    try {
+      localStorage.setItem(BEATS, JSON.stringify(current))
+    } catch {
+      // Storage refused. The opening simply plays more often than it might.
+    }
+  }
+
+  beat()
+  const ticking = setInterval(beat, BEAT_EVERY)
+
   window.addEventListener("pagehide", (event) => {
     // A page kept alive for the back button has not really gone away.
     if (event.persisted) return
-    const now = Number(recall(TAB_COUNT)) || 1
-    note(TAB_COUNT, String(Math.max(0, now - 1)))
-    note(LEFT_AT, String(Date.now()))
+    clearInterval(ticking)
+
+    // Removed on the way out where possible, so closing the last tab ends
+    // the visit at once rather than after the heartbeat ages out.
+    const current = readBeats()
+    delete current[me]
+    try {
+      localStorage.setItem(BEATS, JSON.stringify(current))
+    } catch {
+      // As above.
+    }
   })
 
   return first
+}
+
+/** The heartbeats of every tab, or nothing if they cannot be read. */
+function readBeats() {
+  try {
+    const raw = localStorage.getItem(BEATS)
+    const parsed = raw ? JSON.parse(raw) : {}
+    return parsed && typeof parsed === "object" ? parsed : {}
+  } catch {
+    return {}
+  }
 }
 
 joinSession()

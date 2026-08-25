@@ -242,69 +242,42 @@ function startRoute() {
     // never reaches the content.
     const sway = Math.sin((travelled - settle) / 260) * 18
 
-    // Then the last stretch, where it settles into the logo in the footer.
+    const inLane = lane.left + sway
+
+    // Except at the very end, where it curves across to the logo waiting in
+    // the footer.
     //
-    // The logo sits in the same lane the trail has been descending, so there
-    // is no crossing to make: the mark simply comes to rest. Putting the
-    // logo under the content instead meant a diagonal across the page, and
-    // on a wide screen that was a long way to travel in the little height
-    // left, which drew a line through the last of the tool cards and turned
-    // a corner rather than a curve.
+    // Crossing the page anywhere else puts the trail through the text, which
+    // is why the route holds one side for its whole descent. Down here there
+    // is no text to cross: the footer is the last thing on the page and the
+    // space beside it is empty, so the mark can come home.
     const finish = destination()
     const slot = document.querySelector("#brand-end")
-    if (!slot) return { x: lane.left + sway, y }
 
-    let slotX = slot.offsetWidth / 2
-    for (let el = slot; el; el = el.offsetParent) slotX += el.offsetLeft
+    if (slot) {
+      let slotX = slot.offsetWidth / 2
+      for (let el = slot; el; el = el.offsetParent) slotX += el.offsetLeft
 
-    // The logo stays where the footer puts it, in line with the links, so
-    // the trail crosses to reach it.
-    //
-    // How far that is depends on the width: the lane sits at half the
-    // content margin while the footer follows the content, so on a wide
-    // screen they can be a couple of hundred pixels apart. The crossing is
-    // given height in proportion, two and a half units down for every unit
-    // across, which is what keeps it a curve rather than a diagonal with a
-    // corner at each end.
-    // The logo is brought into the lane rather than the trail sent across
-    // to it.
-    //
-    // Every version that crossed the page looked wrong: the lane sits at
-    // half the content margin while the footer follows the content, so on a
-    // wide screen that is a couple of hundred pixels to cover in whatever
-    // height is left. Given too little height it turns a corner, given more
-    // it starts high enough to run through the text, and given the empty
-    // space between it wanders across at a shallow angle. Sliding the plate
-    // into the lane removes the problem rather than balancing it.
-    const plate = slot.closest(".footer-brand")
-    if (plate) {
-      // Only as far as the page edge allows. On a narrower screen the lane
-      // is close to the edge already, and shifting the plate all the way to
-      // it hangs the logo off the side of the page.
-      //
-      // Measured from the plate's own left edge rather than the slot inside
-      // it: the plate carries padding around the icon, so a bound worked out
-      // from the icon lets the plate itself slide past the edge.
-      let plateLeft = 0
-      for (let el = plate; el; el = el.offsetParent) plateLeft += el.offsetLeft
+      // The run in is as long as the distance it has to cover sideways,
+      // rather than a fixed number of pixels. A short fixed stretch turns a
+      // wide crossing into a diagonal with a corner at each end, which is
+      // what made the arrival look sharp on a wide screen. Two units down
+      // per unit across keeps it gentle, the same ratio the mark uses
+      // leaving the logo at the top.
+      const homeRun = Math.max(320, Math.abs(slotX - inLane) * 2.2)
 
-      const wanted = lane.left - slotX
-      const shift = Math.max(wanted, 12 - plateLeft)
-      plate.style.transform = `translateX(${shift}px)`
-      slotX += shift
+      if (y > finish - homeRun) {
+        // The crossing finishes a little before the descent does, so the
+        // last stretch comes straight down into the slot rather than
+        // arriving diagonally and clipping the corner of the plate.
+        const into = Math.min(1, (y - (finish - homeRun)) / homeRun)
+        const crossing = Math.min(1, into / 0.82)
+        const eased = (1 - Math.cos(crossing * Math.PI)) / 2
+        return { x: inLane + (slotX - inLane) * eased, y }
+      }
     }
 
-    // Long enough to read as easing in rather than stopping dead.
-    const homeRun = 300
-    if (y <= finish - homeRun) return { x: lane.left + sway, y }
-
-    // The sway fades out as the mark settles, so the line straightens into
-    // the slot rather than wobbling into it.
-    const into = Math.min(1, (y - (finish - homeRun)) / homeRun)
-    const eased = (1 - Math.cos(Math.min(1, into / 0.9) * Math.PI)) / 2
-    const settling = lane.left + sway * (1 - into)
-
-    return { x: settling + (slotX - settling) * eased, y }
+    return { x: inLane, y }
   }
 
   /**
