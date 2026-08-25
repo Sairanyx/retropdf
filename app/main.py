@@ -26,8 +26,8 @@ from app.tools import TOOLS, BY_SLUG
 APP_DIR = Path(__file__).resolve().parent
 STATIC_DIR = APP_DIR / "static"
 
-# Used for canonical URLs and the sitemap. Set REDPDF_BASE_URL in production.
-BASE_URL = os.environ.get("REDPDF_BASE_URL", "http://127.0.0.1:8000").rstrip("/")
+# Used for canonical URLs and the sitemap. Set RETROPDF_BASE_URL in production.
+BASE_URL = os.environ.get("RETROPDF_BASE_URL", "http://127.0.0.1:8000").rstrip("/")
 
 app = FastAPI(title="RetroPDF", docs_url=None, redoc_url=None)
 
@@ -35,10 +35,10 @@ app = FastAPI(title="RetroPDF", docs_url=None, redoc_url=None)
 # behind the production proxy.
 app.add_middleware(
     SecurityHeaders,
-    hsts=os.environ.get("REDPDF_HTTPS", "").lower() in {"1", "true", "yes"},
+    hsts=os.environ.get("RETROPDF_HTTPS", "").lower() in {"1", "true", "yes"},
     # Development only: stops the browser serving a cached script, which
     # makes a change look as though it did not take effect.
-    no_cache=os.environ.get("REDPDF_DEV", "").lower() in {"1", "true", "yes"},
+    no_cache=os.environ.get("RETROPDF_DEV", "").lower() in {"1", "true", "yes"},
 )
 
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
@@ -257,7 +257,7 @@ def register_translated_routes() -> None:
 
 # Development only. Kept out of the sitemap and hidden in production so it
 # never appears to users or search engines.
-if os.environ.get("REDPDF_DEV", "").lower() in {"1", "true", "yes"}:
+if os.environ.get("RETROPDF_DEV", "").lower() in {"1", "true", "yes"}:
 
     @app.get("/bench", response_class=HTMLResponse)
     def bench(request: Request) -> HTMLResponse:
