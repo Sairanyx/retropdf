@@ -15,3 +15,9 @@ node_modules/
 
 # Development screenshots, not part of the project.
 shots/
+
+# The desktop app tally. Runtime state that belongs to whichever machine is
+# serving the site, not to the project: committing it would ship a made up
+# starting number.
+interest.count
+.count-*
