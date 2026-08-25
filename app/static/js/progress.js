@@ -235,42 +235,45 @@ function startRoute() {
     // A slight sway keeps it from being ruler straight, small enough that it
     // never reaches the content.
     const sway = Math.sin((travelled - settle) / 260) * 18
-    const inLane = lane.left + sway
 
-    // Except at the very end, where it curves across to the logo waiting in
-    // the footer.
+    // Then the last stretch, where it crosses to the logo in the footer.
     //
-    // Crossing the page anywhere else puts the trail through the text, which
-    // is why the route holds one side for its whole descent. Down here there
-    // is no text to cross: the footer is the last thing on the page and the
-    // space beside it is empty, so the mark can come home.
+    // Crossing the page anywhere else would put the trail through the text,
+    // which is why the route holds one side for its whole descent. Down here
+    // there is nothing to cross: the footer is the last thing on the page
+    // and the space beside it is empty, so the mark can come home.
     const finish = destination()
     const slot = document.querySelector("#brand-end")
+    if (!slot) return { x: lane.left + sway, y }
 
-    if (slot) {
-      let slotX = slot.offsetWidth / 2
-      for (let el = slot; el; el = el.offsetParent) slotX += el.offsetLeft
+    let slotX = slot.offsetWidth / 2
+    for (let el = slot; el; el = el.offsetParent) slotX += el.offsetLeft
 
-      // The run in is as long as the distance it has to cover sideways,
-      // rather than a fixed 260 pixels. A short fixed stretch turns a wide
-      // crossing into a diagonal with a corner at each end, which is what
-      // made the arrival look sharp on a wide screen. Two units down per
-      // unit across keeps it gentle, the same ratio the mark uses leaving
-      // the logo at the top.
-      const homeRun = Math.max(320, Math.abs(slotX - inLane) * 2.2)
+    // Measured from the lane itself rather than from the swaying line, so
+    // the length of the run in is a fixed property of the page. Taking it
+    // from the sway made the stretch grow and shrink as the sway moved,
+    // which is what put a series of small turns into the approach.
+    //
+    // Two and a half units down for every unit across, which is gentle
+    // enough that the steepest part stays close to the angle the mark
+    // leaves the logo at the top.
+    const homeRun = Math.max(360, Math.abs(slotX - lane.left) * 2.5)
+    if (y <= finish - homeRun) return { x: lane.left + sway, y }
 
-      if (y > finish - homeRun) {
-        // The crossing finishes a little before the descent does, so the
-        // last stretch comes straight down into the slot rather than
-        // arriving diagonally and clipping the corner of the plate.
-        const into = Math.min(1, (y - (finish - homeRun)) / homeRun)
-        const crossing = Math.min(1, into / 0.82)
-        const eased = (1 - Math.cos(crossing * Math.PI)) / 2
-        return { x: inLane + (slotX - inLane) * eased, y }
-      }
-    }
+    const into = Math.min(1, (y - (finish - homeRun)) / homeRun)
 
-    return { x: inLane, y }
+    // The sway fades out as the crossing takes over, so the two are never
+    // both bending the line at once. Their sum was the wobble.
+    const settling = lane.left + sway * (1 - into)
+
+    // A cosine ease: straight down out of the lane, bending through the
+    // middle, straight down into the slot. Finishing a little before the
+    // descent does means the last few squares drop in vertically rather
+    // than arriving on the diagonal and clipping the corner of the plate.
+    const crossing = Math.min(1, into / 0.86)
+    const eased = (1 - Math.cos(crossing * Math.PI)) / 2
+
+    return { x: settling + (slotX - settling) * eased, y }
   }
 
   /**
@@ -410,14 +413,16 @@ function startRoute() {
     if (now === lastHeight) return
     lastHeight = now
 
-    // The route is measured from the page, so a page of a different length
-    // is a different route. The trail laid against the old one no longer
-    // matches and is drawn again as you scroll.
-    cachedOrigin = null
-    cachedLanes = null
+    // Only the destination moves. The origin is the logo at the top, which
+    // has not gone anywhere, and the lanes follow the content width rather
+    // than the height, so neither needs measuring again.
+    //
+    // The trail is kept rather than cleared. Wiping it makes the whole line
+    // disappear and redraw, which reads as the mark jumping even though it
+    // has not moved. The squares already laid are still where the mark went;
+    // only the stretch below them changes, and that is drawn as you scroll
+    // into it.
     cachedEnd = null
-    trail.replaceChildren()
-    laid.clear()
     requestAnimationFrame(update)
   })
   watchHeight.observe(document.body)

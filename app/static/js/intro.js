@@ -167,6 +167,10 @@ const REJOIN_WINDOW = 20 * 1000
 // opening for good.
 const STALE_AFTER = 12 * 60 * 60 * 1000
 
+// Beyond this the count is not a number of tabs, it is a number that has
+// gone wrong. Generous: nobody has this many of one site open at once.
+const MAX_PLAUSIBLE_TABS = 12
+
 const wantsLessMotion =
   window.matchMedia("(prefers-reduced-motion: reduce)").matches
 
@@ -227,8 +231,22 @@ function joinSession() {
   // permanently above zero and the site believes a visit that ended weeks
   // ago is still going. The opening then never plays again.
   //
-  // If nothing has left recently, whatever the count claims is stale.
-  if (open > 0 && leftAt && Date.now() - leftAt > STALE_AFTER) open = 0
+  // A count that only ever goes up is a count that has gone wrong.
+  //
+  // Tabs remove themselves on the way out, but a crash, a killed browser or
+  // a machine losing power never gets the chance, so the number is left
+  // permanently above zero and the site believes a visit that ended weeks
+  // ago is still going. The opening then never plays again.
+  //
+  // Two ways to spot it. Either something left long enough ago that nothing
+  // can still be open, or the count has climbed past any number of tabs a
+  // person would actually have. A missing leave record is not a symptom: a
+  // first visit has none either, and treating that as stale would restart
+  // the session on every tab.
+  const longSinceAnythingLeft = leftAt && Date.now() - leftAt > STALE_AFTER
+  if (open > 0 && (longSinceAnythingLeft || open > MAX_PLAUSIBLE_TABS)) {
+    open = 0
+  }
 
   // Reloading and following a link both close the old page before opening
   // the new one, so the count dips to zero for a moment and the end of a
