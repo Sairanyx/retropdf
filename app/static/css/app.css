@@ -434,7 +434,15 @@ html {
   }
 
   .navgroup {
-    position: static;
+    /* Above the page, so content scrolls behind the bar rather than over it. */
+    position: relative;
+    z-index: 60;
+    /* Only the downward half of the usual plate shadow. The raised look is
+       built from a pale shadow up and left and a dark one down and right,
+       which reads as light falling on a raised object. Stuck to the top of
+       the screen the pale one has nothing above it to fall on, so it painted
+       a smear across the page scrolling past behind the bar. */
+    box-shadow: 4px 4px 11px var(--shade);
     /* One row, the three chips sharing it evenly. Left to wrap they broke
        two and one, which left a chip stranded beside an empty half of the
        plate and read as something unfinished rather than as a taskbar. */
