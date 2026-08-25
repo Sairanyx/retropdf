@@ -236,12 +236,14 @@ function startRoute() {
     // never reaches the content.
     const sway = Math.sin((travelled - settle) / 260) * 18
 
-    // Then the last stretch, where it crosses to the logo in the footer.
+    // Then the last stretch, where it settles into the logo in the footer.
     //
-    // Crossing the page anywhere else would put the trail through the text,
-    // which is why the route holds one side for its whole descent. Down here
-    // there is nothing to cross: the footer is the last thing on the page
-    // and the space beside it is empty, so the mark can come home.
+    // The logo sits in the same lane the trail has been descending, so there
+    // is no crossing to make: the mark simply comes to rest. Putting the
+    // logo under the content instead meant a diagonal across the page, and
+    // on a wide screen that was a long way to travel in the little height
+    // left, which drew a line through the last of the tool cards and turned
+    // a corner rather than a curve.
     const finish = destination()
     const slot = document.querySelector("#brand-end")
     if (!slot) return { x: lane.left + sway, y }
@@ -249,29 +251,23 @@ function startRoute() {
     let slotX = slot.offsetWidth / 2
     for (let el = slot; el; el = el.offsetParent) slotX += el.offsetLeft
 
-    // Measured from the lane itself rather than from the swaying line, so
-    // the length of the run in is a fixed property of the page. Taking it
-    // from the sway made the stretch grow and shrink as the sway moved,
-    // which is what put a series of small turns into the approach.
+    // The logo stays where the footer puts it, in line with the links, so
+    // the trail crosses to reach it.
     //
-    // Two and a half units down for every unit across, which is gentle
-    // enough that the steepest part stays close to the angle the mark
-    // leaves the logo at the top.
-    const homeRun = Math.max(360, Math.abs(slotX - lane.left) * 2.5)
+    // How far that is depends on the width: the lane sits at half the
+    // content margin while the footer follows the content, so on a wide
+    // screen they can be a couple of hundred pixels apart. The crossing is
+    // given height in proportion, two and a half units down for every unit
+    // across, which is what keeps it a curve rather than a diagonal with a
+    // corner at each end.
+    const homeRun = Math.max(300, Math.abs(slotX - lane.left) * 2.5)
     if (y <= finish - homeRun) return { x: lane.left + sway, y }
 
+    // The sway fades out as the mark settles, so the line straightens into
+    // the slot rather than wobbling into it.
     const into = Math.min(1, (y - (finish - homeRun)) / homeRun)
-
-    // The sway fades out as the crossing takes over, so the two are never
-    // both bending the line at once. Their sum was the wobble.
+    const eased = (1 - Math.cos(Math.min(1, into / 0.9) * Math.PI)) / 2
     const settling = lane.left + sway * (1 - into)
-
-    // A cosine ease: straight down out of the lane, bending through the
-    // middle, straight down into the slot. Finishing a little before the
-    // descent does means the last few squares drop in vertically rather
-    // than arriving on the diagonal and clipping the corner of the plate.
-    const crossing = Math.min(1, into / 0.86)
-    const eased = (1 - Math.cos(crossing * Math.PI)) / 2
 
     return { x: settling + (slotX - settling) * eased, y }
   }
@@ -345,17 +341,30 @@ function startRoute() {
     // which is what made those jumps stutter.
     const batch = document.createDocumentFragment()
 
+    // The route can change under a trail that has already been laid: opening
+    // files makes the page longer, clearing them makes it shorter, and the
+    // curve into the footer moves with it. A square placed once and left
+    // there ends up on a path that no longer exists, which is what split the
+    // line into two disconnected halves.
+    //
+    // So every square is moved to where the current route puts it, rather
+    // than only the new ones being placed. Setting a style that has not
+    // changed costs nothing, and it means the trail is always the route
+    // rather than a record of every route there has ever been.
     for (let at = from.y; at <= y; at += STEP) {
       const key = Math.round(at / STEP)
-      if (laid.has(key)) continue
-
       const point = positionAt(at)
-      const dot = document.createElement("span")
-      dot.className = "route-dot lit"
+
+      let dot = laid.get(key)
+      if (!dot) {
+        dot = document.createElement("span")
+        dot.className = "route-dot lit"
+        batch.append(dot)
+        laid.set(key, dot)
+      }
+
       dot.style.left = point.x - DOT / 2 + "px"
       dot.style.top = point.y - DOT / 2 + "px"
-      batch.append(dot)
-      laid.set(key, dot)
     }
 
     // The steps rarely land exactly on the end, so the last one falls short
@@ -372,6 +381,15 @@ function startRoute() {
         dot.style.top = point.y - DOT / 2 + "px"
         batch.append(dot)
         laid.set(key, dot)
+      }
+    }
+
+    // Anything past where the mark now is belongs to a page that has since
+    // got shorter, so it is taken away rather than left below the logo.
+    for (const [key, dot] of laid) {
+      if (key * STEP > y + STEP) {
+        dot.remove()
+        laid.delete(key)
       }
     }
 
@@ -407,25 +425,87 @@ function startRoute() {
   // Watching the height rather than any particular control means it holds
   // for anything that changes the layout, including whatever gets added
   // later.
+  let settleTimer = null
   let lastHeight = document.documentElement.scrollHeight
   const watchHeight = new ResizeObserver(() => {
     const now = document.documentElement.scrollHeight
     if (now === lastHeight) return
+
+    // Compared before the new height is recorded, or every change looks
+    // like a shrink.
+    const grew = now > lastHeight
     lastHeight = now
 
     // Only the destination moves. The origin is the logo at the top, which
     // has not gone anywhere, and the lanes follow the content width rather
     // than the height, so neither needs measuring again.
-    //
-    // The trail is kept rather than cleared. Wiping it makes the whole line
-    // disappear and redraw, which reads as the mark jumping even though it
-    // has not moved. The squares already laid are still where the mark went;
-    // only the stretch below them changes, and that is drawn as you scroll
-    // into it.
     cachedEnd = null
+
+    if (grew) {
+      // A longer page keeps its trail. Every square already laid is still
+      // somewhere the mark has been, and only the stretch below them is new.
+      // Clearing here would make the whole line vanish and redraw, which
+      // reads as the mark jumping even though it has not moved.
+      requestAnimationFrame(update)
+      return
+    }
+
+    // A shorter page cannot. Clearing files or switching to a tool with
+    // fewer options brings the footer up, and squares laid for the old
+    // longer route are now below the logo, so the trail runs straight past
+    // it and off the end of the page. Those have to go.
+    //
+    // Faded out rather than removed on the spot: the line vanishing between
+    // one frame and the next is the harsher of the two, and the mark is left
+    // hanging with nothing behind it. The old squares dim while the new ones
+    // are laid over them.
+    const old = [...trail.children]
+    for (const dot of old) dot.classList.remove("lit")
+    setTimeout(() => {
+      for (const dot of old) dot.remove()
+    }, 400)
+
+    // A shorter page moves the mark without the reader touching anything,
+    // sometimes the length of the page, so the move is eased for as long as
+    // it takes rather than happening between two frames.
+    slot.classList.add("settling")
+    clearTimeout(settleTimer)
+    settleTimer = setTimeout(() => slot.classList.remove("settling"), 500)
+
+    laid.clear()
     requestAnimationFrame(update)
   })
   watchHeight.observe(document.body)
+
+  // The page is a different height once the display face has arrived, since
+  // it is a different width from the fallback it replaces. Anything measured
+  // before that is measured against a page that has since moved, which on a
+  // reload at the foot of the page left the mark a little short of the logo
+  // with nothing to prompt another look.
+  if (document.fonts?.ready) {
+    document.fonts.ready.then(remeasure)
+  }
+
+  /** Take every measurement again and redraw from scratch. */
+  function remeasure() {
+    cachedOrigin = null
+    cachedLanes = null
+    cachedEnd = null
+    lastHeight = document.documentElement.scrollHeight
+    requestAnimationFrame(update)
+  }
+
+  // Reloading restores the scroll position after the page has settled, which
+  // is after the route has already been worked out and drawn once. Nothing
+  // else runs afterwards, so a reload at the foot of the page left the mark
+  // short of the logo until something moved.
+  //
+  // A few passes over the first couple of seconds covers it: the fonts
+  // arriving, the scroll being put back, and the layout settling all land in
+  // that window, and each one can move where the logo sits.
+  for (const delay of [200, 600, 1200, 2000]) {
+    setTimeout(remeasure, delay)
+  }
 
   // Returning with the back button restores the scroll position without a
   // scroll event, so the trail would be missing until something moved.

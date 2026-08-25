@@ -373,6 +373,15 @@ startOver?.addEventListener("click", () => {
   // The starting hint, not the mode's working hint: "Add more files" makes
   // no sense on a page that has just been emptied.
   result.textContent = "Select a file to begin."
+
+  // Emptying the panel makes the page much shorter, and the browser deals
+  // with that by dropping the scroll position, sometimes all the way to the
+  // top. Rather than leaving the reader wherever that lands, this brings
+  // them to the panel they just cleared, which is where the next thing they
+  // do begins. Smoothly, so it reads as the page moving rather than
+  // snapping.
+  const panel = document.querySelector(".workspace")
+  panel?.scrollIntoView({ behavior: "smooth", block: "start" })
 })
 
 // Dropping files anywhere on the page opens them, the same as choosing them.

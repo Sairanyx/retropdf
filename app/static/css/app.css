@@ -417,6 +417,15 @@ html {
      already moved, dragging going down and overshooting coming back up. */
   will-change: transform;
 
+  /* No transition while scrolling: the position is recomputed every frame,
+     so an eased transform would chase a target that has already moved,
+     dragging going down and overshooting coming back up.
+
+     The exception is a layout change. Clearing files or switching tools can
+     move the mark a long way without the reader touching anything, and that
+     jump is worth easing. The class is added for the length of the move and
+     taken off again. */
+
   /* Clickable, unlike the trail behind it. The mark is inside the logo link,
      so clicking it does what the logo does: takes you back to the top of the
      page it set off from. Which is what the thing appears to offer, having
@@ -429,6 +438,10 @@ html {
    it does while parked in the plate at the top: the plate around it is the
    link, and an icon that lights up inside a logo reads as a second control
    sitting on top of one. */
+.brand-slot.settling > svg {
+  transition: transform 0.45s cubic-bezier(0.22, 0.75, 0.3, 1);
+}
+
 .brand-slot.arrived > svg {
   pointer-events: none;
 }
