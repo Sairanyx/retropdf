@@ -1,0 +1,67 @@
+{
+  "nav.tools": "Tools",
+  "nav.info": "Info",
+  "nav.workspace": "Workspace",
+  "nav.main": "Main",
+  "nav.all_tools": "All tools",
+
+  "wanted.ask": "Want a desktop app?",
+  "wanted.do": "Count me in",
+  "wanted.asked": "You have asked for this",
+
+  "home.title": "RetroPDF · PDF tools that never upload your files",
+  "home.description": "Merge, split, rotate and edit PDFs in your browser. Your files stay on your device. No account, no limits, no uploads.",
+  "home.heading": "Simple PDF tools. We don’t see or store any of your files.",
+  "home.lede": "The tools run in your browser, on your own device.",
+  "home.proof.files": "Files don’t leave your browser",
+  "home.proof.account": "No account needed, no email spam",
+  "home.proof.free": "Free, no daily limits",
+  "home.tools_heading": "Pick the tool that matches your task.",
+
+  "home.info_heading": "We don’t get your files.",
+  "home.info.other_sites": "Most free PDF websites send your document to a company’s server, change it there, and send it back. Your files end up somewhere you cannot see, and you have to trust that they are deleted.",
+  "home.info.we_differ": "RetroPDF works differently. Everything runs inside your browser, on your device. Your file is never sent anywhere. That is also why there is no waiting and no daily limit: your own device does the work, not ours.",
+  "home.info.yours": "Your passport, your contract, your bank statement. Whatever you are working on, it stays yours.",
+
+  "tool.select_file": "Select a file",
+  "tool.select_images": "Select images",
+  "tool.download": "Download",
+  "tool.start_over": "Start over",
+  "tool.start_hint": "Select a file to begin.",
+  "tool.other_tools": "Other tools",
+  "tool.workspace_note": "Need more than one tool on the same file?",
+  "tool.workspace_link": "Open the workspace",
+
+  "split.legend": "Where to cut",
+  "split.after_page": "After page",
+  "split.every": "Every",
+  "split.one_per_page": "One file per page",
+  "split.cut_after_label": "Cut after page",
+  "split.pages_per_part": "Pages per part",
+
+  "images.legend": "Page size",
+  "images.fit_a4": "Fit on A4",
+  "images.match": "Match the image",
+
+  "export.legend": "Image size",
+  "export.normal": "Normal",
+  "export.large": "Large",
+  "export.very_large": "Very large",
+
+  "footer.promise": "Your files stay on your device. They are never sent to us.",
+  "footer.privacy": "Privacy",
+  "footer.terms": "Terms",
+  "footer.security": "Security",
+  "footer.language": "Language",
+
+  "desktop.label": "Desktop app",
+  "desktop.title": "A desktop app · RetroPDF",
+  "desktop.description": "Whether RetroPDF should become a desktop app, and how to say you would use one without handing over your email address.",
+  "desktop.counted_heading": "Counted. Thank you.",
+  "desktop.reading_heading": "Someone wants one.",
+  "desktop.first": "You are the first person to ask for one.",
+  "desktop.one_of": "You are one of {count} people who have asked for one.",
+  "desktop.nobody_yet": "Nobody has asked for a desktop app yet.",
+  "desktop.just_one": "One person has asked for a desktop app.",
+  "desktop.how_many": "{count} people have asked for a desktop app."
+}

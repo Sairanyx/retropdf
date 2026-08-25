@@ -17,8 +17,9 @@ from fastapi.responses import HTMLResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from app import interest
+from app import interest, languages
 from app.security import SecurityHeaders
+from app.translations import words_for
 from app.tool_art import ART
 from app.tools import TOOLS, BY_SLUG
 
@@ -45,46 +46,90 @@ app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 templates = Jinja2Templates(directory=APP_DIR / "templates")
 
 
-def render(request: Request, template: str, **context) -> HTMLResponse:
-    """Render a page with the values every template needs."""
+def render(request: Request, template: str, lang: str = "en", **context) -> HTMLResponse:
+    """Render a page with the values every template needs.
+
+    `t` is how a template asks for a word: `{{ t("nav.tools") }}`. It is bound
+    to the language of this request, so the template itself is written once
+    and says nothing about which language it is being read in.
+
+    `url` builds an address in the current language, so a link written once
+    stays inside the language the reader is already in.
+    """
+    words = words_for(lang)
+    language = languages.BY_CODE.get(lang, languages.DEFAULT)
     return templates.TemplateResponse(
         request=request,
         name=template,
-        context={"tools": TOOLS, "art": ART, **context},
+        context={
+            "tools": TOOLS,
+            "art": ART,
+            "t": words,
+            "lang": language,
+            "languages": languages.LANGUAGES,
+            "url": lambda path="": languages.path_for(lang, path),
+            "base_url": BASE_URL,
+            # Every language this page exists in, for the hreflang tags that
+            # tell a search engine these are the same page rather than
+            # duplicates competing with each other.
+            "alternates": [
+                (other, languages.path_for(other.code, context.get("here", "")))
+                for other in languages.LANGUAGES
+            ],
+            **context,
+        },
     )
 
 
-@app.get("/", response_class=HTMLResponse)
-def home(request: Request) -> HTMLResponse:
-    """The home page: what this is, and a way into each tool."""
-    return render(
-        request,
-        "home.html",
-        page_title="RetroPDF · PDF tools that never upload your files",
-        page_description=(
-            "Merge, split, rotate and edit PDFs in your browser. Your files "
-            "stay on your device. No account, no limits, no uploads."
-        ),
-        canonical=f"{BASE_URL}/",
-        on_home=True,
-        route="snake",
-    )
+def make_home_route(lang: str = "en"):
+    """Build the home page handler for one language."""
+
+    def home(request: Request) -> HTMLResponse:
+        """The home page: what this is, and a way into each tool."""
+        words = words_for(lang)
+        return render(
+            request,
+            "home.html",
+            lang=lang,
+            here="",
+            page_title=words("home.title"),
+            page_description=words("home.description"),
+            canonical=f"{BASE_URL}{languages.path_for(lang)}",
+            on_home=True,
+            route="snake",
+        )
+
+    home.__name__ = f"home_{lang}"
+    return home
 
 
-@app.get("/workspace", response_class=HTMLResponse)
-def workspace(request: Request) -> HTMLResponse:
-    """Every tool on one page, for people who want to chain operations."""
-    return render(
-        request,
-        "workspace.html",
-        page_title="Workspace · RetroPDF",
-        page_description=(
-            "Load a PDF once and merge, remove, reorder, rotate or split it "
-            "without uploading anything."
-        ),
-        canonical=f"{BASE_URL}/workspace",
-        on_workspace=True,
-    )
+app.get("/", response_class=HTMLResponse)(make_home_route())
+
+
+def make_workspace_route(lang: str = "en"):
+    """Build the workspace handler for one language."""
+
+    def workspace(request: Request) -> HTMLResponse:
+        """Every tool on one page, for people who want to chain operations."""
+        return render(
+            request,
+            "workspace.html",
+            lang=lang,
+            here="workspace",
+            page_title="Workspace · RetroPDF",
+            page_description=(
+                "Load a PDF once and merge, remove, reorder, rotate or split "
+                "it without uploading anything."
+            ),
+            canonical=f"{BASE_URL}{languages.path_for(lang, 'workspace')}",
+            on_workspace=True,
+        )
+
+    workspace.__name__ = f"workspace_{lang}"
+    return workspace
+
+
+app.get("/workspace", response_class=HTMLResponse)(make_workspace_route())
 
 
 # The pages that say who runs this and what it does with your files.
@@ -116,7 +161,7 @@ LEGAL_PAGES = (
 )
 
 
-def make_page_route(path: str, template: str, title: str, description: str):
+def make_page_route(path: str, template: str, title: str, description: str, lang: str = "en"):
     """Build the handler for one static page.
 
     A factory for the same reason as the tool routes below: each handler has
@@ -127,15 +172,17 @@ def make_page_route(path: str, template: str, title: str, description: str):
         return render(
             request,
             template,
+            lang=lang,
+            here=path,
             page_title=title,
             page_description=description,
-            canonical=f"{BASE_URL}/{path}",
+            canonical=f"{BASE_URL}{languages.path_for(lang, path)}",
             # These pages say what the site does with your files, which is
             # what the Info section covers, so its lamp is the lit one.
             on_info=True,
         )
 
-    page.__name__ = f"page_{path}"
+    page.__name__ = f"page_{lang}_{path}"
     return page
 
 
@@ -145,7 +192,7 @@ for _path, _template, _title, _description in LEGAL_PAGES:
     )
 
 
-def make_tool_route(slug: str):
+def make_tool_route(slug: str, lang: str = "en"):
     """Build the handler for one tool page.
 
     Defined in a factory so each route closes over its own slug rather than
@@ -157,11 +204,12 @@ def make_tool_route(slug: str):
         return render(
             request,
             "tool.html",
+            lang=lang,
             tool=tool,
-            start_hint="Select a file to begin.",
+            here=tool.slug,
             page_title=tool.title,
             page_description=tool.description,
-            canonical=f"{BASE_URL}/{tool.slug}",
+            canonical=f"{BASE_URL}{languages.path_for(lang, tool.slug)}",
             # A tool page is one of the tools, so the Tools lamp is lit.
             on_tools=True,
         )
@@ -171,6 +219,40 @@ def make_tool_route(slug: str):
 
 for _tool in TOOLS:
     app.get(f"/{_tool.slug}", response_class=HTMLResponse)(make_tool_route(_tool.slug))
+
+
+# The same pages again, once per language, at their prefixed addresses.
+#
+# Separate routes rather than one route reading a header, because the address
+# is what a search engine indexes and what a reader copies. A page that serves
+# eleven languages at one address is one page as far as Google is concerned,
+# and the other ten are invisible.
+def register_translated_routes() -> None:
+    """Add every page under every language prefix except English.
+
+    English already has its routes above at the plain addresses, which is
+    deliberate: those exist and are linked to, so they do not move.
+    """
+    for language in languages.PREFIXED:
+        code = language.code
+
+        app.get(f"/{code}", response_class=HTMLResponse)(make_home_route(code))
+        app.get(f"/{code}/workspace", response_class=HTMLResponse)(
+            make_workspace_route(code)
+        )
+        app.get(f"/{code}/desktop", response_class=HTMLResponse)(
+            make_desktop_route(code)
+        )
+
+        for tool in TOOLS:
+            app.get(f"/{code}/{tool.slug}", response_class=HTMLResponse)(
+                make_tool_route(tool.slug, code)
+            )
+
+        for path, template, title, description in LEGAL_PAGES:
+            app.get(f"/{code}/{path}", response_class=HTMLResponse)(
+                make_page_route(path, template, title, description, code)
+            )
 
 
 # Development only. Kept out of the sitemap and hidden in production so it
@@ -189,42 +271,51 @@ if os.environ.get("REDPDF_DEV", "").lower() in {"1", "true", "yes"}:
         )
 
 
-@app.get("/desktop", response_class=HTMLResponse)
-def desktop(request: Request, ask: str = "") -> HTMLResponse:
-    """Count somebody asking for a desktop app.
+def make_desktop_route(lang: str = "en"):
+    """Build the desktop app handler for one language."""
 
-    You arrive here by pressing a button that says it will count you, so the
-    counting is something you chose rather than something that happened while
-    you were reading. That distinction is the whole reason this is a page you
-    go to: the site may not make requests of its own, so a button that quietly
-    sent a tally would need `connect-src 'none'` relaxed, and being counted
-    without noticing is exactly what this is trying to avoid.
+    def desktop(request: Request, ask: str = "") -> HTMLResponse:
+        """Count somebody asking for a desktop app.
 
-    Only a request carrying ?ask=1 counts, which is the link the button
-    points at. Reloading drops back to the plain address, so holding F5 shows
-    the number again without adding to it, and so does sharing the link or
-    coming back to it later. The button itself will not offer that address a
-    second time, since the browser remembers you asked.
+        You arrive here by pressing a button that says it will count you, so
+        the counting is something you chose rather than something that
+        happened while you were reading. That distinction is the whole reason
+        this is a page you go to: the site may not make requests of its own,
+        so a button that quietly sent a tally would need `connect-src 'none'`
+        relaxed, and being counted without noticing is exactly what this is
+        trying to avoid.
 
-    The number says how many, never who.
-    """
-    counted = ask == "1"
-    return render(
-        request,
-        "desktop.html",
-        page_title="A desktop app · RetroPDF",
-        page_description=(
-            "Whether RetroPDF should become a desktop app, and how to say "
-            "you would use one without handing over your email address."
-        ),
-        canonical=f"{BASE_URL}/desktop",
-        asked=interest.record() if counted else interest.read(),
-        counted=counted,
-        on_info=True,
-        # The button that leads here steps aside on this page, since you have
-        # already pressed it.
-        on_desktop=True,
-    )
+        Only a request carrying ?ask=1 counts, which is the link the button
+        points at. Reloading drops back to the plain address, so holding F5
+        shows the number again without adding to it, and so does sharing the
+        link or coming back to it later. The button itself will not offer
+        that address a second time, since the browser remembers you asked.
+
+        The number says how many, never who.
+        """
+        words = words_for(lang)
+        counted = ask == "1"
+        return render(
+            request,
+            "desktop.html",
+            lang=lang,
+            here="desktop",
+            page_title=words("desktop.title"),
+            page_description=words("desktop.description"),
+            canonical=f"{BASE_URL}{languages.path_for(lang, 'desktop')}",
+            asked=interest.record() if counted else interest.read(),
+            counted=counted,
+            on_info=True,
+            # The button that leads here steps aside on this page, since you
+            # have already pressed it.
+            on_desktop=True,
+        )
+
+    desktop.__name__ = f"desktop_{lang}"
+    return desktop
+
+
+app.get("/desktop", response_class=HTMLResponse)(make_desktop_route())
 
 
 @app.get("/robots.txt", response_class=PlainTextResponse)
@@ -239,13 +330,21 @@ def sitemap() -> PlainTextResponse:
     # Every page worth finding: the home page, each tool, the workspace and
     # the pages describing what the site does with your files. The bench page
     # is deliberately absent, being a development tool.
-    urls = (
-        [f"{BASE_URL}/"]
-        + [f"{BASE_URL}/{tool.slug}" for tool in TOOLS]
-        + [f"{BASE_URL}/workspace"]
-        + [f"{BASE_URL}/{path}" for path, _, _, _ in LEGAL_PAGES]
-        + [f"{BASE_URL}/desktop"]
+    # Every page, in every language. A search engine that cannot find the
+    # Spanish pages will not index them, and the whole point of publishing
+    # them is that they are found.
+    pages = (
+        [""]
+        + [tool.slug for tool in TOOLS]
+        + ["workspace"]
+        + [path for path, _, _, _ in LEGAL_PAGES]
+        + ["desktop"]
     )
+    urls = [
+        f"{BASE_URL}{languages.path_for(language.code, page)}"
+        for language in languages.LANGUAGES
+        for page in pages
+    ]
     entries = "\n".join(f"  <url><loc>{url}</loc></url>" for url in urls)
     body = (
         '<?xml version="1.0" encoding="UTF-8"?>\n'
@@ -254,3 +353,9 @@ def sitemap() -> PlainTextResponse:
         "</urlset>\n"
     )
     return PlainTextResponse(body, media_type="application/xml")
+
+
+# Registered last, once every factory above exists. The translated pages are
+# the same handlers as the English ones with a different language bound in,
+# so they cannot be built before those are defined.
+register_translated_routes()

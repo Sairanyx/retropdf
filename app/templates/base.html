@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="{{ lang.locale if lang else 'en' }}"{% if lang and lang.rtl %} dir="rtl"{% endif %}>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -12,6 +12,19 @@
   <meta property="og:description" content="{{ page_description }}">
   <meta property="og:type" content="website">
   <meta property="og:url" content="{{ canonical }}">
+
+  {% if alternates %}
+  <!-- The same page in every language it exists in.
+       Without these a search engine treats the eleven versions as rival
+       copies of one page and picks one, which wastes the other ten. With
+       them it knows they are the same page for different readers and shows
+       each to the right one. x-default is the fallback for a reader whose
+       language we do not publish in. -->
+  {% for other, href in alternates %}
+  <link rel="alternate" hreflang="{{ other.locale }}" href="{{ base_url }}{{ href }}">
+  {% endfor %}
+  <link rel="alternate" hreflang="x-default" href="{{ base_url }}{{ alternates[0][1] }}">
+  {% endif %}
   <!-- Fetched at once rather than waiting for the stylesheet to be parsed
        and the font to be found in it. The display face sets the logo and
        every heading, so arriving late means those are painted in the
