@@ -393,6 +393,40 @@ html {
   z-index: 60;
 }
 
+/* Narrow enough that the nav would sit on the logo, so it stops being fixed
+   and rejoins the flow underneath it.
+ *
+ * Being fixed takes it out of the header's layout altogether, which is why
+ * the header's own wrapping cannot save it: as far as the flex row is
+ * concerned the nav is not there, so the logo lays out across the full width
+ * and the nav lands on top of it.
+ *
+ * This is the zoom case as well. Zooming in shrinks the window measured in
+ * CSS pixels, which is what this asks about, so a zoomed page crosses the
+ * same threshold a small window does and is handled by the same rule. */
+@media (max-width: 640px) {
+  .navgroup {
+    position: static;
+    /* The chips wrap onto a second row rather than running off the edge. */
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 0.5rem;
+    width: 100%;
+  }
+
+  /* The header becomes two rows, the logo above and the nav below. */
+  .topbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .brand {
+    align-self: flex-start;
+  }
+}
+
 .brand-slot.travelling > svg {
   /* Positioned against the page, not the window: the logo scrolls with the
      page now, so the mark and its trail share one set of coordinates and the
