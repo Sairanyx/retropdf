@@ -2118,16 +2118,19 @@ html {
   position: relative;
 }
 
-/* A small square instead, matching the trail and the indicator lamps. */
+/* A lit indicator lamp instead of a bullet, the same one the chips carry.
+   Round and glowing outward rather than recessed, since a marker standing
+   for a point being made should read as on. */
 .plain li::before {
   content: "";
   position: absolute;
   left: 0;
-  top: 0.62em;
-  width: 6px;
-  height: 6px;
+  top: 0.58em;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
   background: var(--accent);
-  opacity: 0.55;
+  box-shadow: 0 0 6px var(--accent), 0 0 2px var(--accent);
 }
 
 .plain strong {
