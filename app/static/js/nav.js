@@ -72,15 +72,21 @@ if (!wantsLessMotion) {
         const spare = window.innerHeight - (tail - top)
         const room = Math.max(0, Math.min(spare / 2, box.top + window.scrollY - top))
 
-        // Where the page can stop without the taskbar covering the heading.
+        // Where the page can stop without the taskbar covering the section.
         // On a phone the nav is stuck to the top of the screen, so a section
         // brought to the very top arrives underneath it. This is the same
         // clearance scroll-margin-top gives every other section, which this
         // path cannot use because it scrolls by hand rather than by anchor.
+        //
+        // A ceiling on how far down the page may stop, not an alternative to
+        // the room above: centring the section wants to scroll further than
+        // clearing the bar allows, and taking the larger of the two put the
+        // section back underneath it.
         const clear = stuckNavHeight()
+        const highest = top - clear
 
         window.scrollTo({
-          top: Math.min(bottom, Math.max(0, top - Math.max(room, clear))),
+          top: Math.min(bottom, highest, Math.max(0, top - room)),
           behavior: "smooth",
         })
       }
