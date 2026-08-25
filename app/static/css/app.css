@@ -419,9 +419,15 @@ html {
    * still scrolls away normally, which keeps a phone screen for the content
    * rather than spending a hundred pixels of it on a permanent title. */
   header {
-    /* The logo plate plus the gap under it, which is how far the header is
-       pulled up. One value so the offset and the row cannot drift apart. */
-    --logo-row: calc(54px + 0.75rem);
+    /* How far the header is pulled up: everything above the nav, which is
+       the top padding of the header row, the logo plate itself and the gap
+       under it. Measured rather than guessed, since a plate that is taller
+       than the figure here leaves its bottom edge stuck on screen.
+
+       The plate is its 26 pixel mark plus 0.9rem of padding each side, and
+       the row below adds the topbar's own padding and gap. */
+    --logo-plate: calc(26px + 1.8rem);
+    --logo-row: calc(1.25rem + var(--logo-plate) + 0.75rem);
     position: sticky;
     top: calc(-1 * var(--logo-row));
     z-index: 60;
