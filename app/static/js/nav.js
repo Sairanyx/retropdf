@@ -72,8 +72,15 @@ if (!wantsLessMotion) {
         const spare = window.innerHeight - (tail - top)
         const room = Math.max(0, Math.min(spare / 2, box.top + window.scrollY - top))
 
+        // Where the page can stop without the taskbar covering the heading.
+        // On a phone the nav is stuck to the top of the screen, so a section
+        // brought to the very top arrives underneath it. This is the same
+        // clearance scroll-margin-top gives every other section, which this
+        // path cannot use because it scrolls by hand rather than by anchor.
+        const clear = stuckNavHeight()
+
         window.scrollTo({
-          top: Math.min(bottom, Math.max(0, top - room)),
+          top: Math.min(bottom, Math.max(0, top - Math.max(room, clear))),
           behavior: "smooth",
         })
       }
@@ -110,6 +117,25 @@ if (!wantsLessMotion) {
   window.addEventListener("pageshow", () => {
     document.body.classList.remove("leaving")
   })
+}
+
+/**
+ * How much of the screen the taskbar holds, when it is holding any.
+ *
+ * On a phone the nav is stuck to the top and covers whatever scrolls under
+ * it, so a section brought to the very top of the window arrives hidden
+ * behind it. On a wider screen it is out of the flow and off to one side,
+ * covering nothing, and this returns zero.
+ *
+ * Measured from the element rather than repeated as a number here, so the
+ * two cannot fall out of step when the bar changes size.
+ */
+function stuckNavHeight() {
+  const nav = document.querySelector(".navgroup")
+  if (!nav) return 0
+  if (getComputedStyle(nav.closest("header") || nav).position !== "sticky") return 0
+  // A little air below the bar, so the heading is not touching it.
+  return Math.round(nav.getBoundingClientRect().height + 16)
 }
 
 /**
