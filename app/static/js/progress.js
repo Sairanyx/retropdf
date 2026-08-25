@@ -382,6 +382,19 @@ function startRoute() {
       dot.style.top = point.y - DOT / 2 + "px"
     }
 
+    // Squares below the mark are on the current route too, and they are the
+    // ones the loop above never reaches. Opening files makes the page longer,
+    // which moves the mark back up the journey while everything already laid
+    // stays where it was, so the old curve is left behind under the new one
+    // and the trail appears to fork.
+    for (const [key, dot] of laid) {
+      const at = key * STEP
+      if (at <= y) continue
+      const point = positionAt(at)
+      dot.style.left = point.x - DOT / 2 + "px"
+      dot.style.top = point.y - DOT / 2 + "px"
+    }
+
     // The steps rarely land exactly on the end, so the last one falls short
     // by up to a full step and the trail appears to stop beside the logo
     // rather than reaching it. This closes that gap.
