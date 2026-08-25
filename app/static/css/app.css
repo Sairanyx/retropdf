@@ -465,6 +465,21 @@ html {
   .brand {
     align-self: flex-start;
   }
+
+  /* The nav rides at the top of the screen here, so anything scrolled to has
+     to stop below it rather than under it. Without this the heading you asked
+     for lands at the very top of the window and the taskbar sits over it.
+
+     The nav plate is its 48 pixel chips plus the padding around them, and a
+     little air below so the heading is not touching the bar. */
+  html {
+    scroll-padding-top: calc(48px + 1.5rem + 1rem);
+  }
+
+  .panel,
+  [id] {
+    scroll-margin-top: calc(48px + 1.5rem + 1rem);
+  }
 }
 
 .brand-slot.travelling > svg {
