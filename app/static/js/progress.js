@@ -288,11 +288,18 @@ function startRoute() {
   function update() {
     ticking = false
 
-    const scrollable =
-      document.documentElement.scrollHeight - window.innerHeight
-    if (scrollable <= 0) return
-
     const from = origin()
+
+    // The journey is over when the logo at the foot of the page is on screen,
+    // which is not the same as the scroll having bottomed out. Anything below
+    // the footer, a margin or a page that simply runs on, would otherwise be
+    // scroll the mark still has to cover, and it would hang above the logo
+    // until the very last pixel.
+    const scrollable = Math.min(
+      document.documentElement.scrollHeight - window.innerHeight,
+      Math.max(0, destination() - window.innerHeight * 0.72),
+    )
+    if (scrollable <= 0) return
 
     // The whole scroll maps onto the whole route: at the top the mark is in
     // its slot, at the bottom it is at the end of the page. Everything in
