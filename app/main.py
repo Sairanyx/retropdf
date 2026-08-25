@@ -13,7 +13,7 @@ import os
 from pathlib import Path
 
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, PlainTextResponse
+from fastapi.responses import FileResponse, HTMLResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -316,6 +316,21 @@ def make_desktop_route(lang: str = "en"):
 
 
 app.get("/desktop", response_class=HTMLResponse)(make_desktop_route())
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon() -> FileResponse:
+    """Browsers ask for this address whatever the page says.
+
+    Older ones ignore the SVG icon in the markup and request /favicon.ico
+    from the root regardless, so serving it here saves a 404 on every visit.
+    """
+    return FileResponse(
+        STATIC_DIR / "favicon.ico",
+        media_type="image/x-icon",
+        # It changes about never, so there is no reason to ask again.
+        headers={"Cache-Control": "public, max-age=604800"},
+    )
 
 
 @app.get("/robots.txt", response_class=PlainTextResponse)

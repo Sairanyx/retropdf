@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- The logo's document mark, drawn for a browser tab.
+
+       The same outlined document with a turned corner that the header shows.
+       The strokes are heavier than the header's relative to the size, since
+       a 1.6 pixel line scaled down to a sixteen pixel tab greys out into
+       nothing.
+
+       No folded corner. The header logo has one, but a fold is two lines
+       with a gap between them, and at sixteen pixels a stroke thick enough
+       to stay visible is thicker than that gap: the corner closes up into a
+       solid wedge and the mark reads as a black blob. A plain page with the
+       accent bar is the part that survives, so it is the part that is drawn.
+
+       No background, so the tab's own colour shows through. That costs the
+       mark its guaranteed contrast, which the rule below buys back: the
+       outline follows the browser's theme rather than being fixed dark,
+       since a dark outline on a dark tab strip is an invisible icon. -->
+  <style>
+    .ink { stroke: #201f1d }
+    @media (prefers-color-scheme: dark) {
+      .ink { stroke: #ebe8e3 }
+    }
+  </style>
+
+  <!-- The page. -->
+  <rect class="ink" x="7.5" y="5" width="17" height="22" rx="2.5"
+        fill="none" stroke-width="2.6"/>
+
+  <!-- The accent bar, the one piece of colour and the thing that makes the
+       mark recognisable at a glance. Kept the same red on either theme. -->
+  <rect x="12" y="17.5" width="8" height="4.5" rx="1" fill="#c8452a"/>
+</svg>

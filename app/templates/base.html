@@ -8,10 +8,31 @@
   <meta name="description" content="{{ page_description }}">
   <link rel="canonical" href="{{ canonical }}">
 
+  <!-- One SVG rather than a pile of PNGs. Every browser that matters reads
+       it, it stays sharp at any size, and there is one file to keep right
+       instead of six. The .ico is only for older browsers that ignore the
+       SVG, and both are served from here like everything else. -->
+  <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon.ico" sizes="32x32">
+  <link rel="apple-touch-icon" href="/static/icon.svg">
+
   <meta property="og:title" content="{{ page_title }}">
   <meta property="og:description" content="{{ page_description }}">
   <meta property="og:type" content="website">
   <meta property="og:url" content="{{ canonical }}">
+  <meta property="og:site_name" content="RetroPDF">
+  <meta property="og:locale" content="{{ lang.locale if lang else 'en' }}">
+
+  <!-- What a link to this page looks like when somebody shares it. Without
+       an image most apps draw a blank grey box, which reads as a broken or
+       untrustworthy link, and this site is asking people to trust it with
+       documents. Served from here rather than a third party, like everything
+       else. -->
+  <meta property="og:image" content="{{ base_url }}/static/share.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="RetroPDF. PDF tools that never upload your files.">
+  <meta name="twitter:card" content="summary_large_image">
 
   {% if alternates %}
   <!-- The same page in every language it exists in.

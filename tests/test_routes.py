@@ -221,6 +221,31 @@ def test_the_security_page_quotes_the_real_policy():
     assert quoted in client.get("/security").headers["content-security-policy"]
 
 
+def test_the_icon_is_served_from_the_root():
+    """Browsers ask for /favicon.ico whatever the markup says, so serving it
+    there saves a 404 on every visit from an older one."""
+    response = client.get("/favicon.ico")
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "image/x-icon"
+
+
+def test_pages_carry_a_share_image():
+    """A link with no image draws a blank grey box in most apps, which reads
+    as broken. This site asks people to trust it with documents, so a link to
+    it should not look untrustworthy."""
+    body = client.get("/").text
+    assert 'property="og:image"' in body
+    assert 'name="twitter:card"' in body
+    # Absolute, since a scraper has no page to resolve a relative one against.
+    assert 'content="http' in body.split('og:image"')[1][:60]
+
+
+def test_the_share_image_is_our_own():
+    """Served from here like everything else, not from an image host."""
+    assert client.get("/static/share.png").status_code == 200
+    assert "/static/share.png" in client.get("/").text
+
+
 def test_the_sitemap_lists_every_page():
     body = client.get("/sitemap.xml").text
     for path in ("workspace", "privacy", "terms", "security", "desktop"):
