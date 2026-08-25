@@ -17,6 +17,10 @@ const wantsLessMotion =
 
 // Below this the content fills the screen and there is no clear space beside
 // it. A line through the words is worse than no line.
+//
+// A first check only. The window being wide enough does not prove there is
+// room beside the text, since zooming in grows the content without changing
+// the window, so the real test is roomBeside() below.
 const NARROWEST = 700
 
 if (!wantsLessMotion) waitThenStart()
@@ -128,6 +132,12 @@ function startRoute() {
   // trail look broken.
   let cachedLanes = null
 
+  // Far enough from the text that the line is beside it rather than grazing
+  // it. The clearance has to cover the sway, which carries the trail 18
+  // pixels either side of the lane, and the square's own width, or the widest
+  // part of the swing ends up a few pixels from the words.
+  const CLEAR = 18 + 18 + DOT
+
   /** The clear space either side of the content, measured rather than assumed. */
   function lanes() {
     if (cachedLanes) return cachedLanes
@@ -146,13 +156,12 @@ function startRoute() {
     // of pixels of clear space and a narrow one has almost none. Measuring
     // beats taking a percentage of the window, which lands the route in open
     // space on one screen and through the text on another.
-    // Far enough from the text that the line is beside it rather than
-    // grazing it. The clearance has to cover the sway, which carries the
-    // trail 18 pixels either side of the lane, and the square's own width,
-    // or the widest part of the swing ends up a few pixels from the words.
-    const CLEAR = 18 + 18 + DOT
-
     cachedLanes = {
+      // How much clear space there actually is to the left of the text. The
+      // lane below is clamped to a minimum so the line stays on screen, and
+      // that clamp is what would push it over the words, so the true gap is
+      // kept separately for roomBeside() to judge.
+      gap: contentLeft,
       left: Math.max(18, Math.min(contentLeft - CLEAR, contentLeft / 2)),
       right: Math.min(
         window.innerWidth - 18,
@@ -160,6 +169,19 @@ function startRoute() {
       ),
     }
     return cachedLanes
+  }
+
+  /**
+   * Whether there is genuinely room for the line beside the text.
+   *
+   * The window being wide is not the same question. Zooming in grows the
+   * text without changing the window, so a zoomed page can be 1200 pixels
+   * wide with the words running to both edges, and a trail drawn there goes
+   * straight through them. Asking the measured gap covers both, since a
+   * narrow window and a zoomed one leave the same lack of space.
+   */
+  function roomBeside() {
+    return lanes().gap >= CLEAR + DOT
   }
 
   // Measured once, like the origin, and for the same reason: the answer must
@@ -287,6 +309,19 @@ function startRoute() {
   let ticking = false
   function update() {
     ticking = false
+
+    // No room beside the text, so there is nowhere to draw. The mark goes
+    // back into the logo and the trail is cleared rather than left lying
+    // across the words. Zooming far enough in reaches this on any screen.
+    if (!roomBeside()) {
+      layer.hidden = true
+      trail.replaceChildren()
+      laid.clear()
+      slot.classList.remove("travelling")
+      mark.style.transform = ""
+      return
+    }
+    layer.hidden = false
 
     const from = origin()
 
