@@ -478,15 +478,19 @@ html {
      to stop below it rather than under it. Without this the heading you asked
      for lands at the very top of the window and the taskbar sits over it.
 
-     The nav plate is its 48 pixel chips plus the padding around them, and a
-     little air below so the heading is not touching the bar. */
+     The bar is its 48 pixel chips plus the plate's padding around them, and
+     --bar-clear adds a little air below so the heading is not touching it.
+     nav.js works the same figure out from the bar it measures, so a section
+     scrolled to by hand stops in the same place as one scrolled to by
+     anchor. Change one and the other has to follow. */
   html {
-    scroll-padding-top: calc(48px + 1.5rem + 1rem);
+    --bar-clear: calc(48px + 1rem + 16px);
+    scroll-padding-top: var(--bar-clear);
   }
 
   .panel,
   [id] {
-    scroll-margin-top: calc(48px + 1.5rem + 1rem);
+    scroll-margin-top: calc(48px + 1rem + 16px);
   }
 }
 
@@ -720,6 +724,20 @@ section {
   min-height: 0;
   justify-content: flex-start;
   padding-block: clamp(1rem, 4vh, 9rem) clamp(4rem, 12vh, 9rem);
+}
+
+/* On a phone the last section keeps the same room above its heading as every
+   other one, so arriving at Info puts its heading the same distance below the
+   taskbar as arriving at Tools does. Its own smaller padding, which exists to
+   share a screen with the footer on a desktop, left the heading against the
+   bar while the others sat well clear.
+
+   Written here rather than beside the other mobile rules because this has to
+   come after the rule above to win. */
+@media (max-width: 640px) {
+  .panel:last-of-type {
+    padding-top: clamp(4rem, 11vh, 8rem);
+  }
 }
 
 /* Short screens would otherwise force a scroll inside the section itself. */
