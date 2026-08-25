@@ -153,6 +153,35 @@ def test_the_privacy_page_says_what_is_stored():
         assert phrase in body
 
 
+def test_the_desktop_page_counts_and_shows_the_number():
+    """Opening the page is the vote, so the count has to go up and be shown."""
+    first = client.get("/desktop")
+    assert first.status_code == 200
+
+    second = client.get("/desktop").text
+    # The number is on the page rather than only in a file somewhere, which
+    # is what lets a reader check the claim the privacy page makes.
+    assert 'class="tally"' in second
+
+
+def test_the_desktop_page_sends_nothing():
+    """The whole design rests on the page being an ordinary read.
+
+    No form, no upload, and the same refusal to make requests that every
+    other page carries. If a form ever appears here, this fails.
+    """
+    page = client.get("/desktop")
+    assert "connect-src 'none'" in page.headers["content-security-policy"]
+    assert "<form" not in page.text
+    assert "<input" not in page.text
+
+
+def test_the_privacy_page_points_at_the_counted_page():
+    """The site's argument is that anything kept is named and checkable."""
+    body = client.get("/privacy").text
+    assert 'href="/desktop"' in body
+
+
 def test_the_security_page_quotes_the_real_policy():
     """The page tells people to check a header, so it has to name the one
     the server actually sends."""
@@ -163,7 +192,7 @@ def test_the_security_page_quotes_the_real_policy():
 
 def test_the_sitemap_lists_every_page():
     body = client.get("/sitemap.xml").text
-    for path in ("workspace", "privacy", "terms", "security"):
+    for path in ("workspace", "privacy", "terms", "security", "desktop"):
         assert f"/{path}<" in body
     for tool in TOOLS:
         assert f"/{tool.slug}<" in body
