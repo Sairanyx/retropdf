@@ -266,36 +266,36 @@ function startRoute() {
     // given height in proportion, two and a half units down for every unit
     // across, which is what keeps it a curve rather than a diagonal with a
     // corner at each end.
-    // Held to the space below the last of the content. A crossing sized only
-    // to its own width starts high enough to run through whatever sits above
-    // the footer, which on these pages is a paragraph.
+    // The logo is brought into the lane rather than the trail sent across
+    // to it.
     //
-    // The footer is where the page stops having anything to cross, so the
-    // curve begins there and takes whatever height is left.
-    let footerTop = finish
-    const footer = document.querySelector("footer")
-    if (footer) {
-      footerTop = 0
-      for (let el = footer; el; el = el.offsetParent) footerTop += el.offsetTop
+    // Every version that crossed the page looked wrong: the lane sits at
+    // half the content margin while the footer follows the content, so on a
+    // wide screen that is a couple of hundred pixels to cover in whatever
+    // height is left. Given too little height it turns a corner, given more
+    // it starts high enough to run through the text, and given the empty
+    // space between it wanders across at a shallow angle. Sliding the plate
+    // into the lane removes the problem rather than balancing it.
+    const plate = slot.closest(".footer-brand")
+    if (plate) {
+      // Only as far as the page edge allows. On a narrower screen the lane
+      // is close to the edge already, and shifting the plate all the way to
+      // it hangs the logo off the side of the page.
+      //
+      // Measured from the plate's own left edge rather than the slot inside
+      // it: the plate carries padding around the icon, so a bound worked out
+      // from the icon lets the plate itself slide past the edge.
+      let plateLeft = 0
+      for (let el = plate; el; el = el.offsetParent) plateLeft += el.offsetLeft
+
+      const wanted = lane.left - slotX
+      const shift = Math.max(wanted, 12 - plateLeft)
+      plate.style.transform = `translateX(${shift}px)`
+      slotX += shift
     }
 
-    // The empty stretch above the footer counts as room too. That space has
-    // no text in it, so the curve can begin there and take the height it
-    // needs, which is what keeps it a curve rather than a right angle at the
-    // bottom.
-    //
-    // The workspace note is the last thing written on these pages, so the
-    // crossing starts below it.
-    const note = document.querySelector(".workspace-note, .prose p:last-of-type")
-    let clearFrom = footerTop
-    if (note) {
-      let bottom = note.offsetHeight
-      for (let el = note; el; el = el.offsetParent) bottom += el.offsetTop
-      clearFrom = Math.min(footerTop, Math.max(bottom + 40, footerTop - 420))
-    }
-
-    const room = Math.max(160, finish - clearFrom)
-    const homeRun = Math.min(room, Math.max(300, Math.abs(slotX - lane.left) * 2.5))
+    // Long enough to read as easing in rather than stopping dead.
+    const homeRun = 300
     if (y <= finish - homeRun) return { x: lane.left + sway, y }
 
     // The sway fades out as the mark settles, so the line straightens into

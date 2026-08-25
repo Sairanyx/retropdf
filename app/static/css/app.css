@@ -556,12 +556,22 @@ section {
   /* A screen minus the header, so a section fills the view without pushing
      the next one more than a screen away. Full viewport height plus padding
      made each one noticeably taller than the window, which meant a long
-     stretch of nothing between sections. */
+     stretch of nothing between sections.
+   *
+   * The space above and below is set here rather than left to the centring,
+   * so the gap between two sections is the same wherever you are on the
+   * page. Centring alone made it depend on how tall each section's content
+   * happened to be: the hero has three short lines and the tools have two
+   * rows of cards, so one gap came out twice the other. */
   min-height: calc(100svh - 5rem);
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  padding-block: clamp(2rem, 5vh, 4rem);
+  /* Content sits at the top of its section rather than floating in the
+     middle. Centring made the gap between two sections depend on how tall
+     each one's content happened to be, so the hero with its three short
+     lines left twice the space the tools did with their two rows of cards. */
+  justify-content: flex-start;
+  padding-block: clamp(4rem, 11vh, 8rem) 0;
   scroll-margin-top: 0;
 }
 
