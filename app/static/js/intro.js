@@ -485,6 +485,75 @@ function aimAtBrand() {
 }
 
 /**
+ * Where the browser breaks the finished heading.
+ *
+ * Asked rather than guessed. The text is put into the heading itself and
+ * every word is measured in place, so the answer comes from the real font at
+ * the real width. A word that sits lower than the one before it started a
+ * new row.
+ *
+ * Returns the lines as arrays of words. A single row comes back as one line,
+ * which is the common case on a wide screen and needs no breaks at all.
+ */
+function splitIntoLines(text) {
+  const words = text.split(" ")
+  if (words.length < 2) return [words]
+
+  // Each word wrapped, so its position can be read back. The heading is
+  // already empty and invisible at this point, so nothing of this shows.
+  const was = headline.textContent
+  headline.textContent = ""
+  const spans = words.map((word, index) => {
+    const span = document.createElement("span")
+    span.textContent = index === 0 ? word : " " + word
+    headline.append(span)
+    return span
+  })
+
+  const lines = []
+  let current = []
+  let rowTop = null
+  spans.forEach((span, index) => {
+    // Rounded, since a taller glyph on the same row can shift the box by a
+    // fraction of a pixel without it being a new line.
+    const top = Math.round(span.getBoundingClientRect().top)
+    if (rowTop === null) rowTop = top
+    if (top > rowTop + 2) {
+      lines.push(current)
+      current = []
+      rowTop = top
+    }
+    current.push(words[index])
+  })
+  if (current.length) lines.push(current)
+
+  headline.textContent = was
+  return lines
+}
+
+/**
+ * The first so many characters, with the line breaks put back in.
+ *
+ * The count runs over the text as one string, so this walks the lines
+ * spending it as it goes and stops wherever it runs out.
+ */
+function withBreaks(lines, count) {
+  let left = count
+  const out = []
+
+  for (const words of lines) {
+    const line = words.join(" ")
+    if (left <= 0) break
+    out.push(line.slice(0, left))
+    // The space that joined this line to the next is spent as well, or the
+    // count drifts by one character per line.
+    left -= line.length + 1
+  }
+
+  return out.join("\n")
+}
+
+/**
  * Type the headline in.
  *
  * The finished text lives in data-type, so it is in the markup for search
@@ -499,13 +568,19 @@ function typeHeadline(onDone) {
   headline.dataset.typed = "1"
   const text = headline.dataset.type
 
+  // Typed with the line breaks already decided, so each row is written and
+  // then left alone. Letting the browser wrap a growing string instead
+  // fills the first row to the edge and then throws a word down to the
+  // second, and the whole heading jumps as it goes.
+  const lines = splitIntoLines(text)
+
   headline.textContent = ""
   headline.classList.add("typing")
 
   let shown = 0
   const step = () => {
     shown += 1
-    headline.textContent = text.slice(0, shown)
+    headline.textContent = withBreaks(lines, shown)
     if (shown < text.length) {
       setTimeout(step, 22)
     } else {

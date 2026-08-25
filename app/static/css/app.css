@@ -651,6 +651,14 @@ h1.typing::after {
   animation: none;
 }
 
+/* The typed heading carries its own line breaks, so each row is written and
+   then left alone rather than being rewrapped as the next words arrive. The
+   breaks are newlines, which need honouring, and the wrapping stays on for
+   anything the measurement did not foresee. */
+h1.typing {
+  white-space: pre-wrap;
+}
+
 @keyframes blink {
   50% { opacity: 0; }
 }
