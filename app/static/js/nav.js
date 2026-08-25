@@ -42,14 +42,25 @@ if (!wantsLessMotion) {
       // window, because there is not a screenful of page left below it. The
       // browser stops partway and the footer ends up half shown.
       //
-      // Landing at the very bottom instead means the section fills the
-      // window with the footer whole underneath it, rather than sliced.
+      // Going to the very bottom instead fixes the footer but pushes a short
+      // section off the top, so the heading you came to read sits above the
+      // window. This lands wherever shows the most of it: as far down as the
+      // page allows, but never past the point where the section itself
+      // starts to leave the screen.
       const target = document.querySelector(url.hash)
       if (target && isLastSection(target)) {
         event.preventDefault()
         history.pushState(null, "", url.hash)
+
+        const box = target.getBoundingClientRect()
+        const top = box.top + window.scrollY
+        const bottom = document.documentElement.scrollHeight - window.innerHeight
+
+        // A little room above it rather than butting it against the top edge.
+        const room = Math.min(80, Math.max(0, (window.innerHeight - box.height) / 2))
+
         window.scrollTo({
-          top: document.documentElement.scrollHeight,
+          top: Math.min(bottom, Math.max(0, top - room)),
           behavior: "smooth",
         })
       }

@@ -146,8 +146,14 @@ function startRoute() {
     // of pixels of clear space and a narrow one has almost none. Measuring
     // beats taking a percentage of the window, which lands the route in open
     // space on one screen and through the text on another.
+    // Far enough from the text that the line is beside it rather than
+    // grazing it. The clearance has to cover the sway, which carries the
+    // trail 18 pixels either side of the lane, and the square's own width,
+    // or the widest part of the swing ends up a few pixels from the words.
+    const CLEAR = 18 + 18 + DOT
+
     cachedLanes = {
-      left: Math.max(18, Math.min(contentLeft - 18, contentLeft / 2)),
+      left: Math.max(18, Math.min(contentLeft - CLEAR, contentLeft / 2)),
       right: Math.min(
         window.innerWidth - 18,
         Math.max(contentRight + 18, (contentRight + window.innerWidth) / 2),
@@ -384,10 +390,16 @@ function startRoute() {
       }
     }
 
-    // Anything past where the mark now is belongs to a page that has since
-    // got shorter, so it is taken away rather than left below the logo.
+    // Squares below the end of the page belong to a route that no longer
+    // exists, so they are taken away rather than left hanging past the logo.
+    //
+    // Measured against the end of the page rather than against the mark:
+    // scrolling back up moves the mark without changing the route, and
+    // clearing everything below it there would wipe the trail you have just
+    // made, which is the record of where you have been.
+    const end = destination()
     for (const [key, dot] of laid) {
-      if (key * STEP > y + STEP) {
+      if (key * STEP > end + STEP) {
         dot.remove()
         laid.delete(key)
       }

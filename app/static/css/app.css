@@ -525,6 +525,13 @@ a {
   margin: 0 0 1rem;
 }
 
+/* Tighter where it heads the other tools at the foot of a tool page: the
+   space below it is what decides whether the cards show at the bottom of the
+   screen or fall out of sight. */
+.panel .label {
+  margin-bottom: 0.5rem;
+}
+
 .lede {
   font-size: var(--text-body);
   color: var(--ink-2);
@@ -556,6 +563,25 @@ section {
   justify-content: center;
   padding-block: clamp(2rem, 5vh, 4rem);
   scroll-margin-top: 0;
+}
+
+/* The last section on the page sizes to what it holds.
+ *
+ * Every other section is a screenful with its content centred, which works
+ * while there is another section below to scroll to. The last one is
+ * different: landing on it means scrolling to the bottom of the page, and a
+ * short piece of text centred in a tall box then sits with its heading above
+ * the top of the window. Sizing to the content keeps the whole of it on
+ * screen at once. */
+.panel:last-of-type {
+  min-height: 0;
+  justify-content: flex-start;
+  /* Little at the top, generous at the bottom. On a tool page this section
+     follows the tool itself, and the point of the small gap above is that
+     "Other tools" and the top of a card show at the foot of the screen: just
+     enough to say there is more below without competing with the tool you
+     came for. */
+  padding-block: clamp(0.75rem, 2vh, 2rem) clamp(3rem, 8vh, 5rem);
 }
 
 /* Short screens would otherwise force a scroll inside the section itself. */
