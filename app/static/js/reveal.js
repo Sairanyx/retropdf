@@ -171,8 +171,34 @@ function placeTheHint() {
   const SHOW = 52
 
   next.style.paddingTop = ""
-  const gap = window.innerHeight - SHOW - panel.getBoundingClientRect().bottom
+  const gap = screenHeight() - SHOW - panel.getBoundingClientRect().bottom
   if (gap > 0) next.style.paddingTop = `${Math.round(gap)}px`
+}
+
+/**
+ * The height of the screen, ignoring the browser's own furniture.
+ *
+ * On a phone innerHeight is not a fixed number: scrolling down collapses the
+ * address bar and scrolling up brings it back, which changes it by around a
+ * hundred pixels and fires a resize each time. Measuring against it meant the
+ * gap below the panel was recomputed to a different answer as you scrolled,
+ * so the space above the next section visibly grew and shrank.
+ *
+ * 100svh is the small viewport height, which is the size with the address bar
+ * showing and does not move. Falls back to innerHeight where svh is not
+ * understood.
+ */
+function screenHeight() {
+  if (!CSS.supports?.("height", "100svh")) return window.innerHeight
+
+  const probe = document.createElement("div")
+  // Out of the flow and out of sight, so measuring costs nothing visually.
+  probe.style.cssText =
+    "position:absolute;top:0;left:0;width:0;height:100svh;visibility:hidden;pointer-events:none"
+  document.body.append(probe)
+  const height = probe.getBoundingClientRect().height
+  probe.remove()
+  return height || window.innerHeight
 }
 
 // Only where a tool panel is followed by another section, which is the tool
