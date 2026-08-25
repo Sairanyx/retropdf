@@ -997,12 +997,24 @@ footer {
 
 footer nav {
   display: flex;
-  gap: 1.5rem;
+  /* Row gap is smaller than column gap because the links now carry their own
+     vertical padding, which already separates the rows when they wrap. */
+  gap: 0.25rem 1.5rem;
   flex-wrap: wrap;
   margin-bottom: 1rem;
 }
 
+/* Padded to a comfortable size for a finger.
+ *
+ * The text alone made these 34px tall, and a row of eight tool names that
+ * close together is a row of mistaps on a phone. The padding grows the area
+ * that responds to a tap without changing how the link looks, since it is
+ * the box that catches the touch rather than the letters. */
 footer a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0.25rem 0;
   color: var(--ink-2);
   font-size: var(--text-small);
   text-decoration: none;
@@ -1853,6 +1865,10 @@ html {
   color: var(--accent);
   text-decoration: none;
   transition: color var(--t);
+  /* A little room above and below, so a link inside a sentence is still
+     catchable with a finger. Kept small: any more and it would push the
+     lines of the paragraph apart. */
+  padding-block: 0.35rem;
 }
 
 .workspace-note a:hover,
