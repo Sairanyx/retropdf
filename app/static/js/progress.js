@@ -253,10 +253,13 @@ function startRoute() {
       let slotX = slot.offsetWidth / 2
       for (let el = slot; el; el = el.offsetParent) slotX += el.offsetLeft
 
-      // The same eased curve the mark uses leaving the logo, so the journey
-      // ends the way it began rather than turning a corner.
+      // The crossing finishes before the descent does, so the last stretch
+      // comes straight down into the slot rather than arriving diagonally
+      // and clipping the corner of the plate. The mark enters the logo the
+      // way it left the one at the top: from directly above.
       const into = Math.min(1, (y - (finish - homeRun)) / homeRun)
-      const eased = (1 - Math.cos(into * Math.PI)) / 2
+      const crossing = Math.min(1, into / 0.72)
+      const eased = (1 - Math.cos(crossing * Math.PI)) / 2
       return { x: inLane + (slotX - inLane) * eased, y }
     }
 
