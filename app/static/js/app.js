@@ -375,13 +375,21 @@ startOver?.addEventListener("click", () => {
   result.textContent = "Select a file to begin."
 
   // Emptying the panel makes the page much shorter, and the browser deals
-  // with that by dropping the scroll position, sometimes all the way to the
-  // top. Rather than leaving the reader wherever that lands, this brings
-  // them to the panel they just cleared, which is where the next thing they
-  // do begins. Smoothly, so it reads as the page moving rather than
-  // snapping.
-  const panel = document.querySelector(".workspace")
-  panel?.scrollIntoView({ behavior: "smooth", block: "start" })
+  // with that by dropping the scroll position, sometimes to the top.
+  //
+  // Where you were is where you should stay, so the position is put back.
+  // Scrolling somewhere sensible instead was worse: pressing a button and
+  // being moved is jarring however good the destination, and the reader was
+  // usually looking at the panel already.
+  //
+  // Only nudged back if the browser has actually moved you, and only as far
+  // as the shorter page now allows.
+  const wasAt = window.scrollY
+  requestAnimationFrame(() => {
+    if (Math.abs(window.scrollY - wasAt) < 2) return
+    const bottom = document.documentElement.scrollHeight - window.innerHeight
+    window.scrollTo({ top: Math.min(wasAt, Math.max(0, bottom)), behavior: "auto" })
+  })
 })
 
 // Dropping files anywhere on the page opens them, the same as choosing them.

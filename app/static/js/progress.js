@@ -266,7 +266,36 @@ function startRoute() {
     // given height in proportion, two and a half units down for every unit
     // across, which is what keeps it a curve rather than a diagonal with a
     // corner at each end.
-    const homeRun = Math.max(300, Math.abs(slotX - lane.left) * 2.5)
+    // Held to the space below the last of the content. A crossing sized only
+    // to its own width starts high enough to run through whatever sits above
+    // the footer, which on these pages is a paragraph.
+    //
+    // The footer is where the page stops having anything to cross, so the
+    // curve begins there and takes whatever height is left.
+    let footerTop = finish
+    const footer = document.querySelector("footer")
+    if (footer) {
+      footerTop = 0
+      for (let el = footer; el; el = el.offsetParent) footerTop += el.offsetTop
+    }
+
+    // The empty stretch above the footer counts as room too. That space has
+    // no text in it, so the curve can begin there and take the height it
+    // needs, which is what keeps it a curve rather than a right angle at the
+    // bottom.
+    //
+    // The workspace note is the last thing written on these pages, so the
+    // crossing starts below it.
+    const note = document.querySelector(".workspace-note, .prose p:last-of-type")
+    let clearFrom = footerTop
+    if (note) {
+      let bottom = note.offsetHeight
+      for (let el = note; el; el = el.offsetParent) bottom += el.offsetTop
+      clearFrom = Math.min(footerTop, Math.max(bottom + 40, footerTop - 420))
+    }
+
+    const room = Math.max(160, finish - clearFrom)
+    const homeRun = Math.min(room, Math.max(300, Math.abs(slotX - lane.left) * 2.5))
     if (y <= finish - homeRun) return { x: lane.left + sway, y }
 
     // The sway fades out as the mark settles, so the line straightens into

@@ -581,7 +581,10 @@ section {
      "Other tools" and the top of a card show at the foot of the screen: just
      enough to say there is more below without competing with the tool you
      came for. */
-  padding-block: clamp(0.75rem, 2vh, 2rem) clamp(3rem, 8vh, 5rem);
+  /* Little at the top so the cards peek at the foot of the screen, generous
+     at the bottom so the footer is well clear of them rather than crowding
+     the last thing on the page. */
+  padding-block: clamp(0.75rem, 2vh, 2rem) clamp(12rem, 34vh, 24rem);
 }
 
 /* Short screens would otherwise force a scroll inside the section itself. */
