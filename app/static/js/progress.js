@@ -334,6 +334,23 @@ function startRoute() {
       laid.set(key, dot)
     }
 
+    // The steps rarely land exactly on the end, so the last one falls short
+    // by up to a full step and the trail appears to stop beside the logo
+    // rather than reaching it. This closes that gap.
+    const finish = destination()
+    if (y >= finish - STEP) {
+      const key = Math.round(finish / STEP) + 1
+      if (!laid.has(key)) {
+        const point = positionAt(finish)
+        const dot = document.createElement("span")
+        dot.className = "route-dot lit"
+        dot.style.left = point.x - DOT / 2 + "px"
+        dot.style.top = point.y - DOT / 2 + "px"
+        batch.append(dot)
+        laid.set(key, dot)
+      }
+    }
+
     if (batch.childNodes.length) trail.append(batch)
 
 

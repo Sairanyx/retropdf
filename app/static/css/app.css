@@ -1861,7 +1861,9 @@ html {
    pixel face. It appears on hover, where it confirms what is about to be
    clicked. */
 .workspace-note a,
-.lede a {
+.lede a,
+.prose a,
+.plain a {
   color: var(--accent);
   text-decoration: none;
   transition: color var(--t);
@@ -1872,7 +1874,9 @@ html {
 }
 
 .workspace-note a:hover,
-.lede a:hover {
+.lede a:hover,
+.prose a:hover,
+.plain a:hover {
   text-decoration: underline;
 }
 
@@ -1948,11 +1952,27 @@ html {
    like the one in the header so the two read as the same object arriving
    rather than two separate marks. */
 .footer-brand {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin: 0 0 1rem;
-  color: var(--ink-2);
+  display: inline-flex;
+  margin: 0 0 1.25rem;
+}
+
+/* The footer text sits above the trail so the line does not run through the
+   words, but the logo plate does not: the trail has to be seen arriving at
+   it, and a plate drawn on top cuts the last squares off at its corner so
+   the mark looks parked beside the logo rather than sitting in it.
+ *
+ * Raised on the wrap rather than on the links themselves, because the wrap
+ * carries z-index 1 while the route layer is a sibling of it at 50, so
+ * nothing inside the wrap can win on its own. */
+.wrap:has(> footer) {
+  position: relative;
+  z-index: 60;
+}
+
+.footer-brand {
+  /* Back under the trail, so the squares run all the way in. */
+  position: relative;
+  z-index: 0;
 }
 
 /* The second footer row. A step back from the tools above it, since these

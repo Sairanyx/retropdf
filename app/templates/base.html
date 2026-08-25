@@ -85,6 +85,14 @@
 
   <div class="wrap">
     <footer>
+      <!-- The logo first, so the trail arrives at it rather than running
+           down past the links to reach it. The header reads the same way:
+           the logo, and then everything else underneath. -->
+      <a class="plate brand footer-brand" href="/">
+        <span class="brand-slot" id="brand-end" aria-hidden="true"></span>
+        <span class="brand-word">RetroPDF</span>
+      </a>
+
       <nav aria-label="All tools">
         {% for tool in tools %}
           <a href="/{{ tool.slug }}">{{ tool.name }}</a>
@@ -109,11 +117,6 @@
            The slot is empty and stays empty: the mark that lands in it is
            the one that travelled, not a second copy. Without scripting the
            word stands on its own, which still reads as the logo. -->
-      <p class="footer-brand">
-        <span class="brand-slot" id="brand-end" aria-hidden="true"></span>
-        <span class="brand-word">RetroPDF</span>
-      </p>
-
       <p>Your files stay on your device. They are never sent to us.</p>
     </footer>
   </div>
