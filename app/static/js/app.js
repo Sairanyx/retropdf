@@ -263,6 +263,18 @@ function roomLeft() {
   return "You can add more files, then download them as one PDF."
 }
 
+/**
+ * What to say about files that turned out not to be PDFs.
+ *
+ * Named individually up to a point, since knowing which one failed is the
+ * useful part, and counted beyond that so the line stays readable.
+ */
+function refusalOf(names, one = "a PDF", many = "PDFs") {
+  if (names.length === 1) return `${names[0]} is not ${one}.`
+  if (names.length <= 3) return `${names.join(", ")} are not ${many}.`
+  return `${names.length} of the files are not ${many}.`
+}
+
 /** Open a list of files, however the user gave them to us. */
 async function openFiles(chosen) {
   if (chosen.length === 0) return
@@ -286,6 +298,11 @@ async function openFiles(chosen) {
   paintLamps()
   working(true)
 
+  // Files the name lied about. Reported at the end rather than as each one
+  // is met, or the summary line that follows the loop simply overwrites the
+  // complaint and the reader is told nothing happened when nothing did.
+  const refused = []
+
   try {
     for (const file of chosen) {
       result.textContent = `Opening ${file.name}`
@@ -293,7 +310,7 @@ async function openFiles(chosen) {
 
       // The name can say anything, so check what the file actually is.
       if (!looksLikePdf(bytes)) {
-        result.textContent = `${file.name} is not a PDF.`
+        refused.push(file.name)
         continue
       }
 
@@ -319,12 +336,26 @@ async function openFiles(chosen) {
       await renderThumbnails(loaded.id, forRendering)
     }
 
+    // Nothing opened, so say why rather than reporting nought pages as
+    // though the job had been done.
+    if (order.length === 0) {
+      result.textContent = refused.length
+        ? refusalOf(refused)
+        : "Nothing could be opened. Select a PDF to begin."
+      paintLamps()
+      return
+    }
+
     downloadBtn.disabled = false
     // The size as well as the count, since the limit is quoted in megabytes
     // and someone near it has no way to tell how close they are otherwise.
     result.textContent =
       `${countOf(order.length, "page")}, ${formatSize(loadedBytes)}. ` +
-      (currentMode() === "merge" ? roomLeft() : modes[currentMode()].hint)
+      (refused.length
+        ? refusalOf(refused)
+        : currentMode() === "merge"
+          ? roomLeft()
+          : modes[currentMode()].hint)
     paintLamps()
   } catch (error) {
     result.textContent = error.message
@@ -768,16 +799,29 @@ downloadBtn.addEventListener("click", async () => {
 // --- images to PDF -----------------------------------------------------
 
 async function addImages(chosen) {
+  // Files that are not images. Collected rather than abandoning the batch on
+  // the first one: nine good photographs and one stray text file should give
+  // you nine photographs, not nothing.
+  const refused = []
+
   for (const file of chosen) {
     const bytes = new Uint8Array(await file.arrayBuffer())
 
     // Check what the file really is, since a name can lie about its contents.
     if (!imageKind(bytes)) {
-      result.textContent = `${file.name} is not a JPG or PNG. Convert it first.`
-      return
+      refused.push(file.name)
+      continue
     }
 
     chosenImages.push({ name: file.name, bytes })
+  }
+
+  if (chosenImages.length === 0) {
+    result.textContent = refused.length
+      ? refusalOf(refused, "a JPG or PNG", "JPGs or PNGs")
+      : "Nothing could be opened. Select an image to begin."
+    paintLamps()
+    return
   }
 
   downloadBtn.disabled = false
@@ -785,7 +829,8 @@ async function addImages(chosen) {
   paintLamps()
   const imageBytes = chosenImages.reduce((sum, i) => sum + i.bytes.byteLength, 0)
   result.textContent =
-    `${countOf(chosenImages.length, "image")}, ${formatSize(imageBytes)}.`
+    `${countOf(chosenImages.length, "image")}, ${formatSize(imageBytes)}.` +
+    (refused.length ? " " + refusalOf(refused, "a JPG or PNG", "JPGs or PNGs") : "")
 }
 
 function drawImages() {
