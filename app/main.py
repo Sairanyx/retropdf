@@ -191,12 +191,14 @@ if os.environ.get("REDPDF_DEV", "").lower() in {"1", "true", "yes"}:
 
 @app.get("/desktop", response_class=HTMLResponse)
 def desktop(request: Request) -> HTMLResponse:
-    """Ask whether a desktop app is wanted, by counting who opens this page.
+    """Count somebody asking for a desktop app.
 
-    Opening the page is the vote. There is no form, no address and no button
-    that sends anything, because the request for the page is already a
-    request the server handles and counting it needs nothing new. That keeps
-    `connect-src 'none'` exactly as it is.
+    You arrive here by pressing a button that says it will count you, so the
+    counting is something you chose rather than something that happened while
+    you were reading. That distinction is the whole reason this is a page you
+    go to: the site may not make requests of its own, so a button that quietly
+    sent a tally would need `connect-src 'none'` relaxed, and being counted
+    without noticing is exactly what this is trying to avoid.
 
     The number says how many, never who.
     """
@@ -211,6 +213,9 @@ def desktop(request: Request) -> HTMLResponse:
         canonical=f"{BASE_URL}/desktop",
         asked=interest.record(),
         on_info=True,
+        # The button that leads here steps aside on this page, since you have
+        # already pressed it.
+        on_desktop=True,
     )
 
 

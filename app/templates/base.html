@@ -77,6 +77,18 @@
             Workspace <span class="led"></span>
           </a>
         </nav>
+
+        <!-- An ordinary link, not a form. The page is not permitted to make
+             requests of its own, so being counted is a page you go to rather
+             than something sent quietly from here. The label says what
+             pressing it does, which is the point: nobody should find out
+             they were counted after the fact. -->
+        {% if not on_desktop %}
+        <a class="plate wanted" href="/desktop">
+          <span class="wanted-ask">Want a desktop app?</span>
+          <span class="wanted-do">Count me in <span class="led"></span></span>
+        </a>
+        {% endif %}
       </div>
     </div>
   </header>
@@ -120,7 +132,6 @@
         <a href="/privacy">Privacy</a>
         <a href="/terms">Terms</a>
         <a href="/security">Security</a>
-        <a href="/desktop">Desktop app</a>
       </nav>
 
       <!-- The logo again, where the trail ends. The mark leaves the plate at

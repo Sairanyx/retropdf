@@ -4,38 +4,42 @@
 <div class="wrap">
   <section class="tool-head first-screen">
     <p class="label">Desktop app</p>
-    <h1 data-type="You just voted.">You just voted.</h1>
+    <h1 data-type="Counted. Thank you.">Counted. Thank you.</h1>
     <p class="lede">
-      Opening this page is the whole of it. There is nothing to fill in.
+      {% if asked == 1 %}
+      You are the first person to ask for one.
+      {% else %}
+      You are one of <strong class="tally">{{ "{:,}".format(asked) }}</strong>
+      people who have asked for one.
+      {% endif %}
     </p>
   </section>
 
   <section class="prose">
-    <h2>What the number means.</h2>
+    <h2>That is all we took.</h2>
     <p>
-      <strong class="tally">{{ "{:,}".format(asked) }}</strong>
-      {% if asked == 1 %}
-      person has opened this page, and that person is you. You are the first.
-      {% else %}
-      people have opened this page, including you just now.
-      {% endif %}
-      That is the entire record: how many, never who. No address, no account,
-      nothing stored about you, and nothing that could be sold to anyone even
-      if we wanted to.
+      A number went up by one. There is no address attached to it, no account,
+      nothing about you and nothing about this visit. It says how many, never
+      who, and it is the only number this site keeps.
     </p>
     <p>
-      Most sites would put an email box here. We did not, because this site
-      tells you it keeps nothing, and asking for your address on the way to
-      that promise would undercut it. A count of how many people were curious
-      answers the question just as well.
+      Most sites would have asked for your email here. We did not, because
+      this site tells you it keeps nothing, and collecting addresses on the
+      way to that promise would make it untrue. Counting how many people were
+      interested answers the question well enough, and it means there is
+      nothing to leak, nothing to sell and nothing to unsubscribe from.
+    </p>
+    <p>
+      The <a href="/privacy">privacy page</a> says the same thing, and this
+      is the number it is talking about.
     </p>
 
     <h2>What the app would be.</h2>
     <p>
       The same tools, without a browser around them. That would mean no size
       limit worth mentioning, since a desktop application is not held to what
-      a browser tab can keep in memory, and files that open straight from
-      your computer rather than being chosen through a picker.
+      a browser tab can keep in memory, and files that open straight from your
+      computer rather than being chosen through a picker.
     </p>
     <p>
       What would not change is the part that matters. It would still do the

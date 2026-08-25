@@ -2347,6 +2347,81 @@ html {
   font-weight: 600;
 }
 
+/* The desktop app question, under the nav on the right.
+ *
+ * An ordinary link rather than a form: the page may not make requests of its
+ * own, so being counted means going to a page. The label says so before it is
+ * pressed, which matters more here than anywhere else on the site, since
+ * counting somebody who only meant to read is exactly what this is trying not
+ * to do.
+ *
+ * Quieter than the nav chips. It is an aside, not a fourth destination. */
+.wanted {
+  /* Out of the header's flow and under the nav, which is fixed to the right
+     on a wide screen. Following the same right edge keeps the two aligned. */
+  position: fixed;
+  top: calc(1.25rem + 66px + 0.75rem);
+  right: max(clamp(1.25rem, 5vw, 4rem), calc((100vw - 1520px) / 2 + clamp(1.25rem, 5vw, 4rem)));
+  z-index: 55;
+
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.15rem;
+  padding: 0.7rem 1.1rem;
+  text-decoration: none;
+  color: var(--ink-3);
+  font-size: var(--text-small);
+  transition: box-shadow 0.32s ease-out, color var(--t);
+}
+
+.wanted:hover {
+  color: var(--ink);
+  box-shadow:
+    var(--raise-lg),
+    0 0 0 1px color-mix(in srgb, var(--accent) 40%, transparent),
+    0 0 20px color-mix(in srgb, var(--accent) 34%, transparent);
+}
+
+/* The question, smaller than the answer. */
+.wanted-ask {
+  opacity: 0.85;
+}
+
+/* The part that reads as the button. */
+.wanted-do {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--accent);
+}
+
+.wanted:hover .led {
+  background: var(--accent);
+  box-shadow: 0 0 6px var(--accent), 0 0 2px var(--accent);
+}
+
+/* On a phone it joins the flow under the nav rather than being fixed over it.
+   The nav is not fixed at this width either, so a fixed button simply landed
+   on top of it.
+
+   Written here rather than with the other mobile rules because it has to come
+   after the rule above to win. */
+@media (max-width: 640px) {
+  .wanted {
+    position: static;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding-block: 0.55rem;
+    /* Clear of the nav plate above, whose shadow and padding reach past its
+       chips. The header's own gap is measured to the plate's edge and leaves
+       the two touching. */
+    margin-top: 0.65rem;
+  }
+}
+
 /* The count on the desktop app page, set large enough to be the thing you
    look at. It is the whole answer that page gives, so it reads as a figure
    rather than as a word in a sentence. */
