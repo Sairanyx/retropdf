@@ -81,7 +81,7 @@
   <header class="topbar-wrap">
     <div class="wrap">
       <div class="topbar">
-        <a class="plate brand" href="/" id="brand-plate">
+        <a class="plate brand" href="{{ url() }}" id="brand-plate">
           <!-- The logo's mark is not drawn here. It is a single element that
                lives on the page and parks in this slot, so that scrolling
                moves the very same object rather than swapping one copy for
@@ -100,15 +100,15 @@
           <span class="brand-word">RetroPDF</span>
         </a>
 
-        <nav class="plate navgroup" aria-label="Main">
+        <nav class="plate navgroup" aria-label="{{ t('nav.main') }}">
           <a class="chip{% if on_tools %} on{% endif %}" href="{{ '#tools' if on_home else '/#tools' }}" data-watch="tools">
-            Tools <span class="led"></span>
+            {{ t('nav.tools') }} <span class="led"></span>
           </a>
           <a class="chip{% if on_info %} on{% endif %}" href="{{ '#info' if on_home else '/#info' }}" data-watch="info">
-            Info <span class="led"></span>
+            {{ t('nav.info') }} <span class="led"></span>
           </a>
-          <a class="chip solid{% if on_workspace %} on{% endif %}" href="/workspace">
-            Workspace <span class="led"></span>
+          <a class="chip solid{% if on_workspace %} on{% endif %}" href="{{ url('workspace') }}">
+            {{ t('nav.workspace') }} <span class="led"></span>
           </a>
         </nav>
 
@@ -118,9 +118,9 @@
              pressing it does, which is the point: nobody should find out
              they were counted after the fact. -->
         {% if not on_desktop %}
-        <a class="plate wanted" href="/desktop?ask=1">
-          <span class="wanted-ask">Want a desktop app?</span>
-          <span class="wanted-do">Count me in</span>
+        <a class="plate wanted" href="{{ url('desktop') }}?ask=1">
+          <span class="wanted-ask">{{ t('wanted.ask') }}</span>
+          <span class="wanted-do">{{ t('wanted.do') }}</span>
         </a>
         {% endif %}
       </div>
@@ -134,7 +134,7 @@
       <!-- The logo first, so the trail arrives at it rather than running
            down past the links to reach it. The header reads the same way:
            the logo, and then everything else underneath. -->
-      <a class="plate brand footer-brand" href="/">
+      <a class="plate brand footer-brand" href="{{ url() }}">
         <!-- The footer draws its own mark, unlike the header slot above.
              The travelling mark only arrives here when the trail is running,
              which needs clear space beside the text, so on a phone and on a
@@ -151,11 +151,11 @@
         <span class="brand-word">RetroPDF</span>
       </a>
 
-      <nav aria-label="All tools">
+      <nav aria-label="{{ t('nav.all_tools') }}">
         {% for tool in tools %}
-          <a href="/{{ tool.slug }}">{{ tool.name }}</a>
+          <a href="{{ url(tool.slug) }}">{{ tool.name }}</a>
         {% endfor %}
-        <a href="/workspace">Workspace</a>
+        <a href="{{ url('workspace') }}">{{ t('nav.workspace') }}</a>
       </nav>
 
       <!-- Kept in a second row so the tools stay the prominent thing. A site
@@ -163,9 +163,9 @@
            policy reads as no thought given to privacy, whatever the code
            actually does. -->
       <nav class="footer-legal" aria-label="About this site">
-        <a href="/privacy">Privacy</a>
-        <a href="/terms">Terms</a>
-        <a href="/security">Security</a>
+        <a href="{{ url('privacy') }}">{{ t('footer.privacy') }}</a>
+        <a href="{{ url('terms') }}">{{ t('footer.terms') }}</a>
+        <a href="{{ url('security') }}">{{ t('footer.security') }}</a>
       </nav>
 
       <!-- The logo again, where the trail ends. The mark leaves the plate at
@@ -175,7 +175,7 @@
            The slot is empty and stays empty: the mark that lands in it is
            the one that travelled, not a second copy. Without scripting the
            word stands on its own, which still reads as the logo. -->
-      <p>Your files stay on your device. They are never sent to us.</p>
+      <p>{{ t('footer.promise') }}</p>
     </footer>
   </div>
 
