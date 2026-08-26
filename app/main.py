@@ -251,10 +251,19 @@ def register_translated_routes() -> None:
                 make_tool_route(tool.slug, code)
             )
 
-        # The legal pages and the desktop page are English only, so they get
-        # no prefixed address. A reader following a link to one leaves their
-        # language for that page, which is honest: there is no translation to
-        # send them to.
+        app.get(f"/{code}/desktop", response_class=HTMLResponse)(
+            make_desktop_route(code)
+        )
+
+        # Terms and the security page have no prefixed address: they are the
+        # two where a loose translation would misstate something. Everything
+        # else, privacy included, is published in every language.
+        for path, template, title, description in LEGAL_PAGES:
+            if languages.english_only(path):
+                continue
+            app.get(f"/{code}/{path}", response_class=HTMLResponse)(
+                make_page_route(path, template, title, description, code)
+            )
 
 
 # Development only. Kept out of the sitemap and hidden in production so it

@@ -102,8 +102,9 @@ def test_every_language_serves_the_translated_pages():
 
 
 def test_english_only_pages_have_no_translated_address():
-    """A privacy policy nobody can verify is worse than one in a language the
-    reader has to switch to, and nobody reaches these from a search engine."""
+    """Terms is a contract that says English governs it, and the security page
+    describes a policy header precisely. A loose translation of either would
+    misstate something, so neither is published in another language."""
     for language in languages.PREFIXED:
         for page in sorted(languages.ENGLISH_ONLY):
             path = languages.path_for(language.code, page)
@@ -114,7 +115,7 @@ def test_english_only_pages_have_no_translated_address():
 
 def test_english_only_pages_claim_no_translations():
     """hreflang pointing at addresses that do not exist is a crawl error."""
-    body = client.get("/privacy").text
+    body = client.get("/terms").text
     assert 'rel="alternate"' not in body
 
     # A translated page still declares its alternates.
@@ -123,8 +124,16 @@ def test_english_only_pages_claim_no_translations():
 
 def test_the_sitemap_lists_english_only_pages_once():
     body = client.get("/sitemap.xml").text
-    assert "/privacy<" in body
-    assert "/es/privacy<" not in body
+    assert "/terms<" in body
+    assert "/es/terms<" not in body
+
+
+def test_privacy_is_published_in_every_language():
+    """The GDPR asks for clear and plain language, which for a reader in
+    Spanish means Spanish."""
+    for language in languages.PREFIXED:
+        path = languages.path_for(language.code, "privacy")
+        assert client.get(path).status_code == 200, path
 
 
 def test_a_translated_page_declares_its_language():
