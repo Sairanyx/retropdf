@@ -50,9 +50,20 @@ def test_words_come_back_for_a_known_key():
 
 
 def test_a_missing_language_falls_back_to_english():
-    """A language listed before its file exists shows English rather than
-    breaking every page in it."""
+    """A language listed before its file is written shows English rather than
+    breaking every page in it. Every language has a file now, so this uses a
+    code that has none: the safety net has to keep working for the next one
+    added."""
     assert words_for("xx")("nav.tools") == "Tools"
+
+
+def test_a_missing_key_falls_back_to_english():
+    """A translation that is behind the English shows the English line rather
+    than a blank or a raw key name."""
+    assert words_for("sv")("this.key.does.not.exist") == "this.key.does.not.exist"
+    # And a key English has but a translation lacks comes back in English.
+    swedish = words_for("sv")
+    assert swedish("nav.tools") == "Verktyg"
 
 
 def test_numbers_are_substituted_into_the_sentence():
@@ -154,10 +165,22 @@ def test_pages_point_at_their_other_languages():
     assert "/zh/merge-pdf" in body
 
 
-def test_untranslated_words_fall_back_to_english():
-    """A language with no file yet reads as English rather than as blanks."""
-    body = client.get("/sv/merge-pdf").text
-    assert "Tools" in body or "Workspace" in body
+def test_every_language_is_actually_translated():
+    """A page serving English words under another language's address is worse
+    than no translation: a reader is told it is their language and it is not,
+    and a search engine indexes eleven copies of the same text."""
+    english = words_for("en")
+    for language in languages.PREFIXED:
+        words = words_for(language.code)
+        same = [
+            key
+            for key in ("home.heading", "nav.tools", "tool.download", "footer.privacy")
+            if words(key) == english(key)
+        ]
+        # "Info" and "Normal" really are the same in several languages, so a
+        # couple of matches is fine. The heading never legitimately matches.
+        assert words("home.heading") != english("home.heading"), language.code
+        assert len(same) < 3, f"{language.code} looks untranslated: {same}"
 
 
 def test_the_sitemap_lists_every_language():
