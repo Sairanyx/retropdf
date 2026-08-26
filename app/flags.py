@@ -7,9 +7,9 @@ pixels a flag is already a hint rather than a rendering, but a wrong hint is
 worse than a plain lamp.
 
 Each is a circle of the flag's centre, since that is what a round lamp can
-hold. Simplified deliberately: the Korean taegeuk is two curves rather than
-the full spiral with its four trigrams, and China keeps the large star and
-drops the four small ones. Both still read as themselves at this size.
+hold. Two simplifications remain, both because the detail closes up at this
+size rather than because it was easier: China's four small stars are dots
+instead of five pointed stars, and Spain and Portugal carry no arms.
 
 A flag stands for a country and a language rarely does, which is why the
 name is always written beside the lamp. The flag is the glance, the word is
@@ -28,11 +28,18 @@ FLAGS = {
   <path d="M16 0v32M0 16h32" stroke="#fff" stroke-width="11"/>
   <path d="M16 0v32M0 16h32" stroke="#c8102e" stroke-width="6"/>
 </svg>""",
-    # Red ground with the large gold star. The four small ones are dropped:
-    # at this size they close up into a smudge.
+    # Red ground, the large star towards the hoist with the four small ones
+    # arced beside it. The small stars are drawn as plain dots: at this size a
+    # five pointed star of that size is a smudge either way, and a dot keeps
+    # the arrangement legible.
     "zh": """<svg viewBox="0 0 32 32" preserveAspectRatio="xMidYMid slice">
   <rect width="32" height="32" fill="#de2910"/>
-  <path d="M16 7l2.6 8h8.4l-6.8 4.9 2.6 8-6.8-4.9-6.8 4.9 2.6-8L4.9 15h8.4z" fill="#ffde00"/>
+  <path d="M10.5 6l2.35 7.24h7.61l-6.16 4.47 2.36 7.24-6.16-4.48-6.16 4.48 2.36-7.24-6.16-4.47h7.61z"
+        fill="#ffde00"/>
+  <circle cx="24" cy="7" r="1.5" fill="#ffde00"/>
+  <circle cx="27.5" cy="11" r="1.5" fill="#ffde00"/>
+  <circle cx="27.5" cy="16" r="1.5" fill="#ffde00"/>
+  <circle cx="24" cy="20" r="1.5" fill="#ffde00"/>
 </svg>""",
     # Saffron, white, green, with the navy chakra.
     "hi": """<svg viewBox="0 0 32 32" preserveAspectRatio="xMidYMid slice">
@@ -70,11 +77,36 @@ FLAGS = {
   <rect width="32" height="32" fill="#fff"/>
   <circle cx="16" cy="16" r="9" fill="#bc002d"/>
 </svg>""",
-    # White with the taegeuk: two halves, each curving into the other.
+    # White with the taegeuk, tilted as it really is, and the four trigrams in
+    # their corners. The trigram bars are shortened and thickened so they stay
+    # separate lines rather than closing into blocks.
     "ko": """<svg viewBox="0 0 32 32" preserveAspectRatio="xMidYMid slice">
   <rect width="32" height="32" fill="#fff"/>
-  <path d="M7 16a9 9 0 0 1 18 0 4.5 4.5 0 0 0-9 0 4.5 4.5 0 0 1-9 0z" fill="#cd2e3a"/>
-  <path d="M7 16a4.5 4.5 0 0 1 9 0 4.5 4.5 0 0 0 9 0 9 9 0 0 1-18 0z" fill="#0047a0"/>
+  <g transform="rotate(-33.69 16 16)">
+    <circle cx="16" cy="16" r="7.5" fill="#cd2e3a"/>
+    <path d="M8.5 16a3.75 3.75 0 0 1 7.5 0 3.75 3.75 0 0 0 7.5 0 7.5 7.5 0 0 1-15 0z"
+          fill="#0047a0"/>
+  </g>
+  <g fill="#000">
+    <rect x="2.2" y="6.2" width="6.4" height="1.1"/>
+    <rect x="2.2" y="8.1" width="6.4" height="1.1"/>
+    <rect x="2.2" y="10" width="6.4" height="1.1"/>
+    <rect x="23.4" y="21" width="6.4" height="1.1"/>
+    <rect x="23.4" y="22.9" width="2.7" height="1.1"/>
+    <rect x="27.1" y="22.9" width="2.7" height="1.1"/>
+    <rect x="23.4" y="24.8" width="6.4" height="1.1"/>
+    <rect x="23.4" y="6.2" width="2.7" height="1.1"/>
+    <rect x="27.1" y="6.2" width="2.7" height="1.1"/>
+    <rect x="23.4" y="8.1" width="6.4" height="1.1"/>
+    <rect x="23.4" y="10" width="2.7" height="1.1"/>
+    <rect x="27.1" y="10" width="2.7" height="1.1"/>
+    <rect x="2.2" y="21" width="2.7" height="1.1"/>
+    <rect x="5.9" y="21" width="2.7" height="1.1"/>
+    <rect x="2.2" y="22.9" width="2.7" height="1.1"/>
+    <rect x="5.9" y="22.9" width="2.7" height="1.1"/>
+    <rect x="2.2" y="24.8" width="2.7" height="1.1"/>
+    <rect x="5.9" y="24.8" width="2.7" height="1.1"/>
+  </g>
 </svg>""",
     # Blue with the gold cross, set left of centre as it really is.
     "sv": """<svg viewBox="0 0 32 32" preserveAspectRatio="xMidYMid slice">
