@@ -207,14 +207,15 @@ def make_tool_route(slug: str, lang: str = "en"):
 
     def tool_page(request: Request) -> HTMLResponse:
         tool = BY_SLUG[slug]
+        words = words_for(lang)
         return render(
             request,
             "tool.html",
             lang=lang,
             tool=tool,
             here=tool.slug,
-            page_title=tool.title,
-            page_description=tool.description,
+            page_title=words(f"tool.{tool.slug}.title"),
+            page_description=words(f"tool.{tool.slug}.description"),
             canonical=f"{BASE_URL}{languages.path_for(lang, tool.slug)}",
             # A tool page is one of the tools, so the Tools lamp is lit.
             on_tools=True,

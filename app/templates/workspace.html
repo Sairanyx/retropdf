@@ -32,39 +32,39 @@
       </label>
       <input type="file" id="picker" multiple>
       <button class="chip" id="download" disabled>
-        Download <span class="led"></span>
+        {{ t('tool.download') }} <span class="led"></span>
       </button>
       <!-- Hidden until there is something to clear, so an empty page does
            not offer to empty itself. -->
       <button class="chip" id="start-over" hidden>Start over</button>
     </div>
 
-    <p class="readout" id="result">Select a file to begin.</p>
+    <p class="readout" id="result">{{ t('tool.start_hint') }}</p>
     <p class="note" id="limit-note"></p>
 
     <fieldset id="split-options" hidden>
-      <legend>Where to cut</legend>
+      <legend>{{ t('split.legend') }}</legend>
       <!-- Each choice is wrapped with the number it needs, so the two stay
            together when the row wraps. Left as siblings they broke apart on a
            narrow screen and a stepper ended up beside the wrong switch. -->
       <div class="option">
         <label class="switchbox">
           <input type="radio" name="split" value="at" checked>
-          After page <span class="led"></span>
+          {{ t('split.after_page') }} <span class="led"></span>
         </label>
-        <input type="number" id="split-after" value="1" min="1" aria-label="Cut after page">
+        <input type="number" id="split-after" value="1" min="1" aria-label="{{ t('split.cut_after_label') }}">
       </div>
       <div class="option">
         <label class="switchbox">
           <input type="radio" name="split" value="every">
-          Every <span class="led"></span>
+          {{ t('split.every') }} <span class="led"></span>
         </label>
-        <input type="number" id="split-size" value="1" min="1" aria-label="Pages per part">
+        <input type="number" id="split-size" value="1" min="1" aria-label="{{ t('split.pages_per_part') }}">
       </div>
       <div class="option">
         <label class="switchbox">
           <input type="radio" name="split" value="single">
-          One file per page <span class="led"></span>
+          {{ t('split.one_per_page') }} <span class="led"></span>
         </label>
       </div>
     </fieldset>

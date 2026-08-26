@@ -3,9 +3,9 @@
 {% block content %}
 <div class="wrap">
   <section class="tool-head first-screen">
-    <p class="label">{{ tool.name }}</p>
-    <h1 data-type="{{ tool.heading }}">{{ tool.heading }}</h1>
-    <p class="lede">{{ tool.steps }}</p>
+    <p class="label">{{ t('tool.' ~ tool.slug ~ '.name') }}</p>
+    <h1 data-type="{{ t('tool.' ~ tool.slug ~ '.heading') }}">{{ t('tool.' ~ tool.slug ~ '.heading') }}</h1>
+    <p class="lede">{{ t('tool.' ~ tool.slug ~ '.steps') }}</p>
   </section>
 
   <!-- The active tool. The browser code reads this rather than guessing from
@@ -19,40 +19,40 @@
       </label>
       <input type="file" id="picker" multiple>
       <button class="chip" id="download" disabled>
-        Download <span class="led"></span>
+        {{ t('tool.download') }} <span class="led"></span>
       </button>
       <!-- Hidden until there is something to clear, so an empty page does
            not offer to empty itself. -->
-      <button class="chip" id="start-over" hidden>Start over</button>
+      <button class="chip" id="start-over" hidden>{{ t('tool.start_over') }}</button>
     </div>
 
-    <p class="readout" id="result">{{ start_hint }}</p>
+    <p class="readout" id="result">{{ t('tool.start_hint') }}</p>
     <p class="note" id="limit-note"></p>
 
     {% if tool.mode == "split" %}
     <fieldset id="split-options">
-      <legend>Where to cut</legend>
+      <legend>{{ t('split.legend') }}</legend>
       <!-- Each choice is wrapped with the number it needs, so the two stay
            together when the row wraps. Left as siblings they broke apart on a
            narrow screen and a stepper ended up beside the wrong switch. -->
       <div class="option">
         <label class="switchbox">
           <input type="radio" name="split" value="at" checked>
-          After page <span class="led"></span>
+          {{ t('split.after_page') }} <span class="led"></span>
         </label>
-        <input type="number" id="split-after" value="1" min="1" aria-label="Cut after page">
+        <input type="number" id="split-after" value="1" min="1" aria-label="{{ t('split.cut_after_label') }}">
       </div>
       <div class="option">
         <label class="switchbox">
           <input type="radio" name="split" value="every">
-          Every <span class="led"></span>
+          {{ t('split.every') }} <span class="led"></span>
         </label>
-        <input type="number" id="split-size" value="1" min="1" aria-label="Pages per part">
+        <input type="number" id="split-size" value="1" min="1" aria-label="{{ t('split.pages_per_part') }}">
       </div>
       <div class="option">
         <label class="switchbox">
           <input type="radio" name="split" value="single">
-          One file per page <span class="led"></span>
+          {{ t('split.one_per_page') }} <span class="led"></span>
         </label>
       </div>
     </fieldset>
@@ -60,26 +60,26 @@
 
     {% if tool.mode == "frimages" %}
     <fieldset id="image-options">
-      <legend>Page size</legend>
+      <legend>{{ t('images.legend') }}</legend>
       <label class="switchbox">
         <input type="radio" name="fit" value="a4" checked>
-        Fit on A4 <span class="led"></span>
+        {{ t('images.fit_a4') }} <span class="led"></span>
       </label>
       <label class="switchbox">
         <input type="radio" name="fit" value="image">
-        Match the image <span class="led"></span>
+        {{ t('images.match') }} <span class="led"></span>
       </label>
     </fieldset>
     {% endif %}
 
     {% if tool.mode == "toimages" %}
     <fieldset id="export-options">
-      <legend>Image size</legend>
-      <label for="export-scale" class="visually-hidden">Image size</label>
+      <legend>{{ t('export.legend') }}</legend>
+      <label for="export-scale" class="visually-hidden">{{ t('export.legend') }}</label>
       <select id="export-scale">
-        <option value="1">Normal</option>
-        <option value="2" selected>Large</option>
-        <option value="3">Very large</option>
+        <option value="1">{{ t('export.normal') }}</option>
+        <option value="2" selected>{{ t('export.large') }}</option>
+        <option value="3">{{ t('export.very_large') }}</option>
       </select>
     </fieldset>
     {% endif %}
@@ -90,21 +90,21 @@
   </section>
 
   <section class="panel" data-reveal>
-    <p class="label">Other tools</p>
+    <p class="label">{{ t('tool.other_tools') }}</p>
     <ul class="tools">
       {% for other in tools if other.slug != tool.slug %}
         <li>
-          <a class="plate tool" href="/{{ other.slug }}">
+          <a class="plate tool" href="{{ url(other.slug) }}">
             <span class="tool-art">{{ art[other.mode] | safe }}</span>
-            <h3>{{ other.name }}</h3>
-            <p>{{ other.blurb }}</p>
+            <h3>{{ t('tool.' ~ other.slug ~ '.name') }}</h3>
+            <p>{{ t('tool.' ~ other.slug ~ '.blurb') }}</p>
           </a>
         </li>
       {% endfor %}
     </ul>
     <p class="workspace-note">
-      Need more than one tool on the same file?
-      <a href="/workspace">Open the workspace</a>.
+      {{ t('tool.workspace_note') }}
+      <a href="{{ url('workspace') }}">{{ t('tool.workspace_link') }}</a>.
     </p>
   </section>
 </div>

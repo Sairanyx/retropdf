@@ -34,8 +34,8 @@
           <a class="plate tool" href="{{ url(tool.slug) }}">
             <span class="tool-art">{{ art[tool.mode] | safe }}</span>
             <span class="k">{{ "%02d"|format(loop.index) }}</span>
-            <h3>{{ tool.name }}</h3>
-            <p>{{ tool.blurb }}</p>
+            <h3>{{ t('tool.' ~ tool.slug ~ '.name') }}</h3>
+            <p>{{ t('tool.' ~ tool.slug ~ '.blurb') }}</p>
           </a>
         </li>
       {% endfor %}
