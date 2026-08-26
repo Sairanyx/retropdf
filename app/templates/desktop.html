@@ -3,92 +3,57 @@
 {% block content %}
 <div class="wrap">
   <section class="tool-head first-screen">
-    <p class="label">Desktop app</p>
+    <p class="label">{{ t('desktop.label') }}</p>
     {% if counted %}
-    <h1 data-type="Counted. Thank you.">Counted. Thank you.</h1>
+    <h1 data-type="{{ t('desktop.counted_heading') }}">{{ t('desktop.counted_heading') }}</h1>
     <p class="lede">
       {% if asked == 1 %}
-      You are the first person to ask for one.
+      {{ t('desktop.first') }}
       {% else %}
-      You are one of <strong class="tally">{{ "{:,}".format(asked) }}</strong>
-      people who have asked for one.
+      {{ t('desktop.one_of', count='<strong class="tally">%s</strong>' % "{:,}".format(asked)) | safe }}
       {% endif %}
     </p>
     {% else %}
     <!-- Reached without pressing the button: a reload, a shared link, or
          coming back later. The number is shown but not added to. -->
-    <h1 data-type="Someone wants one.">Someone wants one.</h1>
+    <h1 data-type="{{ t('desktop.reading_heading') }}">{{ t('desktop.reading_heading') }}</h1>
     <p class="lede">
       {% if asked == 0 %}
-      Nobody has asked for a desktop app yet.
+      {{ t('desktop.nobody_yet') }}
       {% elif asked == 1 %}
-      One person has asked for a desktop app.
+      {{ t('desktop.just_one') }}
       {% else %}
-      <strong class="tally">{{ "{:,}".format(asked) }}</strong> people have
-      asked for a desktop app.
+      {{ t('desktop.how_many', count='<strong class="tally">%s</strong>' % "{:,}".format(asked)) | safe }}
       {% endif %}
     </p>
     {% endif %}
   </section>
 
   <section class="prose">
-    <h2>{% if counted %}That is all we took.{% else %}What the number is.{% endif %}</h2>
-    <p>
-      {% if counted %}A number went up by one.{% else %}It is one number.{% endif %} There is no address attached to it, no account,
-      nothing about you and nothing about this visit. It says how many, never
-      who, and it is the only number this site keeps.
-    </p>
-    <p>
-      Most sites would have asked for your email here. We did not, because
-      this site tells you it keeps nothing, and collecting addresses on the
-      way to that promise would make it untrue. Counting how many people were
-      interested answers the question well enough, and it means there is
-      nothing to leak, nothing to sell and nothing to unsubscribe from.
-    </p>
+    <h2>{% if counted %}{{ t('desktop.took_heading') }}{% else %}{{ t('desktop.number_heading') }}{% endif %}</h2>
+    <p>{% if counted %}{{ t('desktop.took_one') }}{% else %}{{ t('desktop.reading_one') }}{% endif %}</p>
+    <p>{{ t('desktop.no_email') }}</p>
+
     {% if counted %}
-    <p>
-      Your browser now remembers that you asked, so the button will say so
-      rather than counting you twice. That is a note in your own browser and
-      nothing is sent anywhere, the same as the two other things this site
-      remembers.
-    </p>
+    <p>{{ t('desktop.remembered') }}</p>
     {% endif %}
+
+    <p>{{ t('desktop.limit') }}</p>
     <p>
-      It is worth being straight about the limit of that: clearing your
-      browser data or opening a private window would let the same person be
-      counted again. Stopping that properly would mean keeping something
-      about you, which is the one thing this site will not do. So the number
-      is honest rather than exact, and it is a floor rather than a headcount.
-    </p>
-    <p>
-      The <a href="/privacy">privacy page</a> says the same thing, and this
-      is the number it is talking about.
+      {{ t('desktop.privacy_note_before') }}
+      <a href="{{ url('privacy') }}">{{ t('desktop.privacy_note_link') }}</a>
+      {{ t('desktop.privacy_note_after') }}
     </p>
 
-    <h2>What the app would be.</h2>
-    <p>
-      The same tools, without a browser around them. That would mean no size
-      limit worth mentioning, since a desktop application is not held to what
-      a browser tab can keep in memory, and files that open straight from your
-      computer rather than being chosen through a picker.
-    </p>
-    <p>
-      What would not change is the part that matters. It would still do the
-      work on your own machine and still send nothing anywhere, because that
-      is the point of the thing rather than a feature of it.
-    </p>
+    <h2>{{ t('desktop.would_be_heading') }}</h2>
+    <p>{{ t('desktop.would_be_1') }}</p>
+    <p>{{ t('desktop.would_be_2') }}</p>
 
-    <h2>Whether it happens.</h2>
+    <h2>{{ t('desktop.happens_heading') }}</h2>
+    <p>{{ t('desktop.happens_1') }}</p>
     <p>
-      Honestly, it depends on this number. Building and maintaining a desktop
-      application for three operating systems is a great deal more work than a
-      website, and it is worth doing only if people actually want it. If the
-      count stays small, the website stays as it is, which is no bad outcome:
-      it already does the job.
-    </p>
-    <p>
-      In the meantime everything here works today, on this device, with no
-      account and no limit. The <a href="/">tools are on the home page</a>.
+      {{ t('desktop.happens_2_before') }}
+      <a href="{{ url() }}">{{ t('desktop.happens_2_link') }}</a>{{ t('desktop.happens_2_after') }}
     </p>
   </section>
 </div>

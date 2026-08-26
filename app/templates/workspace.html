@@ -3,12 +3,12 @@
 {% block content %}
 <div class="wrap">
   <section class="tool-head first-screen">
-    <p class="label">Workspace</p>
-    <h1 data-type="Every tool in one place.">Every tool in one place.</h1>
+    <p class="label">{{ t('workspace.label') }}</p>
+    <h1 data-type="{{ t('workspace.heading') }}">{{ t('workspace.heading') }}</h1>
     <p class="lede">
-      Select your files once, switch between tools, and download when you are
-      done. If you only need to do one task, the <a href="/#tools">single tools</a>
-      are simpler.
+      {{ t('workspace.lede_before') }}
+      <a href="{{ url() }}#tools">{{ t('workspace.lede_link') }}</a>
+      {{ t('workspace.lede_after') }}
     </p>
   </section>
 
@@ -16,12 +16,12 @@
   <section class="plate workspace workspace-page" id="workspace" data-mode="merge">
 
     <fieldset class="toolbar">
-      <legend>Tool</legend>
+      <legend>{{ t('workspace.tool_legend') }}</legend>
       {% for tool in tools %}
         <label class="switchbox">
           <input type="radio" name="mode" value="{{ tool.mode }}"
                  {% if loop.first %}checked{% endif %}>
-          {{ tool.name }} <span class="led"></span>
+          {{ t('tool.' ~ tool.slug ~ '.name') }} <span class="led"></span>
         </label>
       {% endfor %}
     </fieldset>
@@ -36,7 +36,7 @@
       </button>
       <!-- Hidden until there is something to clear, so an empty page does
            not offer to empty itself. -->
-      <button class="chip" id="start-over" hidden>Start over</button>
+      <button class="chip" id="start-over" hidden>{{ t('tool.start_over') }}</button>
     </div>
 
     <p class="readout" id="result">{{ t('tool.start_hint') }}</p>
@@ -70,7 +70,7 @@
     </fieldset>
 
     <fieldset id="image-options" hidden>
-      <legend>Page size</legend>
+      <legend>{{ t('images.legend') }}</legend>
       <label class="switchbox">
         <input type="radio" name="fit" value="a4" checked>
         Fit on A4 <span class="led"></span>
@@ -82,12 +82,12 @@
     </fieldset>
 
     <fieldset id="export-options" hidden>
-      <legend>Image size</legend>
-      <label for="export-scale" class="visually-hidden">Image size</label>
+      <legend>{{ t('export.legend') }}</legend>
+      <label for="export-scale" class="visually-hidden">{{ t('export.legend') }}</label>
       <select id="export-scale">
-        <option value="1">Normal</option>
-        <option value="2" selected>Large</option>
-        <option value="3">Very large</option>
+        <option value="1">{{ t('export.normal') }}</option>
+        <option value="2" selected>{{ t('export.large') }}</option>
+        <option value="3">{{ t('export.very_large') }}</option>
       </select>
     </fieldset>
 

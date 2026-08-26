@@ -138,11 +138,8 @@ def make_workspace_route(lang: str = "en"):
             "workspace.html",
             lang=lang,
             here="workspace",
-            page_title="Workspace · RetroPDF",
-            page_description=(
-                "Load a PDF once and merge, remove, reorder, rotate or split "
-                "it without uploading anything."
-            ),
+            page_title=words_for(lang)("workspace.title"),
+            page_description=words_for(lang)("workspace.description"),
             canonical=f"{BASE_URL}{languages.path_for(lang, 'workspace')}",
             on_workspace=True,
         )

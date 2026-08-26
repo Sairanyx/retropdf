@@ -29,3 +29,32 @@ if (picker) {
     picker.querySelector("summary")?.focus()
   })
 }
+
+
+// Line the desktop app button up with the left edge of the taskbar.
+//
+// The taskbar is fixed to the right and its width changes with the language,
+// so the button's distance from the left of the window is not a fixed number
+// and cannot be written in the stylesheet. Measured here and handed back as a
+// custom property, which the CSS uses in place of its own rough guess.
+function alignWantedWithNav() {
+  const nav = document.querySelector(".navgroup")
+  const wanted = document.querySelector(".wanted")
+  if (!nav || !wanted) return
+
+  // Only while the nav is fixed to the right. On a phone it sits in the flow
+  // and the button follows it there on its own.
+  if (getComputedStyle(nav).position !== "fixed") {
+    document.documentElement.style.removeProperty("--nav-left")
+    return
+  }
+
+  const left = Math.round(nav.getBoundingClientRect().left)
+  document.documentElement.style.setProperty("--nav-left", `${left}px`)
+}
+
+alignWantedWithNav()
+window.addEventListener("resize", alignWantedWithNav, { passive: true })
+// The nav is a different width once the display face has arrived.
+document.fonts?.ready.then(alignWantedWithNav)
+

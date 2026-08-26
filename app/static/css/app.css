@@ -408,6 +408,18 @@ html {
   box-shadow: var(--press);
 }
 
+/* The note beside a link to a page that exists only in English. Quieter
+   than the link it follows, since it is a caveat rather than part of the
+   name. */
+.only-english {
+  font-size: 0.85em;
+  opacity: 0.7;
+  /* Space of its own, rather than relying on the newline in the markup
+     collapsing into one. The note reads as an aside beside the name, and
+     that only works if it is not touching it. */
+  margin-left: 0.4em;
+}
+
 /* ---------- header ---------- */
 
 .topbar {
@@ -2464,10 +2476,10 @@ html {
    * puts this at the nav's left edge. */
   position: fixed;
   top: calc(1.25rem + 66px + 0.75rem);
-  right: calc(
-    max(clamp(1.25rem, 5vw, 4rem), (100vw - 1520px) / 2 + clamp(1.25rem, 5vw, 4rem))
-    + 15rem
-  );
+  /* Set from the nav's measured left edge rather than guessed here: the nav
+     changes width with the language, so any fixed offset drifts. picker.js
+     writes the value. The fallback keeps it roughly right without scripting. */
+  left: var(--nav-left, max(clamp(1.25rem, 5vw, 4rem), calc((100vw - 1520px) / 2 + clamp(1.25rem, 5vw, 4rem))));
   z-index: 55;
 
   display: flex;

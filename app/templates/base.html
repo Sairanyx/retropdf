@@ -141,7 +141,8 @@
              pressing it does, which is the point: nobody should find out
              they were counted after the fact. -->
         {% if not on_desktop %}
-        <a class="plate wanted" href="{{ url('desktop') }}?ask=1">
+        <a class="plate wanted" href="{{ url('desktop') }}?ask=1"
+           data-asked="{{ t('wanted.asked') }}">
           <span class="wanted-ask">{{ t('wanted.ask') }}</span>
           <span class="wanted-do">{{ t('wanted.do') }}</span>
         </a>
@@ -186,9 +187,19 @@
            policy reads as no thought given to privacy, whatever the code
            actually does. -->
       <nav class="footer-legal" aria-label="About this site">
-        <a href="{{ url('privacy') }}">{{ t('footer.privacy') }}</a>
-        <a href="{{ url('terms') }}">{{ t('footer.terms') }}</a>
-        <a href="{{ url('security') }}">{{ t('footer.security') }}</a>
+        <a href="{{ url('privacy') }}">
+          {{ t('footer.privacy') }}{% if lang and lang.code != 'en' %} <span class="only-english">({{ t('footer.english_only') }})</span>{% endif %}
+        </a>
+        <!-- Terms and the security page are published in English only, so a
+             reader in another language is told before they follow the link
+             rather than after. The note is pointless in English, where every
+             page is in English, so it only appears elsewhere. -->
+        <a href="{{ url('terms') }}">
+          {{ t('footer.terms') }}{% if lang and lang.code != 'en' %} <span class="only-english">({{ t('footer.english_only') }})</span>{% endif %}
+        </a>
+        <a href="{{ url('security') }}">
+          {{ t('footer.security') }}{% if lang and lang.code != 'en' %} <span class="only-english">({{ t('footer.english_only') }})</span>{% endif %}
+        </a>
       </nav>
 
       <!-- The logo again, where the trail ends. The mark leaves the plate at

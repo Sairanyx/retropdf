@@ -137,14 +137,16 @@ def test_the_sitemap_lists_english_only_pages_once():
     body = client.get("/sitemap.xml").text
     assert "/terms<" in body
     assert "/es/terms<" not in body
+    assert "/es/privacy<" not in body
 
 
-def test_privacy_is_published_in_every_language():
-    """The GDPR asks for clear and plain language, which for a reader in
-    Spanish means Spanish."""
-    for language in languages.PREFIXED:
-        path = languages.path_for(language.code, "privacy")
-        assert client.get(path).status_code == 200, path
+def test_the_footer_says_which_pages_are_english_only():
+    """A reader in another language is told before following the link, not
+    after."""
+    spanish = client.get("/es/merge-pdf").text
+    assert spanish.count("only-english") == len(languages.ENGLISH_ONLY)
+    # And the note is pointless in English, where every page is in English.
+    assert "only-english" not in client.get("/merge-pdf").text
 
 
 def test_a_translated_page_declares_its_language():

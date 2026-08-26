@@ -56,6 +56,9 @@ if (document.body.dataset.counted === "1") {
   button.removeAttribute("href")
   button.setAttribute("role", "note")
 
+  // The wording comes from the page rather than from here: this script
+  // cannot read the translation files, and a hardcoded English line would
+  // stay English on every translated page.
   const doing = button.querySelector(".wanted-do")
-  if (doing) doing.textContent = "You have asked for this"
+  if (doing && button.dataset.asked) doing.textContent = button.dataset.asked
 }
