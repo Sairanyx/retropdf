@@ -42,6 +42,16 @@ the machine's local address:
 uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
+## Hooks
+
+One commit hook, refusing a `Co-Authored-By` trailer that credits an
+assistant. Enable it once after cloning, since git does not carry hook
+settings across a clone:
+
+```bash
+git config core.hooksPath .githooks
+```
+
 ## Tests
 
 ```bash

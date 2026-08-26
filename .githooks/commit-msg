@@ -1,0 +1,21 @@
+#!/bin/sh
+# Refuse a commit message that credits a co-author who is not a person.
+#
+# The history of this repository is one author's. A trailer naming an
+# assistant showed up in GitHub's contributor list and took a rewrite and a
+# force push to remove, which is not a thing to do twice.
+#
+# Enable once, in this repository:
+#     git config core.hooksPath .githooks
+
+if grep -qiE '^Co-Authored-By:.*(claude|anthropic|copilot|chatgpt|openai|gpt)' "$1"; then
+	echo "commit-msg: refusing a Co-Authored-By trailer for an assistant." >&2
+	echo "" >&2
+	echo "  Found:" >&2
+	grep -iE '^Co-Authored-By:.*(claude|anthropic|copilot|chatgpt|openai|gpt)' "$1" | sed 's/^/    /' >&2
+	echo "" >&2
+	echo "  Remove that line and commit again." >&2
+	exit 1
+fi
+
+exit 0
