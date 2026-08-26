@@ -70,3 +70,22 @@ def path_for(code: str, path: str = "") -> str:
     if code == DEFAULT.code:
         return f"/{path}" if path else "/"
     return f"/{code}/{path}" if path else f"/{code}"
+
+
+# Pages that stay in English whatever language the reader is in.
+#
+# Two reasons, and they are different. The legal pages carry weight: a
+# mistranslated privacy policy or set of terms is a liability, and publishing
+# eleven versions nobody can verify is worse than publishing one that is
+# right. The rest simply gain nothing, since nobody arrives at a privacy
+# policy from a search engine.
+#
+# Translating the tools, the home page and the interface captures nearly all
+# the search value for about a third of the words.
+ENGLISH_ONLY = frozenset({"privacy", "terms", "security", "desktop"})
+
+
+def english_only(page: str) -> bool:
+    """Whether this page is published in English alone."""
+    return page.strip("/") in ENGLISH_ONLY
+

@@ -72,10 +72,16 @@ def render(request: Request, template: str, lang: str = "en", **context) -> HTML
             # Every language this page exists in, for the hreflang tags that
             # tell a search engine these are the same page rather than
             # duplicates competing with each other.
-            "alternates": [
-                (other, languages.path_for(other.code, context.get("here", "")))
-                for other in languages.LANGUAGES
-            ],
+            # An English only page has no alternates: claiming versions that
+            # do not exist makes a search engine follow links to nothing.
+            "alternates": (
+                []
+                if languages.english_only(context.get("here", ""))
+                else [
+                    (other, languages.path_for(other.code, context.get("here", "")))
+                    for other in languages.LANGUAGES
+                ]
+            ),
             **context,
         },
     )
@@ -240,19 +246,15 @@ def register_translated_routes() -> None:
         app.get(f"/{code}/workspace", response_class=HTMLResponse)(
             make_workspace_route(code)
         )
-        app.get(f"/{code}/desktop", response_class=HTMLResponse)(
-            make_desktop_route(code)
-        )
-
         for tool in TOOLS:
             app.get(f"/{code}/{tool.slug}", response_class=HTMLResponse)(
                 make_tool_route(tool.slug, code)
             )
 
-        for path, template, title, description in LEGAL_PAGES:
-            app.get(f"/{code}/{path}", response_class=HTMLResponse)(
-                make_page_route(path, template, title, description, code)
-            )
+        # The legal pages and the desktop page are English only, so they get
+        # no prefixed address. A reader following a link to one leaves their
+        # language for that page, which is honest: there is no translation to
+        # send them to.
 
 
 # Development only. Kept out of the sitemap and hidden in production so it
@@ -359,6 +361,9 @@ def sitemap() -> PlainTextResponse:
         f"{BASE_URL}{languages.path_for(language.code, page)}"
         for language in languages.LANGUAGES
         for page in pages
+        # English only pages appear once, under their plain address, rather
+        # than eleven times at addresses that do not exist.
+        if language.code == languages.DEFAULT.code or not languages.english_only(page)
     ]
     entries = "\n".join(f"  <url><loc>{url}</loc></url>" for url in urls)
     body = (

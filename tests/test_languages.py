@@ -93,11 +93,38 @@ def test_english_addresses_still_work():
         assert client.get(path).status_code == 200, path
 
 
-def test_every_language_serves_every_page():
+def test_every_language_serves_the_translated_pages():
+    """The tools, the home page and the workspace exist in every language."""
     for language in languages.PREFIXED:
-        for page in ("", "merge-pdf", "workspace", "privacy"):
+        for page in ("", "merge-pdf", "workspace"):
             path = languages.path_for(language.code, page)
             assert client.get(path).status_code == 200, path
+
+
+def test_english_only_pages_have_no_translated_address():
+    """A privacy policy nobody can verify is worse than one in a language the
+    reader has to switch to, and nobody reaches these from a search engine."""
+    for language in languages.PREFIXED:
+        for page in sorted(languages.ENGLISH_ONLY):
+            path = languages.path_for(language.code, page)
+            assert client.get(path).status_code == 404, f"{path} should not exist"
+        # The plain address still works, for everyone.
+        assert client.get(f"/{page}").status_code == 200
+
+
+def test_english_only_pages_claim_no_translations():
+    """hreflang pointing at addresses that do not exist is a crawl error."""
+    body = client.get("/privacy").text
+    assert 'rel="alternate"' not in body
+
+    # A translated page still declares its alternates.
+    assert 'rel="alternate"' in client.get("/merge-pdf").text
+
+
+def test_the_sitemap_lists_english_only_pages_once():
+    body = client.get("/sitemap.xml").text
+    assert "/privacy<" in body
+    assert "/es/privacy<" not in body
 
 
 def test_a_translated_page_declares_its_language():
