@@ -13,7 +13,9 @@
   <section class="plate workspace" id="workspace" data-mode="{{ tool.mode }}">
     <div class="controls">
       <label class="chip accent" for="picker">
-        {% if tool.mode == "frimages" %}Select images{% else %}Select a file{% endif %}
+        {% if tool.mode == "frimages" %}{{ t('tool.select_images') }}
+        {%- elif tool.mode == "merge" %}{{ t('tool.select_files') }}
+        {%- else %}{{ t('tool.select_file') }}{% endif %}
       </label>
       <input type="file" id="picker" multiple>
       <button class="chip" id="download" disabled>
