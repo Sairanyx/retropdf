@@ -310,6 +310,98 @@ html {
   box-shadow: 0 0 6px var(--accent), 0 0 2px var(--accent);
 }
 
+/* The language picker.
+ *
+ * A details element, so it opens and closes without any script and keeps
+ * working with none. The lamp takes the language's own colour through a
+ * custom property, which is the one place on the site where a lamp is not
+ * the accent red: here the colour is doing work, telling you which language
+ * a row is before you read it. */
+.picker {
+  position: relative;
+}
+
+.picker > summary {
+  /* A chip like the others, minus the marker the browser draws on a
+     summary element, which is a triangle from another design language. */
+  list-style: none;
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+}
+
+.picker > summary::-webkit-details-marker {
+  display: none;
+}
+
+/* One class per language, rather than an inline style: the site sets
+   style-src 'self', so the browser drops a style attribute on the element.
+   That rule is why no third party stylesheet can be injected, and it is not
+   worth relaxing for eleven colours.
+
+   Hard stops rather than blends, so a tricolour reads as three bands. */
+.lamp-en { background: linear-gradient(135deg, #012169 0 38%, #ffffff 38% 50%, #c8102e 50% 62%, #012169 62%) }
+.lamp-zh { background: radial-gradient(circle at 32% 34%, #ffde00 0 26%, #de2910 26%) }
+.lamp-hi { background: linear-gradient(#ff9933 0 33%, #ffffff 33% 67%, #138808 67%) }
+.lamp-es { background: linear-gradient(#aa151b 0 27%, #f1bf00 27% 73%, #aa151b 73%) }
+.lamp-fr { background: linear-gradient(90deg, #0055a4 0 33%, #ffffff 33% 67%, #ef4135 67%) }
+.lamp-pt { background: linear-gradient(90deg, #046a38 0 40%, #da291c 40%) }
+.lamp-de { background: linear-gradient(#000000 0 33%, #dd0000 33% 67%, #ffce00 67%) }
+.lamp-ja { background: radial-gradient(circle at 50% 50%, #bc002d 0 42%, #ffffff 42%) }
+.lamp-ko { background: linear-gradient(135deg, #cd2e3a 0 50%, #0047a0 50%) }
+.lamp-sv { background: linear-gradient(90deg, #005293 0 34%, #fecb00 34% 52%, #005293 52%) }
+.lamp-fi { background: linear-gradient(90deg, #ffffff 0 34%, #002f6c 34% 52%, #ffffff 52%) }
+
+/* Bigger than the indicator lamps elsewhere, because this one is carrying a
+   flag rather than an on or off state, and three bands need room to read as
+   three bands. The glow is dropped: it washed the colours out. */
+.picker .led {
+  width: 16px;
+  height: 16px;
+  box-shadow: inset 0 0 0 1px var(--shade);
+}
+
+/* The panel is only as wide as the names in it, hanging under the chip
+   rather than stretching across the plate behind it. */
+.picker-panel {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  z-index: 70;
+  margin: 0;
+  padding: 0.4rem;
+  list-style: none;
+  width: max-content;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.picker-choice {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  /* A comfortable target, since this is a list of eleven small rows. */
+  min-height: 44px;
+  padding: 0.4rem 0.75rem;
+  border-radius: var(--r-sm);
+  color: var(--ink-2);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background var(--t), color var(--t);
+}
+
+.picker-choice:hover,
+.picker-choice:focus-visible {
+  background: var(--chip-hover);
+  color: var(--ink);
+}
+
+/* The language you are already reading. */
+.picker-choice.on {
+  color: var(--ink);
+  background: var(--inset);
+  box-shadow: var(--press);
+}
+
 /* ---------- header ---------- */
 
 .topbar {

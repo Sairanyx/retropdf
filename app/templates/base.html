@@ -110,6 +110,29 @@
           <a class="chip solid{% if on_workspace %} on{% endif %}" href="{{ url('workspace') }}">
             {{ t('nav.workspace') }} <span class="led"></span>
           </a>
+
+          <!-- The language picker. A lamp in the language's own colour, and
+               the code beside it, so you can find your own without reading
+               a menu. It is a details element rather than a script: it opens
+               and closes on its own, and works with no JavaScript at all. -->
+          <details class="picker">
+            <summary class="chip" aria-label="{{ t('footer.language') }}">
+              <span class="led lit lamp-{{ lang.code if lang else 'en' }}"></span>
+              {{ (lang.code if lang else 'en') | upper }}
+            </summary>
+            <ul class="picker-panel plate">
+              {% for other in languages %}
+              <li>
+                <a class="picker-choice{% if lang and other.code == lang.code %} on{% endif %}"
+                   href="{{ language_urls[other.code] }}" lang="{{ other.locale }}"
+                   {% if lang and other.code == lang.code %}aria-current="true"{% endif %}>
+                  <span class="led lit lamp-{{ other.code }}"></span>
+                  {{ other.name }}
+                </a>
+              </li>
+              {% endfor %}
+            </ul>
+          </details>
         </nav>
 
         <!-- An ordinary link, not a form. The page is not permitted to make

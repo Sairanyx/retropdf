@@ -46,6 +46,15 @@ app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 templates = Jinja2Templates(directory=APP_DIR / "templates")
 
 
+def _language_urls(here: str) -> dict:
+    """This page's address in every language."""
+    page = "" if languages.english_only(here) else here
+    return {
+        language.code: languages.path_for(language.code, page)
+        for language in languages.LANGUAGES
+    }
+
+
 def render(request: Request, template: str, lang: str = "en", **context) -> HTMLResponse:
     """Render a page with the values every template needs.
 
@@ -69,6 +78,12 @@ def render(request: Request, template: str, lang: str = "en", **context) -> HTML
             "languages": languages.LANGUAGES,
             "url": lambda path="": languages.path_for(lang, path),
             "base_url": BASE_URL,
+            # Where each language's version of this page lives, so the picker
+            # keeps you on the page you are reading. Terms and the security
+            # page exist only in English, so from those the picker offers the
+            # home page in each language instead of an address that is not
+            # there.
+            "language_urls": _language_urls(context.get("here", "")),
             # Every language this page exists in, for the hreflang tags that
             # tell a search engine these are the same page rather than
             # duplicates competing with each other.
