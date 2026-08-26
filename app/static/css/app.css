@@ -2455,16 +2455,24 @@ html {
  *
  * Quieter than the nav chips. It is an aside, not a fourth destination. */
 .wanted {
-  /* Out of the header's flow and under the nav, which is fixed to the right
-     on a wide screen. Following the same right edge keeps the two aligned. */
+  /* Under the left hand end of the nav, below Tools and Info.
+   *
+   * It used to sit under the right hand end, directly below the language
+   * chip, where the language panel opened straight down onto it and covered
+   * it completely. The panel belongs under its own chip, so the button moved
+   * instead. The offset is the nav's own right margin plus its width, which
+   * puts this at the nav's left edge. */
   position: fixed;
   top: calc(1.25rem + 66px + 0.75rem);
-  right: max(clamp(1.25rem, 5vw, 4rem), calc((100vw - 1520px) / 2 + clamp(1.25rem, 5vw, 4rem)));
+  right: calc(
+    max(clamp(1.25rem, 5vw, 4rem), (100vw - 1520px) / 2 + clamp(1.25rem, 5vw, 4rem))
+    + 15rem
+  );
   z-index: 55;
 
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: flex-start;
   gap: 0.15rem;
   padding: 0.7rem 1.1rem;
   text-decoration: none;
