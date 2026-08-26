@@ -109,9 +109,12 @@ is stronger. The defence is that nobody gets write access:
 
 ## Before going live
 
-- [ ] Fill the two `TODO` markers: the controller's name and country in
-      `privacy.html`, and the governing law in `terms.html`. The GDPR asks for
-      the controller's identity, and "an individual" is not that.
-- [ ] Put your legal name in `LICENSE`.
-- [ ] Update the three GitHub URLs in `package.json` once the repo is renamed.
-- [ ] Check `hello@retropdf.com` exists and reaches you. It is on three pages.
+- [ ] Buy the domain and point it at the VM before the first deploy. Caddy
+      requests the certificate on first start and needs the name resolving
+      already, so deploying first means deploying twice.
+- [ ] Check `hello@retropdf.com` exists and reaches you. It is the contact
+      address on the privacy, terms and security pages, and the GDPR entry
+      the privacy page relies on is a name plus a working address.
+- [ ] Read the privacy, terms and security pages once as a stranger would.
+      They make specific claims about what the site does, and they have to
+      stay true as the site changes.
