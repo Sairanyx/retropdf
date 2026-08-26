@@ -33,3 +33,8 @@ interest.count
 *.key
 id_rsa*
 
+# The security checklist. A working note to come back to before launch, not
+# something to publish: it lists what was tested and what was not, which is
+# more useful to somebody probing the site than to anyone reading the repo.
+SECURITY-CHECKLIST.md
+
