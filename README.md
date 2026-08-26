@@ -50,7 +50,13 @@ npm test                         # PDF operations and limits
 node tests/tools.e2e.mjs         # every tool, end to end, in a real browser
 node tests/edge.e2e.mjs          # locked, corrupt and oversized files
 node tests/responsive.e2e.mjs    # layout across phone and desktop sizes
+node tests/privacy.e2e.mjs       # the claim itself: nothing leaves the browser
 ```
+
+`privacy.e2e.mjs` is the one worth running yourself. It drives a real PDF
+through a real browser while recording every request, then deliberately tries
+to send data out by five different routes to confirm the browser refuses. The
+claim on the site is only worth what that test says.
 
 The browser suites need the server running first. They are the layer the unit
 tests cannot reach: the tools are driven through a real browser with real
