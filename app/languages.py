@@ -35,55 +35,32 @@ class Language:
     """Written right to left. None of the current languages are, but the flag
     is here so adding Arabic later is a data change rather than a code one."""
 
-    lamp: str = "#c8452a"
-    """The lamp's colours in the picker, as a CSS gradient.
-
-    Taken from the flag most associated with the language, so the lamp hints
-    at which language a row is before you read the word. A gradient rather
-    than an image: a real flag would not survive being drawn as a small
-    circle in a pixel typeface, while its colours still read as themselves."""
 
 
 # Ordered by how many people the language reaches, since that is the order a
 # reader is most likely to find their own in.
-# The gradients are written as hard stops rather than blends, so a tricolour
-# reads as three bands rather than a smear. Vertical bands for flags that
-# have them, horizontal for the rest, which is the quickest way to tell two
-# similar palettes apart at this size.
 LANGUAGES = (
-    # Union flag: blue ground, white and red cross.
-    Language("en", "English", "en",
-             lamp="linear-gradient(135deg, #012169 0 38%, #ffffff 38% 50%, #c8102e 50% 62%, #012169 62%)"),
+    Language("en", "English", "en"),
     # Red with the yellow stars reduced to a corner of gold.
-    Language("zh", "中文", "zh-Hans",
-             lamp="radial-gradient(circle at 32% 34%, #ffde00 0 26%, #de2910 26%)"),
+    Language("zh", "中文", "zh-Hans"),
     # Saffron, white, green.
-    Language("hi", "हिन्दी", "hi",
-             lamp="linear-gradient(#ff9933 0 33%, #ffffff 33% 67%, #138808 67%)"),
+    Language("hi", "हिन्दी", "hi"),
     # Red, gold, red.
-    Language("es", "Español", "es",
-             lamp="linear-gradient(#aa151b 0 27%, #f1bf00 27% 73%, #aa151b 73%)"),
+    Language("es", "Español", "es"),
     # Blue, white, red.
-    Language("fr", "Français", "fr",
-             lamp="linear-gradient(90deg, #0055a4 0 33%, #ffffff 33% 67%, #ef4135 67%)"),
+    Language("fr", "Français", "fr"),
     # Green and red, divided vertically.
-    Language("pt", "Português", "pt",
-             lamp="linear-gradient(90deg, #046a38 0 40%, #da291c 40%)"),
+    Language("pt", "Português", "pt"),
     # Black, red, gold.
-    Language("de", "Deutsch", "de",
-             lamp="linear-gradient(#000000 0 33%, #dd0000 33% 67%, #ffce00 67%)"),
+    Language("de", "Deutsch", "de"),
     # White with the red disc.
-    Language("ja", "日本語", "ja",
-             lamp="radial-gradient(circle at 50% 50%, #bc002d 0 42%, #ffffff 42%)"),
+    Language("ja", "日本語", "ja"),
     # White with the red and blue taegeuk.
-    Language("ko", "한국어", "ko",
-             lamp="linear-gradient(135deg, #cd2e3a 0 50%, #0047a0 50%)"),
+    Language("ko", "한국어", "ko"),
     # Blue with the gold cross.
-    Language("sv", "Svenska", "sv",
-             lamp="linear-gradient(90deg, #005293 0 34%, #fecb00 34% 52%, #005293 52%)"),
+    Language("sv", "Svenska", "sv"),
     # White with the blue cross.
-    Language("fi", "Suomi", "fi",
-             lamp="linear-gradient(90deg, #ffffff 0 34%, #002f6c 34% 52%, #ffffff 52%)"),
+    Language("fi", "Suomi", "fi"),
 )
 
 BY_CODE = {language.code: language for language in LANGUAGES}

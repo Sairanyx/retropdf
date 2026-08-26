@@ -333,11 +333,6 @@ html {
   display: none;
 }
 
-/* One class per language, rather than an inline style: the site sets
-   style-src 'self', so the browser drops a style attribute on the element.
-   That rule is why no third party stylesheet can be injected, and it is not
-   worth relaxing for eleven colours.
-
    Hard stops rather than blends, so a tricolour reads as three bands. */
 .lamp-en { background: linear-gradient(135deg, #012169 0 38%, #ffffff 38% 50%, #c8102e 50% 62%, #012169 62%) }
 .lamp-zh { background: radial-gradient(circle at 32% 34%, #ffde00 0 26%, #de2910 26%) }
@@ -351,13 +346,24 @@ html {
 .lamp-sv { background: linear-gradient(90deg, #005293 0 34%, #fecb00 34% 52%, #005293 52%) }
 .lamp-fi { background: linear-gradient(90deg, #ffffff 0 34%, #002f6c 34% 52%, #ffffff 52%) }
 
-/* Bigger than the indicator lamps elsewhere, because this one is carrying a
-   flag rather than an on or off state, and three bands need room to read as
-   three bands. The glow is dropped: it washed the colours out. */
-.picker .led {
-  width: 16px;
-  height: 16px;
+/* The flag itself, clipped to a circle so it sits where a lamp would.
+   Larger than the indicator lamps elsewhere: this one carries a picture
+   rather than an on or off state, and a cross needs room to read as a
+   cross. A thin inset ring gives a white flag an edge against the plate. */
+.picker .flag {
+  display: block;
+  width: 18px;
+  height: 18px;
+  flex: none;
+  border-radius: 50%;
+  overflow: hidden;
   box-shadow: inset 0 0 0 1px var(--shade);
+}
+
+.picker .flag svg {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 /* The panel is only as wide as the names in it, hanging under the chip

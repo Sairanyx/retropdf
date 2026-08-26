@@ -17,7 +17,7 @@ from fastapi.responses import FileResponse, HTMLResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from app import interest, languages
+from app import flags, interest, languages
 from app.security import SecurityHeaders
 from app.translations import words_for
 from app.tool_art import ART
@@ -78,6 +78,7 @@ def render(request: Request, template: str, lang: str = "en", **context) -> HTML
             "languages": languages.LANGUAGES,
             "url": lambda path="": languages.path_for(lang, path),
             "base_url": BASE_URL,
+            "flags": flags.FLAGS,
             # Where each language's version of this page lives, so the picker
             # keeps you on the page you are reading. Terms and the security
             # page exist only in English, so from those the picker offers the

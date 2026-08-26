@@ -117,7 +117,7 @@
                and closes on its own, and works with no JavaScript at all. -->
           <details class="picker">
             <summary class="chip" aria-label="{{ t('footer.language') }}">
-              <span class="led lit lamp-{{ lang.code if lang else 'en' }}"></span>
+              <span class="flag">{{ flags[lang.code if lang else 'en'] | safe }}</span>
               {{ (lang.code if lang else 'en') | upper }}
             </summary>
             <ul class="picker-panel plate">
@@ -126,7 +126,7 @@
                 <a class="picker-choice{% if lang and other.code == lang.code %} on{% endif %}"
                    href="{{ language_urls[other.code] }}" lang="{{ other.locale }}"
                    {% if lang and other.code == lang.code %}aria-current="true"{% endif %}>
-                  <span class="led lit lamp-{{ other.code }}"></span>
+                  <span class="flag">{{ flags[other.code] | safe }}</span>
                   {{ other.name }}
                 </a>
               </li>
