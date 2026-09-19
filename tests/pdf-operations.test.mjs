@@ -50,7 +50,7 @@ test("load rejects something that is not a PDF", async () => {
   const notAPdf = new TextEncoder().encode("this is plain text, not a pdf")
   await assert.rejects(
     () => load({ bytes: notAPdf }),
-    /could not be read as a PDF/,
+    /js\.error\.not_pdf/,
   )
 })
 
@@ -150,14 +150,14 @@ test("rotating left from zero gives 270, not a negative angle", async () => {
 
 test("build refuses an empty selection", async () => {
   await load({ bytes: await makePdf(3) })
-  await assert.rejects(() => build({ items: [] }), /No pages were selected/)
+  await assert.rejects(() => build({ items: [] }), /js\.error\.none_selected/)
 })
 
 test("build refuses a page number past the end", async () => {
   const { id } = await load({ bytes: await makePdf(3) })
   await assert.rejects(
     () => build({ items: [{ doc: id, page: 9 }] }),
-    /Page 9 does not exist/,
+    /js\.error\.page_missing\|9/,
   )
 })
 
@@ -165,7 +165,7 @@ test("build refuses page zero, since pages count from one", async () => {
   const { id } = await load({ bytes: await makePdf(3) })
   await assert.rejects(
     () => build({ items: [{ doc: id, page: 0 }] }),
-    /does not exist/,
+    /js\.error\.page_missing/,
   )
 })
 
@@ -175,7 +175,7 @@ test("build refuses a document that was closed", async () => {
 
   await assert.rejects(
     () => build({ items: [{ doc: id, page: 1 }] }),
-    /no longer loaded/,
+    /js\.error\.(one_)?not_loaded/,
   )
 })
 
@@ -214,7 +214,7 @@ test("split at a point gives two ranges", () => {
 test("split at a point refuses a cut past the last page", () => {
   assert.throws(
     () => splitRanges({ pageCount: 5, mode: "at", after: 5 }),
-    /between 1 and 4/,
+    /js\.error\.cut_between\|4/,
   )
 })
 
@@ -270,7 +270,7 @@ test("splitToZip does not let two parts share a name", async () => {
 })
 
 test("splitToZip refuses an empty list of parts", async () => {
-  await assert.rejects(() => splitToZip({ parts: [] }), /Nothing to split/)
+  await assert.rejects(() => splitToZip({ parts: [] }), /js\.empty\.split/)
 })
 
 // --- images to PDF -----------------------------------------------------
@@ -333,12 +333,12 @@ test("imagesToPdf explains that an unsupported format must be converted", async 
   const heicish = new Uint8Array([0, 0, 0, 0x20, 0x66, 0x74, 0x79, 0x70])
   await assert.rejects(
     () => imagesToPdf({ images: [{ name: "IMG_4821.HEIC", bytes: heicish }] }),
-    /IMG_4821\.HEIC is not a JPG or PNG/,
+    /js\.error\.not_image\|IMG_4821\.HEIC/,
   )
 })
 
 test("imagesToPdf refuses an empty list", async () => {
-  await assert.rejects(() => imagesToPdf({ images: [] }), /at least one image/)
+  await assert.rejects(() => imagesToPdf({ images: [] }), /js\.empty\.frimages/)
 })
 
 test("imagesToPdf embeds a JPEG as well as a PNG", async () => {

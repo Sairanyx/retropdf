@@ -54,6 +54,8 @@ function isMobile() {
  * The point is to make the figure feel measured rather than arbitrary: the
  * limit comes from the machine in front of them, not from us.
  */
+import { say } from "/static/js/words.js"
+
 export function deviceName(agent) {
   const ua =
     agent ??
@@ -61,11 +63,11 @@ export function deviceName(agent) {
 
   if (/iPhone/i.test(ua)) return "iPhone"
   if (/iPad/i.test(ua)) return "iPad"
-  if (/Android/i.test(ua)) return "Android phone"
+  if (/Android/i.test(ua)) return say("js.device.android")
   if (/Macintosh|Mac OS X/i.test(ua)) return "Mac"
   if (/Windows/i.test(ua)) return "PC"
 
-  return "device"
+  return say("js.device.device")
 }
 
 // A merge holds the sources and the output at once, then copies the result
@@ -110,25 +112,26 @@ export function formatSize(bytes) {
  */
 export function checkFile(file, limits = LIMITS) {
   if (file.size === 0) {
-    return { ok: false, reason: `${file.name} is empty.` }
+    return { ok: false, reason: say("js.limit.empty", { name: file.name }) }
   }
 
   if (file.size > limits.maxFile) {
     return {
       ok: false,
       reason:
-        `${file.name} is ${formatSize(file.size)}. The limit for one file on ` +
-        `this device is ${formatSize(limits.maxFile)}. ` +
-        (limits.mobile
-          ? "A computer can handle larger files than a phone."
-          : "You could split it into smaller files first."),
+        say("js.limit.too_big", {
+          name: file.name,
+          size: formatSize(file.size),
+          max: formatSize(limits.maxFile),
+        }) +
+        say(limits.mobile ? "js.limit.computer_larger" : "js.limit.split_first"),
     }
   }
 
   if (file.size > limits.warnAt) {
     return {
       ok: true,
-      warning: `${file.name} is ${formatSize(file.size)}, so this may take a while.`,
+      warning: say("js.limit.slow", { name: file.name, size: formatSize(file.size) }),
     }
   }
 
@@ -140,7 +143,7 @@ export function checkSelection(files, alreadyLoadedBytes = 0, limits = LIMITS) {
   if (files.length > MAX_FILES) {
     return {
       ok: false,
-      reason: `That is ${files.length} files. The limit is ${MAX_FILES} at a time.`,
+      reason: say("js.limit.too_many", { count: files.length, max: MAX_FILES }),
     }
   }
 
@@ -154,9 +157,10 @@ export function checkSelection(files, alreadyLoadedBytes = 0, limits = LIMITS) {
   if (total > limits.maxTotal) {
     return {
       ok: false,
-      reason:
-        `Those files come to ${formatSize(total)}. The limit on this device ` +
-        `is ${formatSize(limits.maxTotal)} at a time, so try choosing fewer.`,
+      reason: say("js.limit.total", {
+        size: formatSize(total),
+        max: formatSize(limits.maxTotal),
+      }),
     }
   }
 

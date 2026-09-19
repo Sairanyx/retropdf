@@ -26,7 +26,7 @@ worker.addEventListener("message", (event) => {
 
 worker.addEventListener("error", (event) => {
   for (const waiting of pending.values()) {
-    waiting.reject(new Error(event.message || "The PDF worker failed."))
+    waiting.reject(new Error(event.message || "js.error.worker_failed"))
   }
   pending.clear()
 })

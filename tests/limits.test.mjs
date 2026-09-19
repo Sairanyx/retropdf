@@ -33,20 +33,20 @@ test("a normal file is accepted without comment", () => {
 test("an empty file is refused", () => {
   const result = checkFile(file("empty.pdf", 0), desktop)
   assert.equal(result.ok, false)
-  assert.match(result.reason, /empty/)
+  assert.match(result.reason, /js\.limit\.empty/)
 })
 
 test("a large file is accepted but warned about", () => {
   const result = checkFile(file("scan.pdf", desktop.warnAt + 1), desktop)
   assert.equal(result.ok, true)
-  assert.match(result.warning, /take a while/)
+  assert.match(result.warning, /js\.limit\.slow/)
 })
 
 test("an oversized file is refused and told what to do instead", () => {
   const result = checkFile(file("huge.pdf", desktop.maxFile + 1), desktop)
   assert.equal(result.ok, false)
-  assert.match(result.reason, /The limit for one file on this device is/)
-  assert.match(result.reason, /split it into smaller files/)
+  assert.match(result.reason, /js\.limit\.too_big/)
+  assert.match(result.reason, /js\.limit\.split_first/)
 })
 
 test("the refusal names the file and its size", () => {
@@ -60,7 +60,7 @@ test("too many files at once is refused", () => {
     file(`f${i}.pdf`, 1024))
   const result = checkSelection(many, 0, desktop)
   assert.equal(result.ok, false)
-  assert.match(result.reason, /The limit is 50 at a time/)
+  assert.match(result.reason, /js\.limit\.too_many/)
 })
 
 test("many small files together are fine", () => {
@@ -77,7 +77,7 @@ test("files that are individually fine but too big together are refused", () => 
 
   const result = checkSelection(big, 0, desktop)
   assert.equal(result.ok, false)
-  assert.match(result.reason, /The limit on this device is/)
+  assert.match(result.reason, /js\.limit\.total/)
 })
 
 test("what is already loaded counts towards the total", () => {
@@ -140,20 +140,25 @@ test("the warning comes well before the refusal", () => {
 test("a phone is told a computer would cope better", () => {
   const result = checkFile(file("big.pdf", phone.maxFile + 1), phone)
   assert.equal(result.ok, false)
-  assert.match(result.reason, /computer can handle larger files than a phone/)
+  assert.match(result.reason, /js\.limit\.computer_larger/)
 })
 
 // --- naming the device -------------------------------------------------
 //
 // The limit line tells the reader what their own machine can take, so it
 // names the machine. Getting that wrong is worse than staying vague, which
-// is why anything unrecognised falls back to "device".
+// is why anything unrecognised falls back to a plain word for a device.
+//
+// Product names come back as themselves, since an iPhone is an iPhone in
+// every language. The two that are ordinary words come back as translation
+// keys, which the page turns into words; here, with no page, the key is what
+// is returned and what these check.
 
 test("names the common devices from their user agent", () => {
   const cases = [
     ["Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)", "iPhone"],
     ["Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X)", "iPad"],
-    ["Mozilla/5.0 (Linux; Android 14; Pixel 8)", "Android phone"],
+    ["Mozilla/5.0 (Linux; Android 14; Pixel 8)", "js.device.android"],
     ["Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)", "Mac"],
     ["Mozilla/5.0 (Windows NT 10.0; Win64; x64)", "PC"],
   ]
@@ -172,7 +177,7 @@ test("an iPhone is not mistaken for a Mac", () => {
 })
 
 test("anything unrecognised is just a device", () => {
-  assert.equal(deviceName("Mozilla/5.0 (X11; Linux x86_64)"), "device")
-  assert.equal(deviceName(""), "device")
-  assert.equal(deviceName("something else entirely"), "device")
+  assert.equal(deviceName("Mozilla/5.0 (X11; Linux x86_64)"), "js.device.device")
+  assert.equal(deviceName(""), "js.device.device")
+  assert.equal(deviceName("something else entirely"), "js.device.device")
 })

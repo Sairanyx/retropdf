@@ -9,6 +9,7 @@ lands on a page about that job. All of them render the same template with a
 different tool selected.
 """
 
+import json
 import os
 from pathlib import Path
 
@@ -46,6 +47,22 @@ app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 templates = Jinja2Templates(directory=APP_DIR / "templates")
 
 
+def _script_words(lang: str) -> str:
+    """Every js. string for one language, as JSON for the page to carry.
+
+    Only the js. keys: the rest are already rendered into the markup, and
+    sending them again would be dead weight on every page.
+    """
+    words = words_for(lang)
+    english = words_for("en")
+    chosen = {
+        key: words(key)
+        for key in english.keys()
+        if key.startswith("js.")
+    }
+    return json.dumps(chosen, ensure_ascii=False, separators=(",", ":"))
+
+
 def _language_urls(here: str) -> dict:
     """This page's address in every language."""
     page = "" if languages.english_only(here) else here
@@ -78,6 +95,11 @@ def render(request: Request, template: str, lang: str = "en", **context) -> HTML
             "languages": languages.LANGUAGES,
             "url": lambda path="": languages.path_for(lang, path),
             "base_url": BASE_URL,
+            # The strings the browser scripts need, in this page's language.
+            # They cannot read the translation files themselves, and shipping
+            # every language to every visitor would be eleven times the words
+            # for no reason.
+            "script_words": _script_words(lang),
             "flags": flags.FLAGS,
             # Where each language's version of this page lives, so the picker
             # keeps you on the page you are reading. Terms and the security

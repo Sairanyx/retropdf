@@ -190,3 +190,29 @@ def test_the_sitemap_lists_every_language():
     for language in languages.LANGUAGES:
         path = languages.path_for(language.code, "merge-pdf")
         assert f"{path}<" in body, path
+
+
+def test_pages_carry_the_words_their_scripts_need():
+    """The browser scripts cannot read the translation files, so the page
+    hands them their own language. Without this block every message a tool
+    shows would be English, whatever the page around it says."""
+    import json
+
+    body = client.get("/de/merge-pdf").text
+    assert 'id="words"' in body
+
+    block = body.split('id="words">')[1].split("</script>")[0]
+    words = json.loads(block)
+    assert words["js.start_hint"] == words_for("de")("js.start_hint")
+    assert words["js.start_hint"] != words_for("en")("js.start_hint")
+
+
+def test_the_words_block_carries_only_what_the_scripts_use():
+    """Everything else is already rendered into the markup. Sending it again
+    would be dead weight on every page."""
+    import json
+
+    body = client.get("/merge-pdf").text
+    words = json.loads(body.split('id="words">')[1].split("</script>")[0])
+    assert words
+    assert all(key.startswith("js.") for key in words)

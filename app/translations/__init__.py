@@ -64,6 +64,11 @@ class Words:
         """Whether this language has its own words for this key."""
         return key in self._words
 
+    def keys(self):
+        """Every key this language knows, English included through the
+        fallback. Used to pick out the subset the browser scripts need."""
+        return {**self._base, **self._words}.keys()
+
 
 @lru_cache(maxsize=None)
 def words_for(code: str) -> Words:

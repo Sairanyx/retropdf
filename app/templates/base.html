@@ -219,6 +219,11 @@
   <script type="module" src="/static/js/nav.js"></script>
   <script type="module" src="/static/js/progress.js"></script>
   <script type="module" src="/static/js/wanted.js"></script>
+  <!-- The words the scripts need, in this page's language. Data rather than
+       code: the site sets script-src 'self' and the browser will not run an
+       inline script, but it will read one as JSON. -->
+  <script type="application/json" id="words">{{ script_words | safe }}</script>
+
   <script type="module" src="/static/js/picker.js"></script>
 </body>
 </html>

@@ -5,6 +5,7 @@ import { call } from "/static/js/pdf-worker.js"
 import { splitRanges, imageKind } from "/static/js/pdf-operations.js"
 import { checkSelection, looksLikePdf, LIMITS, MAX_FILES, formatSize, deviceName } from "/static/js/limits.js"
 import { acceptDroppedFiles, makeReorderable } from "/static/js/dragdrop.js"
+import { say, count } from "/static/js/words.js"
 
 // pdf.js parses on its own background thread and needs to know where that
 // code lives. Without this it fails with an unhelpful error.
@@ -105,59 +106,91 @@ function currentMode() {
 const modes = {
   merge: {
     controls: "move",
-    hint: "Add more files, then download them as one PDF.",
+    get hint() {
+      return say("js.hint.merge")
+    },
     items: () => order.slice(),
     suffix: "-merged",
-    empty: "Add at least one file.",
+    get empty() {
+      return say("js.empty.merge")
+    },
   },
   remove: {
     controls: "select",
-    hint: "Pick the pages you want to remove.",
+    get hint() {
+      return say("js.hint.remove")
+    },
     items: () => order.filter((entry) => !marked.has(entry.key)),
     suffix: "-edited",
-    empty: "That would remove every page.",
+    get empty() {
+      return say("js.empty.remove")
+    },
   },
   extract: {
     controls: "select",
-    hint: "Pick the pages you want to keep.",
+    get hint() {
+      return say("js.hint.extract")
+    },
     items: () => order.filter((entry) => marked.has(entry.key)),
     suffix: "-extract",
-    empty: "Pick at least one page to keep.",
+    get empty() {
+      return say("js.empty.extract")
+    },
   },
   reorder: {
     controls: "move",
-    hint: "Use the arrows to move pages, then download.",
+    get hint() {
+      return say("js.hint.reorder")
+    },
     items: () => order.slice(),
     suffix: "-reordered",
-    empty: "There are no pages to save.",
+    get empty() {
+      return say("js.empty.reorder")
+    },
   },
   rotate: {
     controls: "turn",
-    hint: "Turn pages with the buttons, then download.",
+    get hint() {
+      return say("js.hint.rotate")
+    },
     items: () => order.slice(),
     suffix: "-rotated",
-    empty: "There are no pages to save.",
+    get empty() {
+      return say("js.empty.rotate")
+    },
   },
   toimages: {
     controls: "none",
-    hint: "Pick a size, then download a zip of PNG images.",
+    get hint() {
+      return say("js.hint.toimages")
+    },
     items: () => order.slice(),
     suffix: "-images",
-    empty: "There are no pages to export.",
+    get empty() {
+      return say("js.empty.toimages")
+    },
   },
   frimages: {
     controls: "none",
-    hint: "Select JPG or PNG images to turn into one PDF.",
+    get hint() {
+      return say("js.hint.frimages")
+    },
     items: () => [],
     suffix: "",
-    empty: "Select at least one image.",
+    get empty() {
+      return say("js.empty.frimages")
+    },
   },
   split: {
     controls: "none",
-    hint: "Pick where to cut, then download a zip of the parts.",
+    get hint() {
+      return say("js.hint.split")
+    },
     items: () => order.slice(),
     suffix: "-split",
-    empty: "There are no pages to split.",
+    get empty() {
+      return say("js.empty.split")
+    },
   },
 }
 
@@ -171,7 +204,7 @@ function applyAccept() {
 
   if (pickerLabel) {
     const led = pickerLabel.querySelector(".led")
-    pickerLabel.textContent = wantsImages ? "Select images " : "Select files "
+    pickerLabel.textContent = wantsImages ? say("js.select_images") : say("js.select_files")
     if (led) pickerLabel.appendChild(led)
   }
 }
@@ -193,9 +226,11 @@ function showLimit() {
   // can work with up to", which buried the one thing being asked for in the
   // middle of a sentence.
   note.textContent =
-    `On this ${deviceName()}: ${formatSize(LIMITS.maxFile)} per file, ` +
-    `${formatSize(LIMITS.maxTotal)} at once.` +
-    (LIMITS.mobile ? " A computer takes more." : "")
+    say("js.limit.note", {
+      device: deviceName(),
+      perFile: formatSize(LIMITS.maxFile),
+      total: formatSize(LIMITS.maxTotal),
+    }) + (LIMITS.mobile ? " " + say("js.limit.more") : "")
 }
 
 /**
@@ -232,13 +267,35 @@ picker.addEventListener("change", async () => {
 })
 
 /**
- * A count with its noun, in the singular when there is one of something.
+ * What to show the reader when something failed.
  *
- * Saves writing "1 page(s)", which is programmer shorthand that reads as an
- * unfinished sentence to everyone else.
+ * The worker throws translation keys rather than sentences, since it runs
+ * without a page and cannot look words up. Anything that is not a key, such
+ * as a browser error about memory, is shown as it came: an unhelpful message
+ * beats a blank readout.
  */
-function countOf(n, noun) {
-  return `${n} ${noun}${n === 1 ? "" : "s"}`
+function reasonFor(error) {
+  const raw = String(error?.message || error)
+  if (!raw.startsWith("js.")) return raw
+
+  // A key may carry values after bars, in the order the sentence needs them.
+  const [key, ...values] = raw.split("|")
+  const named = {
+    "js.error.image_unreadable": ["name"],
+    "js.error.not_image": ["name"],
+    "js.error.page_missing": ["page", "total"],
+    "js.error.cut_between": ["max"],
+  }[key]
+
+  if (!named) return say(key)
+
+  const fields = {}
+  named.forEach((name, at) => {
+    // An empty filename means the file arrived without one.
+    fields[name] =
+      values[at] || (name === "name" ? say("js.error.that_file") : values[at])
+  })
+  return say(key, fields)
 }
 
 /**
@@ -252,15 +309,15 @@ function roomLeft() {
   const spare = LIMITS.maxTotal - loadedBytes
 
   if (files.size >= MAX_FILES) {
-    return `That is the most files at once (${MAX_FILES}). Download these first.`
+    return say("js.room.most_files", { max: MAX_FILES })
   }
   if (spare <= 0) {
-    return "No room left on this device. Download these first."
+    return say("js.error.no_room")
   }
   if (spare < LIMITS.maxTotal * 0.15) {
-    return `You can add about ${formatSize(spare)} more, then download as one PDF.`
+    return say("js.room.about", { size: formatSize(spare) })
   }
-  return "You can add more files, then download them as one PDF."
+  return say("js.room.more")
 }
 
 /**
@@ -269,10 +326,12 @@ function roomLeft() {
  * Named individually up to a point, since knowing which one failed is the
  * useful part, and counted beyond that so the line stays readable.
  */
-function refusalOf(names, one = "a PDF", many = "PDFs") {
-  if (names.length === 1) return `${names[0]} is not ${one}.`
-  if (names.length <= 3) return `${names.join(", ")} are not ${many}.`
-  return `${names.length} of the files are not ${many}.`
+function refusalOf(names, kind = "pdf") {
+  const one = say(`js.kind.${kind}.one`)
+  const many = say(`js.kind.${kind}.many`)
+  if (names.length === 1) return say("js.refused.one", { name: names[0], kind: one })
+  if (names.length <= 3) return say("js.refused.few", { names: names.join(", "), kinds: many })
+  return say("js.refused.many", { count: names.length, kinds: many })
 }
 
 /** Open a list of files, however the user gave them to us. */
@@ -305,7 +364,7 @@ async function openFiles(chosen) {
 
   try {
     for (const file of chosen) {
-      result.textContent = `Opening ${file.name}`
+      result.textContent = say("js.opening", { name: file.name })
       const bytes = await file.arrayBuffer()
 
       // The name can say anything, so check what the file actually is.
@@ -341,7 +400,7 @@ async function openFiles(chosen) {
     if (order.length === 0) {
       result.textContent = refused.length
         ? refusalOf(refused)
-        : "Nothing could be opened. Select a PDF to begin."
+        : say("js.error.nothing_opened_pdf")
       paintLamps()
       return
     }
@@ -350,7 +409,7 @@ async function openFiles(chosen) {
     // The size as well as the count, since the limit is quoted in megabytes
     // and someone near it has no way to tell how close they are otherwise.
     result.textContent =
-      `${countOf(order.length, "page")}, ${formatSize(loadedBytes)}. ` +
+      say("js.loaded", { pages: count(order.length, "page"), size: formatSize(loadedBytes) }) +
       (refused.length
         ? refusalOf(refused)
         : currentMode() === "merge"
@@ -358,7 +417,7 @@ async function openFiles(chosen) {
           : modes[currentMode()].hint)
     paintLamps()
   } catch (error) {
-    result.textContent = error.message
+    result.textContent = reasonFor(error)
   } finally {
     // In a finally, so a file that fails to open does not leave the whole
     // page stuck showing an hourglass.
@@ -372,7 +431,7 @@ startOver?.addEventListener("click", () => {
   reset()
   // The starting hint, not the mode's working hint: "Add more files" makes
   // no sense on a page that has just been emptied.
-  result.textContent = "Select a file to begin."
+  result.textContent = say("js.start_hint")
 
   // Emptying the panel makes the page much shorter, and the browser deals
   // with that by dropping the scroll position, sometimes to the top.
@@ -398,7 +457,7 @@ acceptDroppedFiles(
   (dropped) => openFiles(dropped),
   (over) => {
     document.body.classList.toggle("drag-over", over)
-    if (over) result.textContent = "Drop them here."
+    if (over) result.textContent = say("js.drop_here")
   },
 )
 
@@ -408,7 +467,7 @@ makeReorderable(pagesEl, (from, to) => {
   const moved = order.splice(from, 1)[0]
   order.splice(to, 0, moved)
   drawPages()
-  result.textContent = "Order updated."
+  result.textContent = say("js.order_updated")
 })
 
 function reset() {
@@ -453,7 +512,7 @@ async function renderThumbnails(docId, bytes) {
     }).promise
 
     thumbnails.set(`${docId}:${n}`, canvas)
-    result.textContent = `Drawing page ${n} of ${pdf.numPages}`
+    result.textContent = say("js.drawing", { n, total: pdf.numPages })
     drawPages()
   }
 }
@@ -552,7 +611,7 @@ function zoomButton(entry, caption) {
   const button = document.createElement("button")
   button.type = "button"
   button.className = "zoom"
-  button.dataset.tip = "Look closer"
+  button.dataset.tip = say("js.look_closer")
   button.setAttribute("aria-label", `Look closer at ${caption}`)
   button.textContent = "+"
   button.addEventListener("click", (event) => {
@@ -689,13 +748,13 @@ function moveButton(direction, from, to, disabled) {
   const button = document.createElement("button")
   button.className = "mini"
   button.textContent = direction === "left" ? "<" : ">"
-  button.dataset.tip = direction === "left" ? "Move earlier" : "Move later"
+  button.dataset.tip = direction === "left" ? say("js.move_earlier") : say("js.move_later")
   button.disabled = disabled
   button.addEventListener("click", () => {
     const moved = order.splice(from, 1)[0]
     order.splice(to, 0, moved)
     drawPagesMoving()
-    result.textContent = "Order updated."
+    result.textContent = say("js.order_updated")
   })
   return button
 }
@@ -703,7 +762,7 @@ function moveButton(direction, from, to, disabled) {
 function turnButton(entry, amount) {
   const button = document.createElement("button")
   button.className = "mini"
-  button.dataset.tip = amount < 0 ? "Turn left" : "Turn right"
+  button.dataset.tip = amount < 0 ? say("js.turn_left") : say("js.turn_right")
   button.textContent = amount < 0 ? "↶" : "↷"
   button.addEventListener("click", () => {
     entry.rotate = (entry.rotate + amount + 360) % 360
@@ -711,7 +770,7 @@ function turnButton(entry, amount) {
     const turned = order.filter((item) => item.rotate !== 0).length
     result.textContent = turned
       ? `${turned} of ${order.length} pages rotated`
-      : "No pages rotated"
+      : say("js.none_rotated")
   })
   return button
 }
@@ -719,9 +778,9 @@ function turnButton(entry, amount) {
 function reportSelection() {
   const mode = currentMode()
   if (mode === "extract") {
-    result.textContent = `Keeping ${marked.size} of ${order.length}`
+    result.textContent = say("js.keeping", { marked: marked.size, total: order.length })
   } else if (mode === "remove") {
-    result.textContent = `Removing ${marked.size} of ${order.length}`
+    result.textContent = say("js.removing", { marked: marked.size, total: order.length })
   } else {
     result.textContent = modes[mode].hint
   }
@@ -759,11 +818,11 @@ async function downloadSplit() {
     }),
   }))
 
-  result.textContent = `Building ${countOf(parts.length, "file")}`
+  result.textContent = say("js.building_files", { files: count(parts.length, "file") })
   const zip = await call("splitToZip", { parts, zipName: `${stem}-split.zip` })
 
   save(zip.bytes, zip.name, "application/zip")
-  result.textContent = `Saved ${countOf(zip.fileCount, "file")} as ${zip.name}`
+  result.textContent = say("js.saved_zip", { files: count(zip.fileCount, "file"), name: zip.name })
 }
 
 downloadBtn.addEventListener("click", async () => {
@@ -780,7 +839,7 @@ downloadBtn.addEventListener("click", async () => {
     try {
       await special()
     } catch (error) {
-      result.textContent = error.message
+      result.textContent = reasonFor(error)
     } finally {
       working(false)
     }
@@ -797,7 +856,7 @@ downloadBtn.addEventListener("click", async () => {
 
   working(true)
   try {
-    result.textContent = "Building"
+    result.textContent = say("js.building")
     const { bytes } = await call("build", {
       items: items.map(({ doc, page, rotate }) => ({ doc, page, rotate })),
     })
@@ -805,9 +864,9 @@ downloadBtn.addEventListener("click", async () => {
     const first = files.values().next().value || "document.pdf"
     const name = first.replace(/\.pdf$/i, "") + mode.suffix + ".pdf"
     save(bytes, name, "application/pdf")
-    result.textContent = `Saved ${countOf(items.length, "page")}.`
+    result.textContent = say("js.saved_pages", { pages: count(items.length, "page") })
   } catch (error) {
-    result.textContent = error.message
+    result.textContent = reasonFor(error)
   } finally {
     working(false)
   }
@@ -836,7 +895,7 @@ async function addImages(chosen) {
   if (chosenImages.length === 0) {
     result.textContent = refused.length
       ? refusalOf(refused, "a JPG or PNG", "JPGs or PNGs")
-      : "Nothing could be opened. Select an image to begin."
+      : say("js.error.nothing_opened_image")
     paintLamps()
     return
   }
@@ -846,8 +905,8 @@ async function addImages(chosen) {
   paintLamps()
   const imageBytes = chosenImages.reduce((sum, i) => sum + i.bytes.byteLength, 0)
   result.textContent =
-    `${countOf(chosenImages.length, "image")}, ${formatSize(imageBytes)}.` +
-    (refused.length ? " " + refusalOf(refused, "a JPG or PNG", "JPGs or PNGs") : "")
+    say("js.loaded_images", { images: count(chosenImages.length, "image"), size: formatSize(imageBytes) }) +
+    (refused.length ? " " + refusalOf(refused, "image") : "")
 }
 
 function drawImages() {
@@ -897,11 +956,11 @@ function imageMoveButton(from, to, label, disabled) {
 async function downloadImagesToPdf() {
   const fit = document.querySelector('input[name="fit"]:checked').value
 
-  result.textContent = "Building..."
+  result.textContent = say("js.building")
   const { bytes, pageCount } = await call("imagesToPdf", { images: chosenImages, fit })
 
   save(bytes, "images.pdf", "application/pdf")
-  result.textContent = `Saved a ${pageCount} page PDF.`
+  result.textContent = say("js.saved_pdf", { count: pageCount })
 }
 
 // --- PDF to images -----------------------------------------------------
@@ -915,7 +974,7 @@ async function downloadPdfToImages() {
   // next, to keep only one full size canvas in memory at a time.
   const images = []
   for (const [position, entry] of order.entries()) {
-    result.textContent = `Rendering ${position + 1} of ${order.length}...`
+    result.textContent = say("js.rendering", { n: position + 1, total: order.length })
     const bytes = await renderPageToPng(entry, scale)
     images.push({
       name: `${stem}-${String(position + 1).padStart(3, "0")}.png`,
@@ -925,7 +984,7 @@ async function downloadPdfToImages() {
 
   const zip = await call("zipImages", { images, zipName: `${stem}-images.zip` })
   save(zip.bytes, zip.name, "application/zip")
-  result.textContent = `Saved ${zip.fileCount} images as ${zip.name}`
+  result.textContent = say("js.saved_images", { count: zip.fileCount, name: zip.name })
 }
 
 async function renderPageToPng(entry, scale) {

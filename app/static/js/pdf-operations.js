@@ -1,3 +1,9 @@
+// Errors are thrown as translation keys rather than sentences. This file
+// runs inside the worker, which has no page and so cannot look words up; the
+// main thread turns the key into a sentence in the reader's language when it
+// shows it. A key that reaches the screen unchanged is a missing string,
+// which is visible rather than silent.
+//
 // The PDF operations themselves, with no reference to workers, messages or
 // the browser. Keeping them here means they can be tested directly in Node,
 // and the worker becomes a thin message handling wrapper.
@@ -15,10 +21,10 @@ export async function load({ bytes }) {
   try {
     doc = await PDFDocument.load(bytes)
   } catch (error) {
-    throw new Error("That file could not be read as a PDF.")
+    throw new Error("js.error.not_pdf")
   }
 
-  if (doc.getPageCount() === 0) throw new Error("That PDF has no pages.")
+  if (doc.getPageCount() === 0) throw new Error("js.error.no_pages")
 
   const id = nextId++
   documents.set(id, doc)
@@ -35,16 +41,16 @@ export async function load({ bytes }) {
  */
 export async function build({ items }) {
   if (!Array.isArray(items) || items.length === 0) {
-    throw new Error("No pages were selected.")
+    throw new Error("js.error.none_selected")
   }
 
   for (const item of items) {
     const source = documents.get(item.doc)
-    if (!source) throw new Error("One of those files is no longer loaded.")
+    if (!source) throw new Error("js.error.one_not_loaded")
 
     const total = source.getPageCount()
     if (!Number.isInteger(item.page) || item.page < 1 || item.page > total) {
-      throw new Error(`Page ${item.page} does not exist in a ${total} page file.`)
+      throw new Error(`js.error.page_missing|${item.page}|${total}`)
     }
   }
 
@@ -96,7 +102,7 @@ const A4 = { width: 595.28, height: 841.89 }
  */
 export async function imagesToPdf({ images, fit = "a4" }) {
   if (!Array.isArray(images) || images.length === 0) {
-    throw new Error("Select at least one image.")
+    throw new Error("js.empty.frimages")
   }
 
   const doc = await PDFDocument.create()
@@ -105,7 +111,7 @@ export async function imagesToPdf({ images, fit = "a4" }) {
     const kind = imageKind(image.bytes)
     if (!kind) {
       throw new Error(
-        `${image.name || "That file"} is not a JPG or PNG. Convert it first.`,
+        `js.error.not_image|${image.name || ""}`,
       )
     }
 
@@ -115,7 +121,7 @@ export async function imagesToPdf({ images, fit = "a4" }) {
         ? await doc.embedJpg(image.bytes)
         : await doc.embedPng(image.bytes)
     } catch (error) {
-      throw new Error(`${image.name || "That image"} could not be read.`)
+      throw new Error("js.error.image_unreadable|" + (image.name || ""))
     }
 
     if (fit === "image") {
@@ -169,7 +175,7 @@ export function imageKind(bytes) {
  */
 export async function splitToZip({ parts, zipName = "split.zip" }) {
   if (!Array.isArray(parts) || parts.length === 0) {
-    throw new Error("Nothing to split.")
+    throw new Error("js.empty.split")
   }
 
   const entries = {}
@@ -206,13 +212,13 @@ export async function splitToZip({ parts, zipName = "split.zip" }) {
  */
 export function splitRanges({ pageCount, mode, after = 1, size = 1 }) {
   if (!Number.isInteger(pageCount) || pageCount < 1) {
-    throw new Error("That document has no pages.")
+    throw new Error("js.error.doc_no_pages")
   }
 
   if (mode === "at") {
     if (!Number.isInteger(after) || after < 1 || after >= pageCount) {
       throw new Error(
-        `Pick a page between 1 and ${pageCount - 1} to cut after.`,
+        `js.error.cut_between|${pageCount - 1}`,
       )
     }
     return [
@@ -223,7 +229,7 @@ export function splitRanges({ pageCount, mode, after = 1, size = 1 }) {
 
   if (mode === "every") {
     if (!Number.isInteger(size) || size < 1) {
-      throw new Error("Each part must have at least one page.")
+      throw new Error("js.error.part_needs_page")
     }
     const parts = []
     for (let start = 1; start <= pageCount; start += size) {
@@ -253,7 +259,7 @@ function range(first, last) {
  */
 export function zipImages({ images, zipName = "pages.zip" }) {
   if (!Array.isArray(images) || images.length === 0) {
-    throw new Error("There are no images to save.")
+    throw new Error("js.error.no_images")
   }
 
   const entries = {}
@@ -271,7 +277,7 @@ export function zipImages({ images, zipName = "pages.zip" }) {
  */
 export async function bytesOf({ id }) {
   const doc = documents.get(id)
-  if (!doc) throw new Error("That file is no longer loaded.")
+  if (!doc) throw new Error("js.error.not_loaded")
   return { bytes: await doc.save() }
 }
 
