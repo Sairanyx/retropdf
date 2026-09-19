@@ -42,6 +42,15 @@ the machine's local address:
 uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
+## The share card
+
+`app/static/share.png` is what appears when someone posts a link. Rebuild it
+after changing the wording or the look:
+
+```bash
+node tests/make-share-card.mjs
+```
+
 ## Hooks
 
 One commit hook, refusing a `Co-Authored-By` trailer that credits an
