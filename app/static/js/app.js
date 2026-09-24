@@ -250,13 +250,38 @@ function showOptionsForMode() {
 // every panel showing at once.
 showOptionsForMode()
 
+// Switching tools in the workspace keeps whatever is already open.
+//
+// That is the point of the workspace: choose a file once, then run it
+// through several tools. Clearing on every switch made it a slower version
+// of the single tool pages, since the file had to be chosen again each time.
+//
+// Images to PDF is the exception, because it takes pictures and everything
+// else takes PDFs. Carrying one across would leave the page showing files
+// the new tool cannot use.
 for (const radio of document.querySelectorAll('input[name="mode"]')) {
+  let wasImages = currentMode() === "frimages"
+
   radio.addEventListener("change", () => {
+    const nowImages = currentMode() === "frimages"
+    const formatChanged = nowImages !== wasImages
+    wasImages = nowImages
+
+    // Page marks belong to the tool that made them: pages picked to remove
+    // are not pages picked to keep.
     marked.clear()
     showOptionsForMode()
     applyAccept()
-    reset()
-    result.textContent = modes[currentMode()].hint
+
+    if (formatChanged) reset()
+
+    // Repaint, since the controls on each page differ by tool: arrows for
+    // reordering, checkboxes for choosing, turn buttons for rotating.
+    if (!formatChanged && order.length) drawPages()
+
+    result.textContent = order.length
+      ? modes[currentMode()].hint
+      : say("js.start_hint")
   })
 }
 

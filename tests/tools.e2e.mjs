@@ -237,7 +237,8 @@ try {
     console.log("\nworkspace")
     const { page, errors } = await open(browser, "/workspace")
     await load(page, [three])
-    // Switching tool with a file open is what the workspace is for.
+    // Choosing a file once and running it through several tools is what the
+    // workspace is for, so switching keeps what is open.
     await page.evaluate(() => {
       const radio = document.querySelector('input[name="mode"][value="extract"]')
       radio.checked = true
@@ -245,11 +246,33 @@ try {
     })
     await page.waitForTimeout(600)
     check(
-      "switching tools starts clean",
+      "switching tools keeps the open file",
+      await page.evaluate(
+        () => document.querySelectorAll("[data-position]").length === 3,
+      ),
+    )
+
+    // Images to PDF is the exception: it takes a different kind of file, so
+    // carrying a PDF across would leave the page showing what it cannot use.
+    await page.evaluate(() => {
+      const radio = document.querySelector('input[name="mode"][value="frimages"]')
+      radio.checked = true
+      radio.dispatchEvent(new Event("change", { bubbles: true }))
+    })
+    await page.waitForTimeout(600)
+    check(
+      "switching to images clears the PDF",
       await page.evaluate(
         () => document.querySelectorAll("[data-position]").length === 0,
       ),
     )
+
+    await page.evaluate(() => {
+      const radio = document.querySelector('input[name="mode"][value="extract"]')
+      radio.checked = true
+      radio.dispatchEvent(new Event("change", { bubbles: true }))
+    })
+    await page.waitForTimeout(400)
     await load(page, [three])
     await page.click("[data-position]")
     await page.waitForTimeout(300)
