@@ -135,28 +135,35 @@ function restoreScroll() {
 // thing this site does not do.
 
 // What this browser has already watched, shared across every tab.
+// Two storages, because neither alone answers the question.
 //
-// sessionStorage would be the natural home, but it is per tab by design, so
-// opening a second tab alongside the first would replay everything. These
-// live in localStorage instead and are cleared when the last tab closes.
+// The flag has to be shared between tabs, so opening a second one does not
+// replay everything. That is localStorage, which every tab sees.
+//
+// It also has to be forgotten when the browser closes, so coming back
+// tomorrow opens properly. localStorage never forgets, but sessionStorage
+// does: the browser clears it on quit and keeps it while it is open. So a
+// mark is kept in both, and the shared flag is trusted only while this tab
+// can still see a session mark of its own.
+//
+// A new tab has no session mark, and writes one. Whether it also replays the
+// opening depends on the shared flag, which the first tab already set: the
+// browser is still open, so nothing replays. Quit the browser and every
+// session mark goes with it, which is what clears the shared flag.
 const SEEN_MAIN = "retropdf-seen-main"
 const SEEN_PAGES = "retropdf-seen-pages"
 
-// How many tabs of this site are open right now.
-//
-// This is what tells "still browsing" apart from "came back later". A
-// timestamp cannot: a tab left open for hours looks exactly like a tab
-// closed hours ago, so the opening would replay in the middle of a session.
-//
-// Each tab adds itself on arrival and removes itself on leaving. When the
-// count reaches zero the flags are cleared, so the next visit opens properly.
-const BEATS = "retropdf-tabs"
+// This tab's own name, kept in sessionStorage so the browser discards it on
+// quit. A tab arriving without one has never been here.
+const SESSION = "retropdf-session"
 
-// How often each tab says it is still here, and how long a mark survives
-// without being refreshed. The gap between them is generous, so a tab busy
-// with a large PDF is never mistaken for one that has gone.
-const BEAT_EVERY = 4 * 1000
-const BEAT_STALE = 20 * 1000
+// The shared list of tabs currently open, and how a claim ages.
+//
+// The gap between refreshing and expiring is generous: a tab working through
+// a large PDF must never be mistaken for one that has closed.
+const CLAIMS = "retropdf-tabs"
+const CLAIM_EVERY = 4 * 1000
+const CLAIM_STALE = 30 * 1000
 
 const wantsLessMotion =
   window.matchMedia("(prefers-reduced-motion: reduce)").matches
@@ -189,81 +196,89 @@ function forget(key) {
 }
 
 /**
- * Join the count of open tabs, and leave it again on the way out.
+ * Whether any other tab of this site is already open.
  *
- * Returns true when this is the first tab, which is what makes the opening
- * play on a genuinely new visit rather than on every tab.
+ * This is what tells "still browsing" from "came back later", and it needs
+ * both storages because neither answers it alone. localStorage is shared
+ * between tabs but never forgets. sessionStorage forgets when the browser
+ * quits but is private to one tab.
+ *
+ * So each tab claims a slot in a shared list and lets go of it on the way
+ * out. An empty list means nothing else is here, which is a new visit.
+ *
+ * A tab that dies without warning cannot let go, so every claim carries the
+ * time it was made and stale ones are dropped on sight. The window is long
+ * enough that a tab busy with a large PDF is never mistaken for a dead one,
+ * and the claim is refreshed while the tab lives, so only a tab that has
+ * genuinely gone ages out.
  */
-function joinSession() {
-  // Every open tab keeps a heartbeat: a timestamp it refreshes while it is
-  // there. A visit is still going if any heartbeat is recent.
-  //
-  // Counting tabs up and down was the obvious approach and it does not
-  // survive contact with reality: a tab that dies without warning, a crashed
-  // browser, a killed process, all leave the count too high with no way to
-  // tell a phantom from a real tab. The number only ever grows, and after
-  // enough of them the opening is silenced for good.
-  //
-  // A heartbeat has the opposite failure: a tab that dies simply stops
-  // writing, and its mark ages out on its own. Nothing has to be cleaned up.
-  const beats = readBeats()
+function otherTabsOpen() {
+  let mine = null
+  try {
+    mine = sessionStorage.getItem(SESSION)
+  } catch (error) {
+    // Storage refused, which private browsing does. The opening plays more
+    // often than it might, which is the harmless way to be wrong.
+    return false
+  }
+
+  const claims = readClaims()
   const now = Date.now()
-  const alive = Object.values(beats).filter((t) => now - t < BEAT_STALE)
 
-  const first = alive.length === 0
+  // Everything heard from recently, this tab's own claim aside.
+  const others = Object.entries(claims).filter(
+    ([id, at]) => id !== mine && now - at < CLAIM_STALE,
+  )
 
-  if (first) {
-    // Nothing else is here, so this is a new visit and last time's flags
-    // belong to a visit that has ended.
-    forget(SEEN_MAIN)
-    forget(SEEN_PAGES)
+  if (!mine) {
+    // A tab with no claim of its own: either the first of a visit or the
+    // first after the browser was quit. Both look the same from here, and
+    // both are told apart by whether anyone else is present.
+    mine = String(Math.random()).slice(2)
+    try {
+      sessionStorage.setItem(SESSION, mine)
+    } catch (error) {
+      return false
+    }
+
+    if (others.length === 0) {
+      // Nobody else. Whatever is left belongs to a visit that has ended.
+      forget(SEEN_MAIN)
+      forget(SEEN_PAGES)
+    }
   }
 
-  // This tab's own mark, kept for as long as the tab is open. A fresh id
-  // each time, so a reload replaces its own entry rather than adding one.
-  const me = String(Math.random()).slice(2)
-  const beat = () => {
-    const current = readBeats()
-    current[me] = Date.now()
-
-    // Anything that has not been heard from in a while is gone.
+  // Claim a slot and keep it fresh for as long as this tab is here.
+  const hold = () => {
+    const current = readClaims()
+    current[mine] = Date.now()
     for (const [id, at] of Object.entries(current)) {
-      if (Date.now() - at > BEAT_STALE) delete current[id]
+      if (Date.now() - at > CLAIM_STALE) delete current[id]
     }
-
-    try {
-      localStorage.setItem(BEATS, JSON.stringify(current))
-    } catch {
-      // Storage refused. The opening simply plays more often than it might.
-    }
+    note(CLAIMS, JSON.stringify(current))
   }
 
-  beat()
-  const ticking = setInterval(beat, BEAT_EVERY)
+  hold()
+  const holding = setInterval(hold, CLAIM_EVERY)
 
+  // Let go on the way out, so the last tab to close ends the visit at once
+  // rather than after the stale window.
   window.addEventListener("pagehide", (event) => {
-    // A page kept alive for the back button has not really gone away.
+    // A page kept alive for the back button has not really gone.
     if (event.persisted) return
-    clearInterval(ticking)
-
-    // Removed on the way out where possible, so closing the last tab ends
-    // the visit at once rather than after the heartbeat ages out.
-    const current = readBeats()
-    delete current[me]
-    try {
-      localStorage.setItem(BEATS, JSON.stringify(current))
-    } catch {
-      // As above.
-    }
+    clearInterval(holding)
+    const current = readClaims()
+    delete current[mine]
+    note(CLAIMS, JSON.stringify(current))
   })
 
-  return first
+  return others.length > 0
 }
 
-/** The heartbeats of every tab, or nothing if they cannot be read. */
-function readBeats() {
+/** Every tab's claim, or nothing if they cannot be read. */
+function readClaims() {
   try {
-    const raw = localStorage.getItem(BEATS)
+    const raw = recall(CLAIMS)
     const parsed = raw ? JSON.parse(raw) : {}
     return parsed && typeof parsed === "object" ? parsed : {}
   } catch {
@@ -271,7 +286,7 @@ function readBeats() {
   }
 }
 
-joinSession()
+otherTabsOpen()
 
 const alreadySeen = recall(SEEN_MAIN) === "1"
 
