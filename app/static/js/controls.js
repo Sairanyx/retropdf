@@ -1,3 +1,5 @@
+import { say } from "/static/js/words.js"
+
 // Replaces two browser drawn controls with ones that match the page.
 //
 // In both cases the real form element stays in the DOM and keeps its value,
@@ -30,7 +32,7 @@ function stepButton(input, direction, label) {
   button.className = "mini"
   button.textContent = label
   button.tabIndex = -1 // the input itself is the keyboard target
-  button.setAttribute("aria-label", direction < 0 ? "Decrease" : "Increase")
+  button.setAttribute("aria-label", say(direction < 0 ? "js.decrease" : "js.increase"))
 
   button.addEventListener("click", () => {
     if (direction < 0) input.stepDown()

@@ -301,6 +301,7 @@ picker.addEventListener("change", async () => {
  */
 function reasonFor(error) {
   const raw = String(error?.message || error)
+
   if (!raw.startsWith("js.")) return raw
 
   // A key may carry values after bars, in the order the sentence needs them.
@@ -416,8 +417,10 @@ async function openFiles(chosen) {
         })
       }
 
+      // Opened before the grid is drawn, so the placeholders that come into
+      // view have a document to draw their page from.
+      await openForDrawing(loaded.id, forRendering)
       drawPages()
-      await renderThumbnails(loaded.id, forRendering)
     }
 
     // Nothing opened, so say why rather than reporting nought pages as
@@ -495,17 +498,37 @@ makeReorderable(pagesEl, (from, to) => {
   result.textContent = say("js.order_updated")
 })
 
+/**
+ * Let go of a pdf.js document and everything it holds.
+ *
+ * destroy() rather than cleanup(): cleanup only drops cached page data and
+ * keeps the parsed document alive, so every file ever opened in the tab
+ * stayed in memory. Guarded, because a throw here would stop reset() half
+ * way and leave the page in a state that is neither old nor new.
+ */
+function release(pdf) {
+  try {
+    Promise.resolve(pdf.destroy()).catch(() => {})
+  } catch {
+    // Already gone, which is the outcome wanted.
+  }
+}
+
 function reset() {
+  // Thumbnails still being drawn belong to the files being cleared away.
+  generation++
+  waiting.length = 0
+  queued.clear()
+  watcher?.disconnect()
+
   loadedBytes = 0
   chosenImages = []
+  for (const pdf of renderCache.values()) release(pdf)
   renderCache.clear()
   for (const id of files.keys()) call("close", { id })
   files.clear()
   thumbnails.clear()
-  // cleanup(), not destroy(): a pdf.js document exposes the first and not
-  // the second, and calling the wrong one threw inside reset, which left
-  // everything after it in this function unreached.
-  for (const pdf of rendered.values()) pdf.cleanup?.()
+  for (const pdf of rendered.values()) release(pdf)
   rendered.clear()
   marked.clear()
   order = []
@@ -514,16 +537,79 @@ function reset() {
   paintLamps()
 }
 
-async function renderThumbnails(docId, bytes) {
+/**
+ * Open a file for drawing. The pages themselves are drawn later, as they
+ * come into view.
+ *
+ * Kept so a page can be drawn again at full size when someone looks closer,
+ * and for exporting pages as images, without parsing the file a second time.
+ */
+async function openForDrawing(docId, bytes) {
   const task = pdfjs.getDocument({ data: bytes, isEvalSupported: false })
   const pdf = await task.promise
-
-  // Kept so a page can be drawn again at full size when someone looks
-  // closer. The thumbnail is rendered at a fraction of the real size, so
-  // scaling that up shows a blurred copy rather than the page.
   rendered.set(docId, pdf)
+}
 
-  for (let n = 1; n <= pdf.numPages; n++) {
+// --- thumbnails, drawn as they come into view ----------------------------
+//
+// Drawing every page up front made a long document slow to open and held a
+// canvas for every page whether or not anyone scrolled to it, and redrawing
+// the whole grid after each one made it slower still the longer it got.
+// Instead each placeholder is watched, and a page is drawn once it is close
+// to the screen. One at a time, so scrolling fast through a long document
+// queues the pages rather than starting hundreds of renders at once.
+
+// Bumped by reset(), so a drawing that finishes after its file was cleared
+// away is thrown out rather than put into the new one.
+let generation = 0
+
+// Keys waiting to be drawn, in the order they were seen, and every key ever
+// queued since the last reset so none is drawn twice.
+const waiting = []
+const queued = new Set()
+let drawingNow = false
+
+// Starts a little before the page is on screen, so it is usually ready by
+// the time the reader gets there. Browsers without the observer, which are
+// very old ones, simply draw every page.
+const watcher =
+  "IntersectionObserver" in window
+    ? new IntersectionObserver(
+        (seen) => {
+          for (const item of seen) {
+            if (!item.isIntersecting) continue
+            watcher.unobserve(item.target)
+            wantThumbnail(item.target.dataset.key)
+          }
+        },
+        { rootMargin: "400px 0px" },
+      )
+    : null
+
+function wantThumbnail(key) {
+  if (!key || thumbnails.has(key) || queued.has(key)) return
+  queued.add(key)
+  waiting.push(key)
+  drawWaiting()
+}
+
+async function drawWaiting() {
+  if (drawingNow) return
+  drawingNow = true
+  try {
+    while (waiting.length) await drawThumbnail(waiting.shift())
+  } finally {
+    drawingNow = false
+  }
+}
+
+async function drawThumbnail(key) {
+  const [docId, n] = key.split(":").map(Number)
+  const pdf = rendered.get(docId)
+  if (!pdf) return
+  const startedIn = generation
+
+  try {
     const page = await pdf.getPage(n)
     const viewport = page.getViewport({ scale: 0.3 })
 
@@ -536,10 +622,38 @@ async function renderThumbnails(docId, bytes) {
       viewport,
     }).promise
 
-    thumbnails.set(`${docId}:${n}`, canvas)
-    result.textContent = say("js.drawing", { n, total: pdf.numPages })
-    drawPages()
+    if (startedIn !== generation || !rendered.has(docId)) return
+    thumbnails.set(key, canvas)
+    placeThumbnail(key, canvas)
+  } catch {
+    // A page pdf.js cannot draw, or a file cleared away mid drawing. The
+    // placeholder stays, and the page itself is still saved correctly, since
+    // saving goes through pdf-lib rather than through this drawing.
   }
+}
+
+/** Put a finished thumbnail into its slot without rebuilding the grid. */
+function placeThumbnail(key, canvas) {
+  const box = Array.from(pagesEl.children).find((child) => child.dataset.key === key)
+  const entry = order.find((item) => item.key === key)
+  if (!box || !entry) return
+  styleThumbnail(canvas, entry)
+  box.querySelector(".thumb")?.replaceChildren(canvas)
+}
+
+/**
+ * Dim or turn a thumbnail to match what will happen to its page.
+ *
+ * On the delete tool a chosen page is dimmed, since it is going. On the
+ * extract tool it is the other way round: the chosen pages are the ones
+ * kept, so everything else is dimmed.
+ */
+function styleThumbnail(canvas, entry) {
+  const mode = currentMode()
+  const bright =
+    modes[mode].controls !== "select" || (mode === "extract") === marked.has(entry.key)
+  canvas.style.opacity = bright ? "1" : "0.4"
+  canvas.style.transform = entry.rotate ? `rotate(${entry.rotate}deg)` : ""
 }
 
 /**
@@ -559,9 +673,10 @@ function inThumb(inner) {
 
 // Rebuild the grid from `order`, wrapping each thumbnail in its controls.
 function drawPages() {
-  const mode = currentMode()
-  const kind = modes[mode].controls
+  const kind = modes[currentMode()].controls
   pagesEl.replaceChildren()
+  // The old boxes are gone. Placeholders in the new grid are watched below.
+  watcher?.disconnect()
 
   order.forEach((entry, position) => {
     const canvas = thumbnails.get(entry.key)
@@ -575,21 +690,19 @@ function drawPages() {
     // Dragging moves pages, so a drag must not be read as a text selection.
     if (kind === "move") box.style.touchAction = "none"
 
+    // Marked whether or not the picture has arrived yet, so a page chosen
+    // before its thumbnail was drawn still shows as chosen.
+    if (kind === "select" && marked.has(entry.key)) box.classList.add("marked")
+
     if (canvas) {
-      if (kind !== "select") {
-        canvas.style.opacity = "1"
-      } else if (marked.has(entry.key)) {
-        box.classList.add("marked")
-        canvas.style.opacity = mode === "extract" ? "1" : "0.4"
-      } else {
-        canvas.style.opacity = mode === "extract" ? "0.4" : "1"
-      }
-      canvas.style.transform = entry.rotate ? `rotate(${entry.rotate}deg)` : ""
+      styleThumbnail(canvas, entry)
       box.appendChild(inThumb(canvas))
     } else {
       const placeholder = document.createElement("div")
       placeholder.className = "placeholder"
       box.appendChild(inThumb(placeholder))
+      if (watcher) watcher.observe(box)
+      else wantThumbnail(entry.key)
     }
 
     const label = document.createElement("div")
@@ -637,7 +750,7 @@ function zoomButton(entry, caption) {
   button.type = "button"
   button.className = "zoom"
   button.dataset.tip = say("js.look_closer")
-  button.setAttribute("aria-label", `Look closer at ${caption}`)
+  button.setAttribute("aria-label", say("js.look_closer_at", { name: caption }))
   button.textContent = "+"
   button.addEventListener("click", (event) => {
     event.stopPropagation()
@@ -670,7 +783,7 @@ async function openViewer(entry, caption) {
   const close = document.createElement("button")
   close.type = "button"
   close.className = "chip"
-  close.textContent = "Close"
+  close.textContent = say("js.close")
 
   const panel = document.createElement("div")
   panel.className = "viewer-panel"
@@ -794,7 +907,7 @@ function turnButton(entry, amount) {
     drawPages()
     const turned = order.filter((item) => item.rotate !== 0).length
     result.textContent = turned
-      ? `${turned} of ${order.length} pages rotated`
+      ? say("js.rotated", { turned, total: order.length })
       : say("js.none_rotated")
   })
   return button
@@ -812,7 +925,14 @@ function reportSelection() {
 }
 
 // Hand bytes to the browser as a download. Nothing is uploaded: the URL
-// points at memory in this tab and is released straight afterwards.
+// points at memory in this tab.
+//
+// The URL is released a while later rather than straight after the click.
+// The click only starts the download, and Firefox and Safari read the blob
+// afterwards, so releasing it at once can leave them with nothing to save.
+// The link is put in the page for the click, which older Firefox requires.
+const RELEASE_AFTER_MS = 60 * 1000
+
 function save(bytes, filename, type) {
   const blob = new Blob([bytes], { type })
   const url = URL.createObjectURL(blob)
@@ -820,9 +940,12 @@ function save(bytes, filename, type) {
   const link = document.createElement("a")
   link.href = url
   link.download = filename
+  link.hidden = true
+  document.body.append(link)
   link.click()
+  link.remove()
 
-  URL.revokeObjectURL(url)
+  setTimeout(() => URL.revokeObjectURL(url), RELEASE_AFTER_MS)
 }
 
 async function downloadSplit() {
@@ -919,7 +1042,7 @@ async function addImages(chosen) {
 
   if (chosenImages.length === 0) {
     result.textContent = refused.length
-      ? refusalOf(refused, "a JPG or PNG", "JPGs or PNGs")
+      ? refusalOf(refused, "image")
       : say("js.error.nothing_opened_image")
     paintLamps()
     return
@@ -990,8 +1113,18 @@ async function downloadImagesToPdf() {
 
 // --- PDF to images -----------------------------------------------------
 
+// What each export format is called and how the browser encodes it. JPEG
+// quality 0.92 is the browser's own default, made explicit: sharp text with
+// files a fraction of the PNG size.
+const IMAGE_FORMATS = {
+  jpg: { extension: "jpg", type: "image/jpeg", quality: 0.92 },
+  png: { extension: "png", type: "image/png" },
+}
+
 async function downloadPdfToImages() {
   const scale = Number(document.querySelector("#export-scale").value)
+  const format =
+    IMAGE_FORMATS[document.querySelector("#export-format")?.value] || IMAGE_FORMATS.jpg
   const stem = (files.values().next().value || "document.pdf").replace(/\.pdf$/i, "")
 
   // Rendering needs a canvas, which a plain worker does not have, so this
@@ -1000,9 +1133,9 @@ async function downloadPdfToImages() {
   const images = []
   for (const [position, entry] of order.entries()) {
     result.textContent = say("js.rendering", { n: position + 1, total: order.length })
-    const bytes = await renderPageToPng(entry, scale)
+    const bytes = await renderPageImage(entry, scale, format)
     images.push({
-      name: `${stem}-${String(position + 1).padStart(3, "0")}.png`,
+      name: `${stem}-${String(position + 1).padStart(3, "0")}.${format.extension}`,
       bytes,
     })
   }
@@ -1012,10 +1145,11 @@ async function downloadPdfToImages() {
   result.textContent = say("js.saved_images", { count: zip.fileCount, name: zip.name })
 }
 
-async function renderPageToPng(entry, scale) {
-  let pdf = renderCache.get(entry.doc)
+async function renderPageImage(entry, scale, format) {
+  // The document opened for the thumbnails, so the file is not parsed twice.
+  // Only if that is missing is it fetched back from the worker.
+  let pdf = rendered.get(entry.doc) || renderCache.get(entry.doc)
   if (!pdf) {
-    // Ask the worker for the original bytes so pdf.js can render from them.
     const { bytes } = await call("bytesOf", { id: entry.doc })
     const task = pdfjs.getDocument({ data: bytes, isEvalSupported: false })
     pdf = await task.promise
@@ -1028,9 +1162,22 @@ async function renderPageToPng(entry, scale) {
   const canvas = document.createElement("canvas")
   canvas.width = viewport.width
   canvas.height = viewport.height
+  const context = canvas.getContext("2d")
 
-  await page.render({ canvasContext: canvas.getContext("2d"), viewport }).promise
+  // JPEG has no transparency, and a transparent pixel encodes as black. A
+  // white sheet underneath keeps a page with no background of its own white.
+  if (format.type === "image/jpeg") {
+    context.fillStyle = "#fff"
+    context.fillRect(0, 0, canvas.width, canvas.height)
+  }
 
-  const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"))
+  await page.render({ canvasContext: context, viewport }).promise
+
+  const blob = await new Promise((resolve) =>
+    canvas.toBlob(resolve, format.type, format.quality),
+  )
+  // Released now rather than whenever the collector gets to it: at the
+  // largest size a page is tens of megabytes of pixels.
+  canvas.width = canvas.height = 0
   return new Uint8Array(await blob.arrayBuffer())
 }

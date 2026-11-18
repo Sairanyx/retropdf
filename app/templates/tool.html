@@ -81,6 +81,11 @@
         <option value="2" selected>{{ t('export.large') }}</option>
         <option value="3">{{ t('export.very_large') }}</option>
       </select>
+      <label for="export-format" class="visually-hidden">{{ t('export.format') }}</label>
+      <select id="export-format">
+        <option value="jpg" selected>JPG</option>
+        <option value="png">PNG</option>
+      </select>
     </fieldset>
     {% endif %}
 

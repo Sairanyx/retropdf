@@ -216,3 +216,32 @@ def test_the_words_block_carries_only_what_the_scripts_use():
     words = json.loads(body.split('id="words">')[1].split("</script>")[0])
     assert words
     assert all(key.startswith("js.") for key in words)
+
+
+def test_a_translated_page_stays_in_its_language():
+    """Words and links written straight into a template, rather than looked
+    up, stay English on every translated page. These are the ones that did."""
+    body = client.get("/es/merge-pdf").text
+    # The Tools and Info links lead to the Spanish home page, not the English.
+    assert 'href="/es#tools"' in body
+    assert 'href="/es#info"' in body
+    assert 'href="/#tools"' not in body
+    # Footer tool names and the legal links' label.
+    assert ">Merge PDF<" not in body
+    assert words_for("es")("tool.merge-pdf.name") in body
+    assert "About this site" not in body
+
+
+def test_the_workspace_has_no_english_left_in_it():
+    body = client.get("/es/workspace").text
+    for english in ("Select files", "Fit on A4", "Match the image"):
+        assert english not in body, english
+
+
+def test_the_image_export_offers_jpg_and_png():
+    """The page is called PDF to JPG, so it must be able to make one."""
+    for path in ("/pdf-to-jpg", "/workspace"):
+        body = client.get(path).text
+        assert 'id="export-format"' in body
+        assert '<option value="jpg" selected>JPG</option>' in body
+        assert '<option value="png">PNG</option>' in body

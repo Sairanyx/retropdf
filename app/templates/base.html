@@ -101,10 +101,10 @@
         </a>
 
         <nav class="plate navgroup" aria-label="{{ t('nav.main') }}">
-          <a class="chip{% if on_tools %} on{% endif %}" href="{{ '#tools' if on_home else '/#tools' }}" data-watch="tools">
+          <a class="chip{% if on_tools %} on{% endif %}" href="{{ '#tools' if on_home else url() ~ '#tools' }}" data-watch="tools">
             {{ t('nav.tools') }} <span class="led"></span>
           </a>
-          <a class="chip{% if on_info %} on{% endif %}" href="{{ '#info' if on_home else '/#info' }}" data-watch="info">
+          <a class="chip{% if on_info %} on{% endif %}" href="{{ '#info' if on_home else url() ~ '#info' }}" data-watch="info">
             {{ t('nav.info') }} <span class="led"></span>
           </a>
           <a class="chip solid{% if on_workspace %} on{% endif %}" href="{{ url('workspace') }}">
@@ -177,7 +177,7 @@
 
       <nav aria-label="{{ t('nav.all_tools') }}">
         {% for tool in tools %}
-          <a href="{{ url(tool.slug) }}">{{ tool.name }}</a>
+          <a href="{{ url(tool.slug) }}">{{ t('tool.' ~ tool.slug ~ '.name') }}</a>
         {% endfor %}
         <a href="{{ url('workspace') }}">{{ t('nav.workspace') }}</a>
       </nav>
@@ -186,7 +186,7 @@
            that handles documents needs these reachable, though: no privacy
            policy reads as no thought given to privacy, whatever the code
            actually does. -->
-      <nav class="footer-legal" aria-label="About this site">
+      <nav class="footer-legal" aria-label="{{ t('footer.about') }}">
         <a href="{{ url('privacy') }}">
           {{ t('footer.privacy') }}{% if lang and lang.code != 'en' %} <span class="only-english">({{ t('footer.english_only') }})</span>{% endif %}
         </a>
