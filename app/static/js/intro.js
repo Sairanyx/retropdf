@@ -118,17 +118,14 @@ function restoreScroll() {
 // someone who came here to do a job. The heading typing is shorter and
 // still reads well, so it plays once per page.
 //
-// Two flags in sessionStorage, which is the narrowest thing that survives a
-// page load. Worth being precise about what that means, since this is the
-// only thing this site keeps anywhere:
+// Kept in browser storage. Worth being precise about what that means, since
+// the privacy page lists everything stored here and has to stay accurate:
 //
 //   - it never leaves the device, and cannot: connect-src 'none' forbids
 //     every outbound request, so there is nothing that could send it
 //   - the server never sees it, and has no way to ask for it
-//   - it holds no identifier, only what this browser has already watched
-//   - it cannot leave the device: connect-src 'none' forbids every outbound
-//     request, so there is nothing that could send it
-//   - the server never sees it, and has no way to ask for it
+//   - it holds nothing about the person, only what this browser has
+//     already watched and which of its tabs are open
 //
 // A cookie would have been the obvious alternative and is the wrong choice:
 // cookies are sent to the server on every request, which is exactly the

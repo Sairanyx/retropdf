@@ -29,17 +29,27 @@
 
     <h2>What your browser keeps.</h2>
     <p>
-      Three things, all stored by your own browser and none of them ever
+      Four things, all stored by your own browser and none of them ever
       sent anywhere:
     </p>
     <ul class="plain">
       <li>
-        Whether you have already seen the opening animation, so it does not
-        replay every time you open a page. This is a date and nothing else.
+        Whether you have already seen the opening animation, and on which
+        pages the heading has already typed itself, so neither replays every
+        time you open a page. This is forgotten once you have closed every
+        tab of this site.
       </li>
       <li>
-        Where you had scrolled to, so reloading puts you back. This is a
-        number and nothing else.
+        Which tabs of this site you have open right now, so that opening a
+        second one does not replay the animation. Each tab makes up a random
+        number for itself when it opens and notes the time every few seconds.
+        A tab removes its entry when it closes, and an entry that stops being
+        updated is dropped after half a minute. The number means nothing
+        outside your browser and is never reused.
+      </li>
+      <li>
+        Where you had scrolled to on each page, so reloading puts you back.
+        This is a number per page, kept only until you close the tab.
       </li>
       <li>
         Whether you have asked for a desktop app, so the button does not
@@ -47,9 +57,10 @@
       </li>
     </ul>
     <p>
-      Neither identifies you. Neither is a cookie, so neither is sent to the
-      server with your requests. You can clear both at any time through your
-      browser's settings for this site, and nothing here will break.
+      None of these identifies you. None of them is a cookie, so none is sent
+      to the server with your requests. You can clear them at any time
+      through your browser's settings for this site, and nothing here will
+      break.
     </p>
 
     <h2>What our server sees.</h2>
@@ -143,7 +154,7 @@
       way that means your files are sent somewhere, that will be said plainly
       at the top of this page rather than buried in it.
     </p>
-    <p class="note">Last updated 25 August 2026.</p>
+    <p class="note">Last updated 18 November 2026.</p>
   </section>
 </div>
 {% endblock %}
