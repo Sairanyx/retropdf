@@ -3,10 +3,6 @@ __pycache__/
 *.pyc
 .venv/
 
-# Personal documents - never commit
-output/*.pdf
-scripts/output/*.pdf
-
 # Planning docs - local only
 docs/
 
