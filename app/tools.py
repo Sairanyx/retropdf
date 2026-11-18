@@ -151,7 +151,7 @@ TOOLS: tuple[Tool, ...] = (
         steps="Select a PDF, pick a size, then download every page as an image.",
         title="PDF to JPG · RetroPDF",
         description=(
-            "Save each page of a PDF as a PNG image. Runs on your own "
+            "Save each page of a PDF as a JPG or PNG image. Runs on your own "
             "device, so nothing is uploaded."
         ),
     ),
