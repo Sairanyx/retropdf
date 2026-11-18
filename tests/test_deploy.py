@@ -44,8 +44,20 @@ def test_the_counter_is_kept_outside_the_container():
 
 
 def test_access_logs_are_off():
-    """The privacy page says logging is off, so this is what makes it true."""
+    """The privacy page says logging is off, so this is what makes it true.
+
+    Both servers, since either one logging is enough to make it false: Docker
+    keeps whatever uvicorn prints in a file on the host.
+    """
     assert "output discard" in CADDYFILE
+    assert "--no-access-log" in DOCKERFILE
+
+
+def test_caddy_does_not_cache_static_files_for_long():
+    """The static file names never change between deploys, so a long cache
+    keeps visitors on old code. The app decides caching, not Caddy."""
+    assert "immutable" not in CADDYFILE
+    assert "max-age" not in CADDYFILE
 
 
 def test_caddy_does_not_repeat_the_security_headers():

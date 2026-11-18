@@ -23,9 +23,8 @@
 
 	encode zstd gzip
 
-	# The fonts, scripts and stylesheet are versioned by content and change
-	# only on deploy, so a long cache costs nothing and saves a round trip
-	# on every visit.
-	@static path /static/*
-	header @static Cache-Control "public, max-age=31536000, immutable"
+	# Caching is left to the app as well, for the same reason. The static
+	# file names do not change between deploys, so a long cache set here
+	# would keep visitors on old code for as long as it lasted. The app's
+	# rule is in app/security.py, static_cache_control.
 }

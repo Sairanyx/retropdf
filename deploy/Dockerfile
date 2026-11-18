@@ -33,4 +33,10 @@ EXPOSE 8000
 
 # Caddy terminates TLS and talks to this over the internal network, so there
 # is no reason for it to listen anywhere else.
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+#
+# --no-access-log for the same reason Caddy's log is discarded. Uvicorn
+# otherwise prints a line per request, with the address, the page and the
+# time, and Docker keeps everything a container prints in a file on the host.
+# The privacy page says access logging is off, and both logs have to be off
+# for that to be true. Errors and startup messages are still printed.
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--no-access-log"]

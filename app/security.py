@@ -60,6 +60,33 @@ HEADERS = {
 }
 
 
+def static_cache_control(path: str, development: bool = False) -> str:
+    """How long a browser may keep a static file without asking again.
+
+    The file names never change between deploys: app.js is /static/js/app.js
+    in every version, and the scripts import each other by those fixed
+    names. So nothing may be cached on trust for long, or a deploy reaches
+    visitors only when their cache happens to expire, and a fix to the code
+    handling their files arrives weeks late.
+
+    "no-cache" does not mean "do not cache". The browser keeps the file and
+    asks each time whether it changed; the answer is usually an empty 304,
+    which costs a round trip and no download.
+
+    Fonts are the exception. They do not change in practice, and asking again
+    on every page makes the headings flash in the fallback typeface first.
+    A week bounds how long an unlikely change could take to arrive.
+
+    In development the browser must never serve a cached script or
+    stylesheet, or a change appears not to have taken effect.
+    """
+    if path.startswith("/static/fonts/"):
+        return "public, max-age=604800"
+    if development:
+        return "no-store, must-revalidate"
+    return "no-cache"
+
+
 class SecurityHeaders(BaseHTTPMiddleware):
     """Attach the headers above to every response."""
 
@@ -75,15 +102,10 @@ class SecurityHeaders(BaseHTTPMiddleware):
         for name, value in HEADERS.items():
             response.headers[name] = value
 
-        # In development the browser must never serve a cached script or
-        # stylesheet, or a change appears not to have taken effect.
-        #
-        # Fonts are deliberately left cached even here: they never change
-        # while working, and re-fetching them on every reload makes the page
-        # flash its fallback typeface before the real one arrives.
-        if self.no_cache and request.url.path.startswith("/static/"):
-            if not request.url.path.startswith("/static/fonts/"):
-                response.headers["Cache-Control"] = "no-store, must-revalidate"
+        if request.url.path.startswith("/static/"):
+            response.headers["Cache-Control"] = static_cache_control(
+                request.url.path, self.no_cache
+            )
 
         # Only meaningful over HTTPS, and actively unhelpful in local
         # development, where it would pin localhost to HTTPS in your browser.
