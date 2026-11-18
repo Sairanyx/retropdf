@@ -353,3 +353,61 @@ def test_the_privacy_page_lists_everything_the_browser_keeps():
     assert "Four things" in body
     for phrase in ("opening animation", "tabs of this site", "scrolled to", "desktop app"):
         assert phrase in body
+
+
+# --- error pages --------------------------------------------------------
+
+
+def test_a_missing_page_is_a_page_of_the_site():
+    response = client.get("/no-such-tool")
+    assert response.status_code == 404
+    assert response.headers["content-type"].startswith("text/html")
+    assert "This page is not here." in response.text
+    assert 'name="robots" content="noindex"' in response.text
+    assert 'rel="canonical"' not in response.text
+    assert "connect-src 'none'" in response.headers["content-security-policy"]
+
+
+def test_a_missing_page_speaks_the_language_of_its_address():
+    from app.translations import words_for
+
+    body = client.get("/fi/no-such-tool").text
+    assert words_for("fi")("error.404.heading") in body
+    assert 'lang="fi"' in body
+
+
+def test_sending_to_a_page_says_it_accepts_nothing():
+    response = client.post("/merge-pdf", content=b"x")
+    assert response.status_code == 405
+    assert "GET" in response.headers["allow"]
+    assert "This address only hands out pages." in response.text
+
+
+def test_head_of_a_missing_page_is_empty():
+    response = client.head("/no-such-tool")
+    assert response.status_code == 404
+    assert response.content == b""
+
+
+def test_a_missing_script_is_not_answered_with_a_whole_page():
+    response = client.get("/static/js/no-such-file.js")
+    assert response.status_code == 404
+    assert "<html" not in response.text
+
+
+def test_a_crash_still_carries_the_security_headers():
+    """The 500 handler runs outside the middleware that adds them."""
+
+    def boom():
+        raise RuntimeError("deliberate")
+
+    app.add_api_route("/__boom-for-tests", boom)
+    try:
+        crashing = TestClient(app, raise_server_exceptions=False)
+        response = crashing.get("/__boom-for-tests")
+    finally:
+        app.router.routes.pop()
+    assert response.status_code == 500
+    assert "Something went wrong on our side." in response.text
+    assert "deliberate" not in response.text
+    assert "connect-src 'none'" in response.headers["content-security-policy"]

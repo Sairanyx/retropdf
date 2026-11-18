@@ -17,9 +17,10 @@ from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, HTMLResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app import flags, interest, languages
-from app.security import SecurityHeaders
+from app.security import HEADERS, SecurityHeaders
 from app.translations import words_for
 from app.tool_art import ART
 from app.tools import TOOLS, BY_SLUG
@@ -466,3 +467,78 @@ def sitemap() -> PlainTextResponse:
 # the same handlers as the English ones with a different language bound in,
 # so they cannot be built before those are defined.
 register_translated_routes()
+
+
+# --- error pages ---------------------------------------------------------
+#
+# Without these, a mistyped address gets FastAPI's bare {"detail": "Not
+# Found"}, which reads as a broken site rather than a missing page. Each error
+# is a page of the site instead: the same plates and type, in the language of
+# the address that was asked for, with a way back.
+
+# Errors with words of their own. Anything else gets the general ones.
+ERROR_KINDS = {404: "404", 405: "405", 500: "500"}
+
+
+def _language_of(request: Request) -> str:
+    """The language an address was in, judged by its prefix."""
+    first = request.url.path.strip("/").split("/", 1)[0]
+    return first if first in languages.BY_CODE else languages.DEFAULT.code
+
+
+def error_page(request: Request, status: int) -> HTMLResponse:
+    """The page for one error, keeping the status code."""
+    lang = _language_of(request)
+    words = words_for(lang)
+    kind = ERROR_KINDS.get(status, "other")
+    response = render(
+        request,
+        "error.html",
+        lang=lang,
+        here="",
+        page_title=words(f"error.{kind}.title"),
+        page_description=words(f"error.{kind}.heading"),
+        canonical=None,
+        noindex=True,
+        # An error has no versions in other languages to point a search
+        # engine at.
+        alternates=[],
+        status=status,
+        kind=kind,
+    )
+    response.status_code = status
+    # A HEAD request asks about the page, not for it.
+    if request.method == "HEAD":
+        return HTMLResponse(status_code=status, headers=dict(response.headers))
+    return response
+
+
+@app.exception_handler(StarletteHTTPException)
+async def http_error(request: Request, exc: StarletteHTTPException):
+    # A missing script or stylesheet is asked for by the browser, not a
+    # person, so a whole page in reply is only wasted bytes.
+    if request.url.path.startswith("/static/"):
+        return PlainTextResponse(str(exc.detail), status_code=exc.status_code)
+    response = error_page(request, exc.status_code)
+    # 405 must say what is allowed.
+    for name, value in (exc.headers or {}).items():
+        response.headers[name] = value
+    return response
+
+
+@app.exception_handler(Exception)
+async def server_error(request: Request, exc: Exception):
+    """Something broke while building a page.
+
+    This handler runs outside the middleware that adds the security headers,
+    so it adds them itself: an error page without the CSP would be the one
+    page on the site allowed to make requests. If even the error page fails,
+    a plain sentence is sent rather than nothing.
+    """
+    try:
+        response = error_page(request, 500)
+    except Exception:
+        response = PlainTextResponse("Something went wrong. Please try again.", status_code=500)
+    for name, value in HEADERS.items():
+        response.headers[name] = value
+    return response

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="wrap">
+  <section class="tool-head first-screen">
+    <p class="label">{{ t('error.label', code=status) }}</p>
+    <h1 data-type="{{ t('error.' ~ kind ~ '.heading') }}">{{ t('error.' ~ kind ~ '.heading') }}</h1>
+    <p class="lede">{{ t('error.' ~ kind ~ '.lede') }}</p>
+
+    <!-- Every error says the same reassuring thing, because the reader's
+         first worry on a document site is the document. -->
+    <p class="lede">{{ t('error.files_safe') }}</p>
+
+    <div class="controls error-ways">
+      <a class="chip accent" href="{{ url() }}">{{ t('error.home') }}</a>
+      <a class="chip" href="{{ url() }}#tools">{{ t('error.tools') }}</a>
+    </div>
+  </section>
+</div>
+{% endblock %}

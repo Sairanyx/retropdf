@@ -6,7 +6,11 @@
 
   <title>{{ page_title }}</title>
   <meta name="description" content="{{ page_description }}">
-  <link rel="canonical" href="{{ canonical }}">
+  {% if canonical %}<link rel="canonical" href="{{ canonical }}">{% endif %}
+  {% if noindex %}
+  <!-- An error page is not a page anyone should land on from a search. -->
+  <meta name="robots" content="noindex">
+  {% endif %}
 
   <!-- One SVG rather than a pile of PNGs. Every browser that matters reads
        it, it stays sharp at any size, and there is one file to keep right
@@ -19,7 +23,7 @@
   <meta property="og:title" content="{{ page_title }}">
   <meta property="og:description" content="{{ page_description }}">
   <meta property="og:type" content="website">
-  <meta property="og:url" content="{{ canonical }}">
+  {% if canonical %}<meta property="og:url" content="{{ canonical }}">{% endif %}
   <meta property="og:site_name" content="RetroPDF">
   <meta property="og:locale" content="{{ lang.locale if lang else 'en' }}">
 

@@ -2746,3 +2746,12 @@ textarea,
   color: #fffaf8;
   font: 600 18px/1.5 "IBM Plex Mono", monospace;
 }
+
+/* The two ways out of an error page sit under the words, with the same
+ * spacing the tool controls use. */
+.error-ways {
+  margin-top: 24px;
+}
+.error-ways a {
+  text-decoration: none;
+}
