@@ -15,6 +15,10 @@ from app.tools import TOOLS
 
 client = TestClient(app)
 
+# What a browser sends when a person clicks a link on this site. The desktop
+# app counter only counts a request carrying these, so a crawler cannot.
+CLICK = {"sec-fetch-site": "same-origin", "sec-fetch-user": "?1"}
+
 
 def test_home_page_loads():
     """The home page renders and carries a heading.
@@ -178,7 +182,7 @@ def test_only_pressing_the_button_counts():
     client.get("/desktop")
     assert interest.read() == before, "reading the page counted somebody"
 
-    client.get("/desktop?ask=1")
+    client.get("/desktop?ask=1", headers=CLICK)
     assert interest.read() == before + 1, "pressing the button did not count"
 
 
@@ -188,8 +192,8 @@ def test_the_desktop_page_shows_the_number():
 
     Asked twice, since one is written out as a word rather than a figure.
     """
-    client.get("/desktop?ask=1")
-    client.get("/desktop?ask=1")
+    client.get("/desktop?ask=1", headers=CLICK)
+    client.get("/desktop?ask=1", headers=CLICK)
     body = client.get("/desktop").text
     assert 'class="tally"' in body
     assert "2" in body
@@ -264,3 +268,88 @@ def test_the_footer_links_to_the_legal_pages():
     body = client.get("/").text
     for path in ("privacy", "terms", "security"):
         assert f'href="/{path}"' in body
+
+
+# --- the counter cannot be inflated by machines -------------------------
+
+
+@pytest.mark.parametrize(
+    "headers",
+    [
+        {},  # a crawler or curl: no fetch metadata at all
+        {"sec-fetch-site": "cross-site", "sec-fetch-user": "?1"},  # linked from elsewhere
+        {"sec-fetch-site": "none", "sec-fetch-user": "?1"},  # typed or bookmarked
+        {"sec-fetch-site": "same-origin"},  # not activated by a person
+    ],
+)
+def test_only_a_click_on_this_site_counts(headers):
+    before = interest.read()
+    page = client.get("/desktop?ask=1", headers=headers)
+    assert page.status_code == 200
+    assert interest.read() == before
+    assert 'data-counted="1"' not in page.text
+
+
+def test_a_click_counts_in_every_language():
+    before = interest.read()
+    client.get("/es/desktop?ask=1", headers=CLICK)
+    assert interest.read() == before + 1
+
+
+def test_head_never_counts():
+    before = interest.read()
+    client.head("/desktop?ask=1", headers=CLICK)
+    assert interest.read() == before
+
+
+def test_crawlers_are_asked_not_to_follow_the_button():
+    assert "Disallow: /*?ask=" in client.get("/robots.txt").text
+    body = client.get("/").text
+    assert 'href="/desktop?ask=1" rel="nofollow"' in body
+
+
+# --- HEAD ---------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "path",
+    ["/", "/merge-pdf", "/es/merge-pdf", "/workspace", "/privacy", "/desktop",
+     "/robots.txt", "/sitemap.xml", "/favicon.ico", "/static/css/app.css"],
+)
+def test_head_is_answered_like_get(path):
+    """curl -I, uptime monitors and some crawlers ask with HEAD."""
+    response = client.head(path)
+    assert response.status_code == 200
+    assert response.content == b""
+    if not path.startswith("/static/") and path != "/favicon.ico":
+        assert "connect-src 'none'" in response.headers["content-security-policy"]
+
+
+# --- caching ------------------------------------------------------------
+
+
+def test_scripts_are_checked_for_changes_on_every_visit():
+    """File names do not change between deploys, so a long cache would keep
+    visitors on old code. no-cache keeps the file but asks first."""
+    for path in ("/static/js/app.js", "/static/css/app.css", "/static/js/vendor/pdf.min.mjs"):
+        assert client.get(path).headers["cache-control"] == "no-cache"
+
+
+def test_an_unchanged_script_is_not_downloaded_again():
+    """What makes no-cache cheap: the browser asks, and gets an empty 304."""
+    first = client.get("/static/js/app.js")
+    again = client.get("/static/js/app.js", headers={"if-none-match": first.headers["etag"]})
+    assert again.status_code == 304
+
+
+def test_fonts_are_cached_for_a_bounded_time():
+    headers = client.get("/static/fonts/ibm-plex-mono-latin-400-normal.woff2").headers
+    assert headers["cache-control"] == "public, max-age=604800"
+
+
+def test_the_privacy_page_lists_everything_the_browser_keeps():
+    """The scripts keep four things. If one is added, the page must say so."""
+    body = client.get("/privacy").text
+    assert "Four things" in body
+    for phrase in ("opening animation", "tabs of this site", "scrolled to", "desktop app"):
+        assert phrase in body

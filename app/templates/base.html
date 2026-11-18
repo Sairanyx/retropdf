@@ -141,7 +141,7 @@
              pressing it does, which is the point: nobody should find out
              they were counted after the fact. -->
         {% if not on_desktop %}
-        <a class="plate wanted" href="{{ url('desktop') }}?ask=1"
+        <a class="plate wanted" href="{{ url('desktop') }}?ask=1" rel="nofollow"
            data-asked="{{ t('wanted.asked') }}">
           <span class="wanted-ask">{{ t('wanted.ask') }}</span>
           <span class="wanted-do">{{ t('wanted.do') }}</span>

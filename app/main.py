@@ -47,6 +47,16 @@ app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 templates = Jinja2Templates(directory=APP_DIR / "templates")
 
 
+def route(path: str, **options):
+    """Register a page for GET and HEAD.
+
+    FastAPI's app.get answers HEAD with 405, unlike plain Starlette. HEAD is
+    what `curl -I`, uptime monitors and some crawlers send, and a site whose
+    headers cannot be checked that way looks broken from outside.
+    """
+    return app.api_route(path, methods=["GET", "HEAD"], **options)
+
+
 def _script_words(lang: str) -> str:
     """Every js. string for one language, as JSON for the page to carry.
 
@@ -147,7 +157,7 @@ def make_home_route(lang: str = "en"):
     return home
 
 
-app.get("/", response_class=HTMLResponse)(make_home_route())
+route("/", response_class=HTMLResponse)(make_home_route())
 
 
 def make_workspace_route(lang: str = "en"):
@@ -170,7 +180,7 @@ def make_workspace_route(lang: str = "en"):
     return workspace
 
 
-app.get("/workspace", response_class=HTMLResponse)(make_workspace_route())
+route("/workspace", response_class=HTMLResponse)(make_workspace_route())
 
 
 # The pages that say who runs this and what it does with your files.
@@ -228,7 +238,7 @@ def make_page_route(path: str, template: str, title: str, description: str, lang
 
 
 for _path, _template, _title, _description in LEGAL_PAGES:
-    app.get(f"/{_path}", response_class=HTMLResponse)(
+    route(f"/{_path}", response_class=HTMLResponse)(
         make_page_route(_path, _template, _title, _description)
     )
 
@@ -260,7 +270,7 @@ def make_tool_route(slug: str, lang: str = "en"):
 
 
 for _tool in TOOLS:
-    app.get(f"/{_tool.slug}", response_class=HTMLResponse)(make_tool_route(_tool.slug))
+    route(f"/{_tool.slug}", response_class=HTMLResponse)(make_tool_route(_tool.slug))
 
 
 # The same pages again, once per language, at their prefixed addresses.
@@ -278,16 +288,16 @@ def register_translated_routes() -> None:
     for language in languages.PREFIXED:
         code = language.code
 
-        app.get(f"/{code}", response_class=HTMLResponse)(make_home_route(code))
-        app.get(f"/{code}/workspace", response_class=HTMLResponse)(
+        route(f"/{code}", response_class=HTMLResponse)(make_home_route(code))
+        route(f"/{code}/workspace", response_class=HTMLResponse)(
             make_workspace_route(code)
         )
         for tool in TOOLS:
-            app.get(f"/{code}/{tool.slug}", response_class=HTMLResponse)(
+            route(f"/{code}/{tool.slug}", response_class=HTMLResponse)(
                 make_tool_route(tool.slug, code)
             )
 
-        app.get(f"/{code}/desktop", response_class=HTMLResponse)(
+        route(f"/{code}/desktop", response_class=HTMLResponse)(
             make_desktop_route(code)
         )
 
@@ -297,7 +307,7 @@ def register_translated_routes() -> None:
         for path, template, title, description in LEGAL_PAGES:
             if languages.english_only(path):
                 continue
-            app.get(f"/{code}/{path}", response_class=HTMLResponse)(
+            route(f"/{code}/{path}", response_class=HTMLResponse)(
                 make_page_route(path, template, title, description, code)
             )
 
@@ -306,7 +316,7 @@ def register_translated_routes() -> None:
 # never appears to users or search engines.
 if os.environ.get("RETROPDF_DEV", "").lower() in {"1", "true", "yes"}:
 
-    @app.get("/bench", response_class=HTMLResponse)
+    @route("/bench", response_class=HTMLResponse)
     def bench(request: Request) -> HTMLResponse:
         """Measure where merging actually stops working on this device."""
         return render(
@@ -316,6 +326,27 @@ if os.environ.get("RETROPDF_DEV", "").lower() in {"1", "true", "yes"}:
             page_description="Development page.",
             canonical=f"{BASE_URL}/bench",
         )
+
+
+def pressed_by_a_person(request: Request) -> bool:
+    """Whether this request is somebody clicking the button on this site.
+
+    The button is a plain link, and crawlers follow links. Without this check
+    every crawl of every page would add one to the tally.
+
+    Browsers label each navigation with Sec-Fetch headers that a page cannot
+    forge: Sec-Fetch-Site says the link was on this site, and Sec-Fetch-User
+    says a person activated it rather than a script or a prefetch. Crawlers
+    and command line tools do not send them. Nothing here is stored or tells
+    one person from another, so it keeps the promise the count makes.
+
+    HEAD never counts: it asks about a page rather than for it.
+    """
+    return (
+        request.method == "GET"
+        and request.headers.get("sec-fetch-site") == "same-origin"
+        and request.headers.get("sec-fetch-user") == "?1"
+    )
 
 
 def make_desktop_route(lang: str = "en"):
@@ -341,7 +372,7 @@ def make_desktop_route(lang: str = "en"):
         The number says how many, never who.
         """
         words = words_for(lang)
-        counted = ask == "1"
+        counted = ask == "1" and pressed_by_a_person(request)
         return render(
             request,
             "desktop.html",
@@ -362,10 +393,10 @@ def make_desktop_route(lang: str = "en"):
     return desktop
 
 
-app.get("/desktop", response_class=HTMLResponse)(make_desktop_route())
+route("/desktop", response_class=HTMLResponse)(make_desktop_route())
 
 
-@app.get("/favicon.ico", include_in_schema=False)
+@route("/favicon.ico", include_in_schema=False)
 def favicon() -> FileResponse:
     """Browsers ask for this address whatever the page says.
 
@@ -380,13 +411,24 @@ def favicon() -> FileResponse:
     )
 
 
-@app.get("/robots.txt", response_class=PlainTextResponse)
+@route("/robots.txt", response_class=PlainTextResponse)
 def robots() -> str:
-    """Tell crawlers everything is open, and where the sitemap is."""
-    return f"User-agent: *\nAllow: /\n\nSitemap: {BASE_URL}/sitemap.xml\n"
+    """Tell crawlers everything is open, and where the sitemap is.
+
+    Except the button's own address. Following it is how somebody asks for a
+    desktop app, and a crawler is not somebody. The server refuses to count a
+    crawler anyway (see pressed_by_a_person); this keeps the polite ones from
+    trying.
+    """
+    return (
+        "User-agent: *\n"
+        "Allow: /\n"
+        "Disallow: /*?ask=\n"
+        f"\nSitemap: {BASE_URL}/sitemap.xml\n"
+    )
 
 
-@app.get("/sitemap.xml")
+@route("/sitemap.xml")
 def sitemap() -> PlainTextResponse:
     """List every page, so search engines find the tools without crawling."""
     # Every page worth finding: the home page, each tool, the workspace and
