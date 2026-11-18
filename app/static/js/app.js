@@ -302,6 +302,13 @@ picker.addEventListener("change", async () => {
 function reasonFor(error) {
   const raw = String(error?.message || error)
 
+  // A browser that passed the checks in support.js but is still missing
+  // something a library needs fails with one of these. Telling the reader to
+  // update is more use to them than the engine's own wording.
+  if (/is not a function|is not defined|is not a constructor|Unexpected token|SyntaxError/.test(raw)) {
+    return say("js.old_browser")
+  }
+
   if (!raw.startsWith("js.")) return raw
 
   // A key may carry values after bars, in the order the sentence needs them.

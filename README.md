@@ -144,6 +144,25 @@ Both PDF libraries are **vendored into the repo**, not loaded from a CDN. A
 CDN request is a third party contact, which would undermine both the privacy
 claim and the CSP.
 
+pdf.js is the **legacy** build (`pdfjs-dist/legacy/build`), not the default
+one. The default build supports only the latest browsers and calls brand new
+functions such as `Math.sumPrecise` without checking, so it fails on phones a
+year or two behind. Upgrading means copying `pdf.min.mjs` and
+`pdf.worker.min.mjs` from `legacy/build` again, not from `build`.
+
+## Browser support
+
+Chrome and Edge 125 or newer (and browsers built on them, such as Opera and
+Samsung Internet 27 or newer), Firefox ESR, and Safari 18 or newer on Mac,
+iPhone and iPad. That is what the pdf.js legacy build supports, and nothing
+else on the site needs more.
+
+`static/js/support.js` checks for the features those browsers share, on the
+reader's own device, and only on a browser missing one shows a message
+saying to update it. Everyone else never sees it. Without that check an old
+browser shows a blank page, since the scripts it cannot run are the ones
+that reveal the page.
+
 ## Security
 
 The Content Security Policy is the load bearing part:

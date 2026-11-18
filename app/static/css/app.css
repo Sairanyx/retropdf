@@ -2731,3 +2731,18 @@ textarea,
 [contenteditable] {
   cursor: text;
 }
+
+/* Shown by support.js, and only on a browser too old for the tools.
+ *
+ * Plain colours and nothing newer than the browsers it is for can read: the
+ * rest of this stylesheet uses color-mix and :has, which is exactly what
+ * those browsers lack, so this cannot lean on any of it. */
+.old-browser-note {
+  margin: 16px auto;
+  max-width: 720px;
+  padding: 16px 20px;
+  border-radius: 8px;
+  background: #c8452a;
+  color: #fffaf8;
+  font: 600 18px/1.5 "IBM Plex Mono", monospace;
+}

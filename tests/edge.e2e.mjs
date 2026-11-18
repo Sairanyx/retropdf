@@ -197,6 +197,39 @@ try {
     check("no unhandled error", errors.length === 0, errors.join("; "))
     await page.close()
   }
+
+  // --- a browser too old for the tools -------------------------------------
+  //
+  // Old browsers cannot be run here, so one is imitated by taking away a
+  // feature every supported browser has before the page loads. Without the
+  // check, such a browser shows a blank page: the module that reveals it
+  // never runs.
+  {
+    console.log("\na browser too old for the tools")
+    const page = await browser.newPage()
+    await page.addInitScript(() => {
+      delete window.structuredClone
+    })
+    await page.goto(BASE + "/de/merge-pdf", { waitUntil: "networkidle" })
+    await page.waitForTimeout(500)
+    const seen = await page.evaluate(() => ({
+      note: document.querySelector(".old-browser-note")?.textContent || "",
+      visible: getComputedStyle(document.body).visibility === "visible",
+      off: document.querySelector("#picker").disabled,
+    }))
+    check("it says the browser is too old, in the page's language", /Browser ist zu alt/.test(seen.note), seen.note)
+    check("the page is not left blank", seen.visible)
+    check("choosing a file is switched off", seen.off)
+    await page.close()
+
+    const modern = await browser.newPage()
+    await modern.goto(BASE + "/de/merge-pdf", { waitUntil: "networkidle" })
+    check(
+      "a supported browser sees no such message",
+      await modern.evaluate(() => !document.querySelector(".old-browser-note")),
+    )
+    await modern.close()
+  }
 } finally {
   await browser.close()
   await rm(work, { recursive: true, force: true })
