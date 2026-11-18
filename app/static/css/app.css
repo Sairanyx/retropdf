@@ -543,7 +543,7 @@ html {
     z-index: 60;
   }
 
-  .navgroup {
+  .topbar .navgroup {
     /* Above the page, so content scrolls behind the bar rather than over it. */
     position: relative;
     z-index: 60;
@@ -553,24 +553,36 @@ html {
        the screen the pale one has nothing above it to fall on, so it painted
        a smear across the page scrolling past behind the bar. */
     box-shadow: 4px 4px 11px var(--shade);
-    /* One row, the three chips sharing it evenly. Left to wrap they broke
-       two and one, which left a chip stranded beside an empty half of the
-       plate and read as something unfinished rather than as a taskbar. */
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    /* The desktop rule pins the nav to the right edge with `right`. Relative
+       positioning honours that too, as an offset, which pushed the whole bar
+       past the left edge of the screen by the width of the margin. */
+    right: auto;
+    /* As many chips to a row as the words allow, every row stretched to the
+       full width. English fits on one row. Spanish or German on a narrow
+       phone needs two, and stretched they read as a taskbar of two rows
+       rather than as a row that ran out of room. Forcing one row instead
+       broke "Herramientas" into a letter or two per line. */
+    display: flex;
+    flex-wrap: wrap;
     gap: 0.5rem;
     width: 100%;
   }
 
-  /* The names centre in their share of the row, and the lamp sits with the
-     word rather than being pushed to the far edge of a stretched chip.
-     Flex rather than inline-flex, or each chip sizes to its own words and
-     the three of them sit unevenly in equal columns. */
-  .navgroup .chip {
+  .topbar .navgroup > * {
+    flex: 1 1 auto;
+  }
+
+  /* The names centre in their stretched chip, and the lamp sits with the
+     word rather than being pushed to the far edge. */
+  .topbar .navgroup .chip {
     display: flex;
     justify-content: center;
     padding-inline: 0.5rem;
     gap: 0.4rem;
+  }
+
+  .topbar .navgroup .picker summary {
+    width: 100%;
   }
 
   /* The header becomes two rows, the logo above and the nav below. */
