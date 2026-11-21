@@ -1,18 +1,18 @@
 {
   "name": "retropdf",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "directories": {
-    "doc": "docs",
-    "test": "tests"
-  },
-  "scripts": {
-    "test": "node --import ./tests/resolve-static-register.mjs --test tests/*.test.mjs"
-  },
+  "private": true,
+  "description": "PDF tools that run in your browser. Files are never uploaded.",
+  "license": "MIT",
+  "author": "Eduard Rednic",
+  "type": "module",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Sairanyx/retropdf.git"
+  },
+  "homepage": "https://github.com/Sairanyx/retropdf#readme",
+  "bugs": {
+    "url": "https://github.com/Sairanyx/retropdf/issues"
   },
   "keywords": [
     "pdf",
@@ -21,13 +21,10 @@
     "privacy",
     "client-side"
   ],
-  "author": "Eduard Rednic",
-  "license": "MIT",
-  "type": "module",
-  "bugs": {
-    "url": "https://github.com/Sairanyx/retropdf/issues"
+  "scripts": {
+    "test": "node --import ./tests/resolve-static-register.mjs --test tests/*.test.mjs",
+    "test:e2e": "node tests/tools.e2e.mjs && node tests/edge.e2e.mjs && node tests/privacy.e2e.mjs && node tests/responsive.e2e.mjs"
   },
-  "homepage": "https://github.com/Sairanyx/retropdf#readme",
   "devDependencies": {
     "@cantoo/pdf-lib": "^2.9.1",
     "@fontsource-variable/handjet": "^5.3.0",

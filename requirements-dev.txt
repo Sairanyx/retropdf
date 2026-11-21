@@ -1,2 +1,3 @@
-pytest>=8.0,<9.0
-httpx>=0.27,<1.0
+# Only for running the tests. Not installed in the container.
+pytest==8.4.2
+httpx==0.28.1

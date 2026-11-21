@@ -1,3 +1,7 @@
-fastapi>=0.115,<1.0
-uvicorn[standard]>=0.30,<1.0
-jinja2>=3.1,<4.0
+# What the server needs to run. Exact versions: these are the ones the tests
+# passed with, so a rebuild gives the same site. Upgrade deliberately and
+# re-run the tests.
+fastapi==0.164.0
+starlette==1.10.0
+uvicorn[standard]==0.54.0
+jinja2==3.1.6
