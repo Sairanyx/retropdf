@@ -28,3 +28,12 @@
 	# would keep visitors on old code for as long as it lasted. The app's
 	# rule is in app/security.py, static_cache_control.
 }
+
+# www. sends people to the plain address, so there is one copy of the site
+# for search engines and one certificate name people see. Logs off here too.
+www.{$RETROPDF_DOMAIN} {
+	log {
+		output discard
+	}
+	redir https://{$RETROPDF_DOMAIN}{uri} permanent
+}
