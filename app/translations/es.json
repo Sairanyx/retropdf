@@ -243,5 +243,6 @@
   "error.other.lede": "No se ha podido mostrar la página. Suele bastar con volver a intentarlo o empezar desde la página de inicio.",
   "error.files_safe": "Tus archivos están a salvo de todos modos: nunca salen de tu dispositivo, así que nada de aquí puede tocarlos.",
   "error.home": "Ir a la página de inicio",
-  "error.tools": "Ver todas las herramientas"
+  "error.tools": "Ver todas las herramientas",
+  "share.alt": "RetroPDF. Herramientas PDF que nunca suben tus archivos."
 }

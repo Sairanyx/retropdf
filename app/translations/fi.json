@@ -243,5 +243,6 @@
   "error.other.lede": "Sivua ei voitu näyttää. Yleensä auttaa, kun yrität uudelleen tai aloitat etusivulta.",
   "error.files_safe": "Tiedostosi ovat joka tapauksessa turvassa: ne eivät koskaan lähde laitteeltasi, joten mikään täällä ei voi koskea niihin.",
   "error.home": "Etusivulle",
-  "error.tools": "Katso kaikki työkalut"
+  "error.tools": "Katso kaikki työkalut",
+  "share.alt": "RetroPDF. PDF-työkalut, jotka eivät koskaan lähetä tiedostojasi minnekään."
 }

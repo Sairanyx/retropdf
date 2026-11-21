@@ -243,5 +243,6 @@
   "error.other.lede": "页面无法显示。再试一次，或从首页重新开始，通常就可以了。",
   "error.files_safe": "无论如何，你的文件都是安全的：它们从不离开你的设备，所以这里的任何东西都碰不到它们。",
   "error.home": "前往首页",
-  "error.tools": "查看所有工具"
+  "error.tools": "查看所有工具",
+  "share.alt": "RetroPDF。从不上传你文件的 PDF 工具。"
 }

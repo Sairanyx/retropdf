@@ -243,5 +243,6 @@
   "error.other.lede": "Die Seite konnte nicht angezeigt werden. Meist hilft ein neuer Versuch oder der Weg über die Startseite.",
   "error.files_safe": "Ihre Dateien sind so oder so sicher: Sie verlassen Ihr Gerät nie, also kann nichts hier sie berühren.",
   "error.home": "Zur Startseite",
-  "error.tools": "Alle Werkzeuge ansehen"
+  "error.tools": "Alle Werkzeuge ansehen",
+  "share.alt": "RetroPDF. PDF-Werkzeuge, die Ihre Dateien nie hochladen."
 }

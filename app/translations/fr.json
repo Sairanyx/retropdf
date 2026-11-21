@@ -243,5 +243,6 @@
   "error.other.lede": "La page n'a pas pu s'afficher. Réessayer, ou repartir de la page d'accueil, suffit généralement.",
   "error.files_safe": "Vos fichiers sont en sécurité dans tous les cas : ils ne quittent jamais votre appareil, donc rien ici ne peut les toucher.",
   "error.home": "Aller à la page d'accueil",
-  "error.tools": "Voir tous les outils"
+  "error.tools": "Voir tous les outils",
+  "share.alt": "RetroPDF. Des outils PDF qui n'envoient jamais vos fichiers."
 }

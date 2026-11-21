@@ -243,5 +243,6 @@
   "error.other.lede": "Sidan kunde inte visas. Att försöka igen, eller börja från startsidan, brukar fungera.",
   "error.files_safe": "Dina filer är säkra i alla fall: de lämnar aldrig din enhet, så inget här kan röra dem.",
   "error.home": "Till startsidan",
-  "error.tools": "Se alla verktyg"
+  "error.tools": "Se alla verktyg",
+  "share.alt": "RetroPDF. PDF-verktyg som aldrig laddar upp dina filer."
 }

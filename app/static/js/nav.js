@@ -115,6 +115,28 @@ function stuckNavHeight() {
 }
 
 /**
+ * Tell the stylesheet how tall the taskbar really is.
+ *
+ * The CSS keeps the browser's own jumps, such as arriving at /es#tools,
+ * clear of the bar with scroll-padding. Its figure assumes one row of chips,
+ * but in Spanish, German or French on a phone the chips take two rows and a
+ * heading jumped to landed under the second. Measured here instead and
+ * handed over, so both kinds of jump stop in the same place.
+ */
+function shareBarHeight() {
+  const height = stuckNavHeight()
+  const root = document.documentElement.style
+  if (height) root.setProperty("--bar-clear", `${height}px`)
+  else root.removeProperty("--bar-clear")
+}
+
+shareBarHeight()
+window.addEventListener("resize", shareBarHeight, { passive: true })
+// The chips are a different width, so possibly a different number of rows,
+// once the display face has arrived.
+document.fonts?.ready.then(shareBarHeight)
+
+/**
  * Is this the last section on the page?
  *
  * Only the footer may follow it. Anything else below means there is a
