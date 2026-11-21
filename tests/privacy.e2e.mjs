@@ -6,13 +6,12 @@
 //
 // Run it yourself. Start the server, then: node tests/privacy.e2e.mjs
 
-import { chromium } from "playwright"
+import { engine, BASE } from "./browser.mjs"
 import { PDFDocument } from "@cantoo/pdf-lib"
 import { mkdtemp, writeFile, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
-const BASE = process.env.BASE || "http://127.0.0.1:8000"
 const work = await mkdtemp(join(tmpdir(), "retroprivacy-"))
 
 let passed = 0
@@ -31,7 +30,7 @@ function check(name, ok, detail) {
 const ours = (url) =>
   url.startsWith(BASE) || url.startsWith("blob:") || url.startsWith("data:")
 
-const browser = await chromium.launch()
+const browser = await engine.launch()
 
 try {
   // --- a real file, driven through a real tool ---------------------------

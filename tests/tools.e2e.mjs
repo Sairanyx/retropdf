@@ -7,14 +7,13 @@
 //
 // Start the server first, then: node tests/tools.e2e.mjs
 
-import { chromium } from "playwright"
+import { engine, BASE } from "./browser.mjs"
 import { PDFDocument, rgb } from "@cantoo/pdf-lib"
 import { unzipSync } from "fflate"
 import { mkdtemp, writeFile, readFile, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
-const BASE = "http://127.0.0.1:8000"
 const work = await mkdtemp(join(tmpdir(), "retropdf-"))
 
 let passed = 0
@@ -109,7 +108,7 @@ function isZip(bytes) {
   return bytes[0] === 0x50 && bytes[1] === 0x4b
 }
 
-const browser = await chromium.launch()
+const browser = await engine.launch()
 
 try {
   const three = await makePdf(3, "a")

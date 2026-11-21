@@ -1,0 +1,53 @@
+# Runs every test on every push and pull request, in all three browser
+# engines: Chromium (Chrome, Edge, Opera, Samsung Internet), Firefox, and
+# WebKit (Safari, and every browser on iPhone and iPad).
+
+name: tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  unit:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: pip install -r requirements.txt -r requirements-dev.txt
+      - run: python -m pytest tests/ -q
+      - run: npm ci
+      - run: npm test
+
+  browsers:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+    env:
+      BROWSER: ${{ matrix.browser }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: pip install -r requirements.txt
+      - run: npm ci
+      - run: npx playwright install --with-deps ${{ matrix.browser }}
+      - name: Start the site
+        run: |
+          uvicorn app.main:app --port 8000 --no-access-log &
+          for i in $(seq 30); do curl -sf http://127.0.0.1:8000/ >/dev/null && break; sleep 1; done
+      - run: node tests/tools.e2e.mjs
+      - run: node tests/edge.e2e.mjs
+      - run: node tests/privacy.e2e.mjs
+      - run: node tests/responsive.e2e.mjs

@@ -7,13 +7,12 @@
 //
 // Start the server first, then: node tests/edge.e2e.mjs
 
-import { chromium } from "playwright"
+import { engine, BASE } from "./browser.mjs"
 import { PDFDocument } from "@cantoo/pdf-lib"
 import { mkdtemp, writeFile, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
-const BASE = "http://127.0.0.1:8000"
 const work = await mkdtemp(join(tmpdir(), "retroedge-"))
 
 let passed = 0
@@ -59,7 +58,7 @@ async function open(browser, path) {
 const readout = (page) =>
   page.evaluate(() => document.querySelector("#result").textContent.trim())
 
-const browser = await chromium.launch()
+const browser = await engine.launch()
 
 try {
   // --- a file that is not a PDF at all -----------------------------------

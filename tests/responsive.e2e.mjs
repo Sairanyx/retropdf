@@ -7,7 +7,7 @@
 //
 // Start the server first, then: node tests/responsive.e2e.mjs
 
-import { chromium } from "playwright"
+import { engine, BASE } from "./browser.mjs"
 
 // Real devices, not round numbers. These are the widths people actually have.
 const SCREENS = [
@@ -19,7 +19,8 @@ const SCREENS = [
 ]
 const PAGES = ["/", "/merge-pdf", "/workspace"]
 
-const browser = await chromium.launch()
+const browser = await engine.launch()
+let problems = 0
 try {
   for (const s of SCREENS) {
     console.log(`\n${s.name}  ${s.w}x${s.h}`)
@@ -32,7 +33,7 @@ try {
       })
       const errors = []
       page.on("pageerror", (e) => errors.push(e.message))
-      await page.goto("http://127.0.0.1:8000" + path, { waitUntil: "networkidle" })
+      await page.goto(BASE + path, { waitUntil: "networkidle" })
       await page.waitForFunction(() => document.body.classList.contains("intro-done"), { timeout: 12000 }).catch(() => {})
       await page.waitForTimeout(900)
 
@@ -72,6 +73,7 @@ try {
       })
 
       const bad = r.scrollsSideways || r.smallCount > 0 || errors.length
+      if (bad) problems++
       console.log(`  ${path.padEnd(12)} ${bad ? "PROBLEMS" : "ok"}`)
       if (r.scrollsSideways) console.log(`      scrolls sideways, from: ${r.overflowing.join(", ")}`)
       if (r.smallCount) console.log(`      ${r.smallCount} targets under 44px: ${r.smallTargets.join(", ")}`)
@@ -80,3 +82,6 @@ try {
     }
   }
 } finally { await browser.close() }
+
+console.log(`\n${problems ? problems + " pages with problems" : "every page ok"}`)
+process.exit(problems ? 1 : 0)
