@@ -137,7 +137,7 @@ def test_the_sitemap_lists_english_only_pages_once():
     body = client.get("/sitemap.xml").text
     assert "/terms<" in body
     assert "/es/terms<" not in body
-    assert "/es/privacy<" not in body
+    assert "/es/terms<" not in body
 
 
 def test_the_footer_says_which_pages_are_english_only():
@@ -245,3 +245,52 @@ def test_the_image_export_offers_jpg_and_png():
         assert 'id="export-format"' in body
         assert '<option value="jpg" selected>JPG</option>' in body
         assert '<option value="png">PNG</option>' in body
+
+
+def _placeholders(text: str) -> set:
+    import re
+
+    return set(re.findall(r"\{(\w+)\}", text))
+
+
+@pytest.mark.parametrize("language", languages.PREFIXED, ids=lambda l: l.code)
+def test_every_language_has_every_key(language):
+    """A missing key shows English in the middle of a translated page."""
+    english = json.loads((HERE / "en.json").read_text(encoding="utf-8"))
+    own = json.loads((HERE / f"{language.code}.json").read_text(encoding="utf-8"))
+    missing = sorted(set(english) - set(own))
+    assert not missing, f"{language.code} is missing {missing}"
+
+
+@pytest.mark.parametrize("language", languages.PREFIXED, ids=lambda l: l.code)
+def test_placeholders_match_english(language):
+    """A renamed or dropped {name} shows a raw brace or loses the value."""
+    english = json.loads((HERE / "en.json").read_text(encoding="utf-8"))
+    own = json.loads((HERE / f"{language.code}.json").read_text(encoding="utf-8"))
+    wrong = [
+        key for key, text in own.items()
+        if key in english and _placeholders(text) != _placeholders(english[key])
+    ]
+    assert not wrong, f"{language.code} placeholders differ in {wrong}"
+
+
+@pytest.mark.parametrize("language", languages.PREFIXED, ids=lambda l: l.code)
+def test_the_privacy_page_is_translated(language):
+    """GDPR transparency: the notice in the languages the site addresses,
+    saying which version governs."""
+    page = client.get(f"/{language.code}/privacy")
+    assert page.status_code == 200
+    words = words_for(language.code)
+    assert words("privacy.heading") in page.text
+    assert words("privacy.heading") != words_for("en")("privacy.heading")
+    # The note that the English version applies, linking to it.
+    assert 'href="/privacy"' in page.text
+    assert "tietosuoja.fi" in page.text
+
+
+def test_the_english_privacy_page_names_the_finnish_authority():
+    body = client.get("/privacy").text
+    assert "Data Protection Ombudsman" in body
+    assert 'href="https://tietosuoja.fi/en" rel="noopener"' in body
+    # No translation note on the original.
+    assert "This is a translation" not in body

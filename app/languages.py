@@ -83,20 +83,13 @@ def path_for(code: str, path: str = "") -> str:
     return f"/{code}/{path}" if path else f"/{code}"
 
 
-# Pages that stay in English whatever language the reader is in.
+# Pages published in English only. Terms is a contract and the security page
+# quotes the policy header exactly; a loose translation of either would
+# misstate something. The footer marks both in the reader's language.
 #
-# The three pages where a wrong word costs something.
-#
-# Terms is a contract and says plainly that English governs it, so eleven
-# versions nobody can verify would create the exact ambiguity it exists to
-# avoid. Security describes the policy header precisely enough that a loose
-# translation would misstate what the site does. Privacy names a person, a
-# country and a set of rights, and a translation of it that nobody here can
-# check is worse than an English one everybody can.
-#
-# The footer says so beside the link, in the reader's own language, rather
-# than letting them find out after following it.
-ENGLISH_ONLY = frozenset({"privacy", "terms", "security"})
+# Privacy is translated: GDPR transparency guidance expects the notice in the
+# languages a site addresses. Its translations say the English one governs.
+ENGLISH_ONLY = frozenset({"terms", "security"})
 
 
 def english_only(page: str) -> bool:

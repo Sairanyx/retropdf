@@ -12,6 +12,7 @@ from fastapi.testclient import TestClient
 from app.main import app
 from app import interest
 from app.tools import TOOLS
+from app.translations import words_for
 
 client = TestClient(app)
 
@@ -47,8 +48,9 @@ def test_tool_page_loads(tool):
 def test_tool_page_has_its_own_title_and_description(tool):
     """Each page must be distinct, or search engines have nothing to rank."""
     response = client.get(f"/{tool.slug}")
-    assert f"<title>{tool.title}</title>" in response.text
-    assert tool.description in response.text
+    words = words_for("en")
+    assert f"<title>{words(f'tool.{tool.slug}.title')}</title>" in response.text
+    assert words(f"tool.{tool.slug}.description") in response.text
 
 
 @pytest.mark.parametrize("tool", TOOLS, ids=lambda tool: tool.slug)
@@ -66,7 +68,7 @@ def test_tool_page_has_a_canonical_url(tool):
 
 
 def test_every_tool_page_has_a_different_title():
-    titles = {tool.title for tool in TOOLS}
+    titles = {words_for("en")(f"tool.{tool.slug}.title") for tool in TOOLS}
     assert len(titles) == len(TOOLS)
 
 
@@ -350,7 +352,7 @@ def test_fonts_are_cached_for_a_bounded_time():
 def test_the_privacy_page_lists_everything_the_browser_keeps():
     """The scripts keep four things. If one is added, the page must say so."""
     body = client.get("/privacy").text
-    assert "Four things" in body
+    assert "Four small notes" in body
     for phrase in ("opening animation", "tabs of this site", "scrolled to", "desktop app"):
         assert phrase in body
 

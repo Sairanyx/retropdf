@@ -221,13 +221,17 @@ def make_page_route(path: str, template: str, title: str, description: str, lang
     """
 
     def page(request: Request) -> HTMLResponse:
+        # A translated page carries its own title and description; the
+        # English only ones use the fixed English pair given here.
+        words = words_for(lang)
+        translated = f"{path}.title" in words_for("en").keys()
         return render(
             request,
             template,
             lang=lang,
             here=path,
-            page_title=title,
-            page_description=description,
+            page_title=words(f"{path}.title") if translated else title,
+            page_description=words(f"{path}.description") if translated else description,
             canonical=f"{BASE_URL}{languages.path_for(lang, path)}",
             # These pages say what the site does with your files, which is
             # what the Info section covers, so its lamp is the lit one.
