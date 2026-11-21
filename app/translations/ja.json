@@ -282,5 +282,6 @@
   "privacy.changes": "このページが変わると、下の日付も変わります。もしファイルが端末の外に出る必要が生じた場合は、このページの冒頭でお知らせします。",
   "privacy.translation_note": "これは翻訳です。{english}と異なる場合は、英語版が適用されます。",
   "privacy.english_link": "英語版",
-  "privacy.updated": "最終更新日：2026年11月21日"
+  "privacy.updated": "最終更新日：2026年11月21日",
+  "legal.english_only_note": "このページは英語のみです。"
 }

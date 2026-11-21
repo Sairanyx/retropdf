@@ -2,7 +2,12 @@
 
 {% block content %}
 <div class="wrap">
-  <section class="tool-head first-screen">
+  {% if lang and lang.code != 'en' %}
+  <!-- The text below is English only. This note says so in the reader's
+       language; the sections carry lang="en" so screen readers switch voice. -->
+  <p class="note english-only-note">{{ t('legal.english_only_note') }}</p>
+  {% endif %}
+  <section class="tool-head first-screen" lang="en">
     <p class="label">Terms</p>
     <h1 data-type="The deal, in plain words.">The deal, in plain words.</h1>
     <p class="lede">
@@ -10,7 +15,7 @@
     </p>
   </section>
 
-  <section class="prose">
+  <section class="prose" lang="en">
     <h2>Using RetroPDF.</h2>
     <p>
       Use it for anything you like, personal or commercial, as much as you

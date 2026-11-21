@@ -282,5 +282,6 @@
   "privacy.changes": "Om den här sidan ändras, ändras datumet nedan med den. Om dina filer någon gång skulle behöva lämna din enhet, skulle det stå högst upp på den här sidan.",
   "privacy.translation_note": "Det här är en översättning. Om den skiljer sig från den {english} gäller den engelska versionen.",
   "privacy.english_link": "engelska versionen",
-  "privacy.updated": "Senast uppdaterad 21 november 2026."
+  "privacy.updated": "Senast uppdaterad 21 november 2026.",
+  "legal.english_only_note": "Den här sidan finns bara på engelska."
 }

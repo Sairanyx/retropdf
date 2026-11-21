@@ -76,9 +76,8 @@ def _script_words(lang: str) -> str:
 
 def _language_urls(here: str) -> dict:
     """This page's address in every language."""
-    page = "" if languages.english_only(here) else here
     return {
-        language.code: languages.path_for(language.code, page)
+        language.code: languages.path_for(language.code, here)
         for language in languages.LANGUAGES
     }
 
@@ -104,11 +103,7 @@ def render(request: Request, template: str, lang: str = "en", **context) -> HTML
             "t": words,
             "lang": language,
             "languages": languages.LANGUAGES,
-            # A page published in English only has no address in other
-            # languages, so a link to it always goes to the English one.
-            "url": lambda path="": languages.path_for(
-                languages.DEFAULT.code if languages.english_only(path) else lang, path
-            ),
+            "url": lambda path="": languages.path_for(lang, path),
             "base_url": BASE_URL,
             # The strings the browser scripts need, in this page's language.
             # They cannot read the translation files themselves, and shipping
@@ -117,16 +112,14 @@ def render(request: Request, template: str, lang: str = "en", **context) -> HTML
             "script_words": _script_words(lang),
             "flags": flags.FLAGS,
             # Where each language's version of this page lives, so the picker
-            # keeps you on the page you are reading. Terms and the security
-            # page exist only in English, so from those the picker offers the
-            # home page in each language instead of an address that is not
-            # there.
+            # keeps you on the page you are reading.
             "language_urls": _language_urls(context.get("here", "")),
             # Every language this page exists in, for the hreflang tags that
             # tell a search engine these are the same page rather than
             # duplicates competing with each other.
-            # An English only page has no alternates: claiming versions that
-            # do not exist makes a search engine follow links to nothing.
+            # An English only page has no alternates: its other addresses
+            # carry the same English text, so they point back to the English
+            # one as canonical instead.
             "alternates": (
                 []
                 if languages.english_only(context.get("here", ""))
@@ -236,7 +229,9 @@ def make_page_route(path: str, template: str, title: str, description: str, lang
             here=path,
             page_title=words(f"{path}.title") if translated else title,
             page_description=words(f"{path}.description") if translated else description,
-            canonical=f"{BASE_URL}{languages.path_for(lang, path)}",
+            # English only pages have the same text at every address, so the
+            # English one is the page search engines should list.
+            canonical=f"{BASE_URL}{languages.path_for(languages.DEFAULT.code if languages.english_only(path) else lang, path)}",
             # These pages say what the site does with your files, which is
             # what the Info section covers, so its lamp is the lit one.
             on_info=True,
@@ -310,12 +305,10 @@ def register_translated_routes() -> None:
             make_desktop_route(code)
         )
 
-        # Terms and the security page have no prefixed address: they are the
-        # two where a loose translation would misstate something. Everything
-        # else, privacy included, is published in every language.
+        # Every page, Terms and Security included. Those two keep their text
+        # in English, but the menu and footer around it stay in the reader's
+        # language, so reading them does not switch the whole site to English.
         for path, template, title, description in LEGAL_PAGES:
-            if languages.english_only(path):
-                continue
             route(f"/{code}/{path}", response_class=HTMLResponse)(
                 make_page_route(path, template, title, description, code)
             )

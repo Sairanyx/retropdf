@@ -282,5 +282,6 @@
   "privacy.changes": "Si esta página cambia, la fecha de abajo cambia con ella. Si tus archivos alguna vez tuvieran que salir de tu dispositivo, se diría al principio de esta página.",
   "privacy.translation_note": "Esto es una traducción. Si difiere de la {english}, se aplica la versión en inglés.",
   "privacy.english_link": "versión en inglés",
-  "privacy.updated": "Última actualización: 21 de noviembre de 2026."
+  "privacy.updated": "Última actualización: 21 de noviembre de 2026.",
+  "legal.english_only_note": "Esta página solo está disponible en inglés."
 }

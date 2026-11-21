@@ -282,5 +282,6 @@
   "privacy.changes": "如果本页发生变化，下面的日期也会随之更新。如果你的文件有一天必须离开你的设备，我们会在本页顶部说明。",
   "privacy.translation_note": "这是译文。如与{english}有出入，以英文版为准。",
   "privacy.english_link": "英文版",
-  "privacy.updated": "最后更新：2026 年 11 月 21 日"
+  "privacy.updated": "最后更新：2026 年 11 月 21 日",
+  "legal.english_only_note": "本页仅提供英文版。"
 }

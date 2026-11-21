@@ -4,6 +4,7 @@ These are the foundation the translated pages sit on: if a key falls through
 or an address is built wrongly, every page in that language is affected.
 """
 
+from markupsafe import escape
 import json
 from pathlib import Path
 
@@ -112,16 +113,20 @@ def test_every_language_serves_the_translated_pages():
             assert client.get(path).status_code == 200, path
 
 
-def test_english_only_pages_have_no_translated_address():
-    """Terms is a contract that says English governs it, and the security page
-    describes a policy header precisely. A loose translation of either would
-    misstate something, so neither is published in another language."""
+def test_english_only_pages_keep_the_readers_language_around_them():
+    """Terms and Security are English text, but reading them must not switch
+    the whole site to English: the menu and footer stay in the reader's
+    language, a note says the page is English only, and search engines are
+    pointed at the English address as the real one."""
     for language in languages.PREFIXED:
+        words = words_for(language.code)
         for page in sorted(languages.ENGLISH_ONLY):
-            path = languages.path_for(language.code, page)
-            assert client.get(path).status_code == 404, f"{path} should not exist"
-        # The plain address still works, for everyone.
-        assert client.get(f"/{page}").status_code == 200
+            body = client.get(f"/{language.code}/{page}")
+            assert body.status_code == 200, f"/{language.code}/{page}"
+            assert words("nav.tools") in body.text
+            assert str(escape(words("legal.english_only_note"))) in body.text
+            assert '<section class="prose" lang="en">' in body.text
+            assert f'rel="canonical" href="http://127.0.0.1:8000/{page}"' in body.text
 
 
 def test_english_only_pages_claim_no_translations():
@@ -298,10 +303,8 @@ def test_the_english_privacy_page_names_the_finnish_authority():
 
 @pytest.mark.parametrize("language", languages.PREFIXED, ids=lambda l: l.code)
 def test_links_to_english_only_pages_work_from_every_language(language):
-    """The footer marks Terms and Security as English only. The links must
-    then open the English pages, not a translated address that 404s."""
+    """The footer links stay in the reader's language and open a real page."""
     body = client.get(f"/{language.code}").text
     for page in sorted(languages.ENGLISH_ONLY):
-        assert f'href="/{page}"' in body, page
-        assert f'href="/{language.code}/{page}"' not in body, page
-        assert client.get(f"/{page}").status_code == 200
+        assert f'href="/{language.code}/{page}"' in body, page
+        assert client.get(f"/{language.code}/{page}").status_code == 200

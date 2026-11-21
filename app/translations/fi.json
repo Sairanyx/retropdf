@@ -282,5 +282,6 @@
   "privacy.changes": "Jos tämä sivu muuttuu, alla oleva päivämäärä muuttuu sen mukana. Jos tiedostojesi joskus pitäisi lähteä laitteeltasi, se kerrottaisiin tämän sivun alussa.",
   "privacy.translation_note": "Tämä on käännös. Jos se poikkeaa {english}, sovelletaan englanninkielistä versiota.",
   "privacy.english_link": "englanninkielisestä versiosta",
-  "privacy.updated": "Päivitetty viimeksi 21.11.2026."
+  "privacy.updated": "Päivitetty viimeksi 21.11.2026.",
+  "legal.english_only_note": "Tämä sivu on saatavilla vain englanniksi."
 }
