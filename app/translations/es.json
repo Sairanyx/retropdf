@@ -283,5 +283,6 @@
   "privacy.translation_note": "Esto es una traducción. Si difiere de la {english}, se aplica la versión en inglés.",
   "privacy.english_link": "versión en inglés",
   "privacy.updated": "Última actualización: 21 de noviembre de 2026.",
-  "legal.english_only_note": "Esta página solo está disponible en inglés."
+  "legal.english_only_note": "Esta página solo está disponible en inglés.",
+  "privacy.host": "El sitio funciona en un servidor de OVHcloud en Polonia, dentro de la UE. OVHcloud gestiona el tráfico de red por nosotros, como encargado del tratamiento según el RGPD."
 }

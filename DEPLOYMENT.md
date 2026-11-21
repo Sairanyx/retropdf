@@ -85,7 +85,8 @@ different JavaScript that sends files away. So nobody gets write access.
 
 ## Before going live
 
-- [ ] `hello@your-domain` exists and reaches you. The privacy, terms and
-      security pages give it as the contact.
-- [ ] The privacy page names the hosting company and the server's country.
+- [ ] The contact address (`CONTACT_EMAIL` in `app/main.py`) exists and
+      reaches you. The privacy and security pages give it as the contact.
+- [x] The privacy page names the hosting company and the server's country
+      (`privacy.host` in the translations: OVHcloud, Poland).
 - [ ] Read the privacy, terms and security pages once as a stranger would.

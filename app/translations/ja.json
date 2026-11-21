@@ -283,5 +283,6 @@
   "privacy.translation_note": "これは翻訳です。{english}と異なる場合は、英語版が適用されます。",
   "privacy.english_link": "英語版",
   "privacy.updated": "最終更新日：2026年11月21日",
-  "legal.english_only_note": "このページは英語のみです。"
+  "legal.english_only_note": "このページは英語のみです。",
+  "privacy.host": "このサイトは EU 内のポーランドにある OVHcloud のサーバーで動いています。OVHcloud は GDPR 上の処理者として、私たちに代わってネットワーク通信を扱います。"
 }

@@ -283,5 +283,6 @@
   "privacy.translation_note": "This is a translation. If it differs from the {english}, the English version applies.",
   "privacy.english_link": "English version",
   "privacy.updated": "Last updated 21 November 2026.",
-  "legal.english_only_note": "This page is only available in English."
+  "legal.english_only_note": "This page is only available in English.",
+  "privacy.host": "The site runs on a server from OVHcloud in Poland, inside the EU. OVHcloud carries the network traffic for us, as a processor under the GDPR."
 }

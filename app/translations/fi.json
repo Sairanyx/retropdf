@@ -283,5 +283,6 @@
   "privacy.translation_note": "Tämä on käännös. Jos se poikkeaa {english}, sovelletaan englanninkielistä versiota.",
   "privacy.english_link": "englanninkielisestä versiosta",
   "privacy.updated": "Päivitetty viimeksi 21.11.2026.",
-  "legal.english_only_note": "Tämä sivu on saatavilla vain englanniksi."
+  "legal.english_only_note": "Tämä sivu on saatavilla vain englanniksi.",
+  "privacy.host": "Sivusto toimii OVHcloudin palvelimella Puolassa, EU:n sisällä. OVHcloud välittää verkkoliikenteen puolestamme tietosuoja-asetuksen mukaisena henkilötietojen käsittelijänä."
 }

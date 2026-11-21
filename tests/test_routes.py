@@ -156,7 +156,9 @@ def test_the_privacy_page_says_what_is_stored():
     """If the wording drifts away from the facts, this should fail."""
     body = client.get("/privacy").text
     assert "connect-src" not in body or "security" in body
-    for phrase in ("never sent to us", "No cookies", "hello@retropdf.com"):
+    from app.main import CONTACT_EMAIL
+
+    for phrase in ("never sent to us", "No cookies", f"mailto:{CONTACT_EMAIL}"):
         assert phrase in body
 
 
@@ -413,3 +415,13 @@ def test_a_crash_still_carries_the_security_headers():
     assert "Something went wrong on our side." in response.text
     assert "deliberate" not in response.text
     assert "connect-src 'none'" in response.headers["content-security-policy"]
+
+
+def test_the_contact_address_is_the_same_everywhere():
+    """It is set once in main.py; no page may still show an old one."""
+    from app.main import CONTACT_EMAIL
+
+    for path in ("/privacy", "/fi/privacy", "/security", "/fi/security"):
+        body = client.get(path).text
+        assert f'href="mailto:{CONTACT_EMAIL}"' in body, path
+        assert body.count("mailto:") == body.count(f"mailto:{CONTACT_EMAIL}"), path

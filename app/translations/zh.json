@@ -283,5 +283,6 @@
   "privacy.translation_note": "这是译文。如与{english}有出入，以英文版为准。",
   "privacy.english_link": "英文版",
   "privacy.updated": "最后更新：2026 年 11 月 21 日",
-  "legal.english_only_note": "本页仅提供英文版。"
+  "legal.english_only_note": "本页仅提供英文版。",
+  "privacy.host": "本站运行在 OVHcloud 位于欧盟境内波兰的服务器上。OVHcloud 作为 GDPR 规定的处理者，代我们处理网络流量。"
 }

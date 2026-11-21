@@ -308,3 +308,10 @@ def test_links_to_english_only_pages_work_from_every_language(language):
     for page in sorted(languages.ENGLISH_ONLY):
         assert f'href="/{language.code}/{page}"' in body, page
         assert client.get(f"/{language.code}/{page}").status_code == 200
+
+
+@pytest.mark.parametrize("language", languages.LANGUAGES, ids=lambda l: l.code)
+def test_the_privacy_page_names_the_host_and_country(language):
+    """GDPR: say who processes visitors' data on our behalf, and where."""
+    body = client.get(languages.path_for(language.code, "privacy")).text
+    assert "OVHcloud" in body

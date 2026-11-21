@@ -283,5 +283,6 @@
   "privacy.translation_note": "이 페이지는 번역본입니다. {english}과 다를 경우 영어 버전이 적용됩니다.",
   "privacy.english_link": "영어 버전",
   "privacy.updated": "최종 업데이트: 2026년 11월 21일",
-  "legal.english_only_note": "이 페이지는 영어로만 제공됩니다."
+  "legal.english_only_note": "이 페이지는 영어로만 제공됩니다.",
+  "privacy.host": "이 사이트는 EU 내 폴란드에 있는 OVHcloud 서버에서 운영됩니다. OVHcloud는 GDPR상 처리자로서 저희를 대신해 네트워크 트래픽을 처리합니다."
 }

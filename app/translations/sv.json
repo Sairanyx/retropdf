@@ -283,5 +283,6 @@
   "privacy.translation_note": "Det här är en översättning. Om den skiljer sig från den {english} gäller den engelska versionen.",
   "privacy.english_link": "engelska versionen",
   "privacy.updated": "Senast uppdaterad 21 november 2026.",
-  "legal.english_only_note": "Den här sidan finns bara på engelska."
+  "legal.english_only_note": "Den här sidan finns bara på engelska.",
+  "privacy.host": "Sajten körs på en server hos OVHcloud i Polen, inom EU. OVHcloud hanterar nätverkstrafiken åt oss, som personuppgiftsbiträde enligt GDPR."
 }

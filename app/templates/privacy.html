@@ -4,7 +4,7 @@
 <a href="{{ href }}"{% if external %} rel="noopener"{% endif %}>{{ text }}</a>
 {%- endmacro %}
 
-{% set email = link("mailto:hello@retropdf.com", "hello@retropdf.com") %}
+{% set email = link("mailto:" ~ contact_email, contact_email) %}
 
 {% block content %}
 <div class="wrap">
@@ -34,6 +34,7 @@
 
     <h2>{{ t('privacy.server_h') }}</h2>
     <p>{{ t('privacy.server') }}</p>
+    <p>{{ t('privacy.host') }}</p>
     <p>{{ t('privacy.count', desktop=link(url('desktop'), t('privacy.desktop_link'))) | safe }}</p>
 
     <h2>{{ t('privacy.not_h') }}</h2>

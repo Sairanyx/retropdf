@@ -28,6 +28,10 @@ from app.tools import TOOLS, BY_SLUG
 APP_DIR = Path(__file__).resolve().parent
 STATIC_DIR = APP_DIR / "static"
 
+# The contact address shown on the privacy and security pages. One place, so
+# changing it cannot leave an old address on some page.
+CONTACT_EMAIL = "hello@retropdf.com"
+
 # Used for canonical URLs and the sitemap. Set RETROPDF_BASE_URL in production.
 BASE_URL = os.environ.get("RETROPDF_BASE_URL", "http://127.0.0.1:8000").rstrip("/")
 
@@ -105,6 +109,7 @@ def render(request: Request, template: str, lang: str = "en", **context) -> HTML
             "languages": languages.LANGUAGES,
             "url": lambda path="": languages.path_for(lang, path),
             "base_url": BASE_URL,
+            "contact_email": CONTACT_EMAIL,
             # The strings the browser scripts need, in this page's language.
             # They cannot read the translation files themselves, and shipping
             # every language to every visitor would be eleven times the words
