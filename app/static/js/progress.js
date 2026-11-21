@@ -414,7 +414,10 @@ function startRoute() {
   // later.
   let settleTimer = null
   let lastHeight = document.documentElement.scrollHeight
-  const watchHeight = new ResizeObserver(() => {
+  // Handled on the next frame for the same reason as in reveal.js: changing
+  // layout inside the observer makes Safari report a loop error.
+  const watchHeight = new ResizeObserver(() => requestAnimationFrame(onHeightChange))
+  function onHeightChange() {
     const now = document.documentElement.scrollHeight
     if (now === lastHeight) return
 
@@ -461,7 +464,7 @@ function startRoute() {
 
     laid.clear()
     requestAnimationFrame(update)
-  })
+  }
   watchHeight.observe(document.body)
 
   // The page is a different height once the display face has arrived, since

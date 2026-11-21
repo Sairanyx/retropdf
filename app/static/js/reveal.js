@@ -194,7 +194,10 @@ if (document.querySelector(".workspace") && document.querySelector(".panel")) {
 
   // The panel changes height as files are opened and tools switched, and the
   // window changes with the browser, so the measurement is taken again.
-  const watch = new ResizeObserver(() => placeTheHint())
+  // On the next frame, not inside the observer: placeTheHint changes the
+  // page's layout, and doing that while the browser is still delivering size
+  // changes makes Safari report a "ResizeObserver loop" error.
+  const watch = new ResizeObserver(() => requestAnimationFrame(placeTheHint))
   watch.observe(document.querySelector(".workspace"))
   window.addEventListener("resize", placeTheHint, { passive: true })
 
