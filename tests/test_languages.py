@@ -294,3 +294,14 @@ def test_the_english_privacy_page_names_the_finnish_authority():
     assert 'href="https://tietosuoja.fi/en" rel="noopener"' in body
     # No translation note on the original.
     assert "This is a translation" not in body
+
+
+@pytest.mark.parametrize("language", languages.PREFIXED, ids=lambda l: l.code)
+def test_links_to_english_only_pages_work_from_every_language(language):
+    """The footer marks Terms and Security as English only. The links must
+    then open the English pages, not a translated address that 404s."""
+    body = client.get(f"/{language.code}").text
+    for page in sorted(languages.ENGLISH_ONLY):
+        assert f'href="/{page}"' in body, page
+        assert f'href="/{language.code}/{page}"' not in body, page
+        assert client.get(f"/{page}").status_code == 200

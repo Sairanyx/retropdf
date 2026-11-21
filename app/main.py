@@ -104,7 +104,11 @@ def render(request: Request, template: str, lang: str = "en", **context) -> HTML
             "t": words,
             "lang": language,
             "languages": languages.LANGUAGES,
-            "url": lambda path="": languages.path_for(lang, path),
+            # A page published in English only has no address in other
+            # languages, so a link to it always goes to the English one.
+            "url": lambda path="": languages.path_for(
+                languages.DEFAULT.code if languages.english_only(path) else lang, path
+            ),
             "base_url": BASE_URL,
             # The strings the browser scripts need, in this page's language.
             # They cannot read the translation files themselves, and shipping
