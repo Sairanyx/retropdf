@@ -371,7 +371,25 @@ function refusalOf(names, kind = "pdf") {
 async function openFiles(chosen) {
   if (chosen.length === 0) return
 
-  const check = checkSelection(chosen, currentMode() === "merge" ? loadedBytes : 0)
+  // Merge and images to PDF both add to what is already open, so the limit
+  // covers everything held, not only this batch. Without counting what was
+  // there, adding pictures a few at a time slipped past the limit and a
+  // phone could run out of memory building the PDF.
+  const adding = currentMode() === "merge" || currentMode() === "frimages"
+  const held = currentMode() === "frimages"
+    ? chosenImages.reduce((sum, image) => sum + image.bytes.byteLength, 0)
+    : loadedBytes
+  const heldCount = currentMode() === "frimages" ? chosenImages.length : files.size
+
+  if (adding && heldCount + chosen.length > MAX_FILES) {
+    result.textContent = say("js.limit.too_many", {
+      count: heldCount + chosen.length,
+      max: MAX_FILES,
+    })
+    return
+  }
+
+  const check = checkSelection(chosen, adding ? held : 0)
   if (!check.ok) {
     result.textContent = check.reason
     return
@@ -498,6 +516,16 @@ acceptDroppedFiles(
 
 // Dragging thumbnails reorders them, alongside the arrow buttons.
 makeReorderable(pagesEl, (from, to) => {
+  // Images to PDF keeps its pictures in a list of its own, not in `order`.
+  // Its instructions say to drag them into order, so dragging has to work
+  // there too, not only the arrows.
+  if (currentMode() === "frimages") {
+    const moved = chosenImages.splice(from, 1)[0]
+    chosenImages.splice(to, 0, moved)
+    drawImages()
+    result.textContent = say("js.order_updated")
+    return
+  }
   if (modes[currentMode()].controls !== "move") return
   const moved = order.splice(from, 1)[0]
   order.splice(to, 0, moved)
@@ -1070,9 +1098,14 @@ function drawImages() {
   chosenImages.forEach((image, position) => {
     const box = document.createElement("div")
     box.dataset.position = String(position)
+    // Dragging moves pictures, so a drag must not scroll the page instead.
+    box.style.touchAction = "none"
 
     // A blob URL points at memory in this tab. Nothing is uploaded.
     const preview = document.createElement("img")
+    // The browser's own image dragging would carry the picture off as a
+    // file instead of letting the page reorder it.
+    preview.draggable = false
     const url = URL.createObjectURL(new Blob([image.bytes]))
     preview.src = url
     preview.addEventListener("load", () => URL.revokeObjectURL(url))
@@ -1147,7 +1180,15 @@ async function downloadPdfToImages() {
     })
   }
 
-  const zip = await call("zipImages", { images, zipName: `${stem}-images.zip` })
+  // Handed over rather than copied. Copying held every picture twice while
+  // the zip was being built beside them, so three times the export in all;
+  // transferring leaves the pictures and the zip, which is the least this
+  // can be done in while the whole zip has to exist before it is saved.
+  const zip = await call(
+    "zipImages",
+    { images, zipName: `${stem}-images.zip` },
+    images.map((image) => image.bytes.buffer),
+  )
   save(zip.bytes, zip.name, "application/zip")
   result.textContent = say("js.saved_images", { count: zip.fileCount, name: zip.name })
 }

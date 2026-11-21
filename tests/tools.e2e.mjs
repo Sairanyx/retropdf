@@ -9,6 +9,7 @@
 
 import { chromium } from "playwright"
 import { PDFDocument, rgb } from "@cantoo/pdf-lib"
+import { unzipSync } from "fflate"
 import { mkdtemp, writeFile, readFile, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
@@ -221,6 +222,44 @@ try {
   }
 
   {
+    console.log("\nimages to PDF: dragging and adding more")
+    const { page, errors } = await open(browser, "/jpg-to-pdf")
+    const picture = await readFile(png)
+    const named = (name) => ({ name, mimeType: "image/png", buffer: picture })
+    await load(page, [named("first.png"), named("second.png")])
+
+    // The instructions say to drag pictures into order, so a drag has to
+    // move them, not only the arrow buttons.
+    const boxes = page.locator("#pages [data-position]")
+    const from = await boxes.nth(0).boundingBox()
+    const to = await boxes.nth(1).boundingBox()
+    await page.mouse.move(from.x + from.width / 2, from.y + from.height / 3)
+    await page.mouse.down()
+    await page.mouse.move(to.x + to.width / 2, to.y + to.height / 3, { steps: 12 })
+    await page.mouse.up()
+    await page.waitForTimeout(400)
+    const names = await page.$$eval("#pages .num", (labels) => labels.map((l) => l.textContent))
+    check("dragging moves a picture", names.join(",") === "second.png,first.png", names.join(","))
+
+    // Adding in batches still counts against the limit on how many files
+    // can be open at once, rather than each batch being judged alone.
+    const batch = (from, count) =>
+      Array.from({ length: count }, (_, i) => named(`p${from + i}.png`))
+    await page.setInputFiles("#picker", batch(0, 30))
+    await page.waitForTimeout(800)
+    await page.setInputFiles("#picker", batch(30, 25))
+    await page.waitForTimeout(800)
+    const said = await page.textContent("#result")
+    check("adding past the limit in batches is refused", /\b57\b/.test(said) && /50/.test(said), said)
+    check(
+      "nothing past the limit was added",
+      (await page.$$eval("#pages [data-position]", (b) => b.length)) === 32,
+    )
+    check("no page errors", errors.length === 0, errors.join("; "))
+    await page.close()
+  }
+
+  {
     console.log("\nPDF to images")
     const { page, errors } = await open(browser, "/pdf-to-jpg")
     await load(page, [three])
@@ -229,6 +268,12 @@ try {
     check("a zip comes back", isZip(bytes))
     check("saved as a zip", suggested.endsWith(".zip"), suggested)
     check("the zip has content", bytes.length > 500, bytes.length + " bytes")
+    // The page is called PDF to JPG, so JPG is what it makes unless asked.
+    const inside = unzipSync(new Uint8Array(bytes))
+    const jpgs = Object.entries(inside).filter(
+      ([name, data]) => name.endsWith(".jpg") && data[0] === 0xff && data[1] === 0xd8,
+    )
+    check("one real JPG per page", jpgs.length === 3, Object.keys(inside).join(" "))
     check("no page errors", errors.length === 0, errors.join("; "))
     await page.close()
   }
